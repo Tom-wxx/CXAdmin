@@ -1,0 +1,53 @@
+package ${packageName}.service;
+
+import ${packageName}.entity.${className};
+import com.baomidou.mybatisplus.extension.service.IService;
+
+/**
+ * ${tableComment}Service接口
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+public interface I${className}Service extends IService<${className}> {
+
+    /**
+     * 查询${tableComment}列表
+     *
+     * @param ${classname} ${tableComment}
+     * @return ${tableComment}集合
+     */
+    PageResult<${className}> select${className}List(${className} ${classname}, Integer current, Integer size);
+
+    /**
+     * 根据ID查询${tableComment}
+     *
+     * @param ${primaryKey.propertyName} ${tableComment}ID
+     * @return ${tableComment}
+     */
+    ${className} select${className}ById(${primaryKey.javaType} ${primaryKey.propertyName});
+
+    /**
+     * 新增${tableComment}
+     *
+     * @param ${classname} ${tableComment}
+     * @return 结果
+     */
+    int insert${className}(${className} ${classname});
+
+    /**
+     * 修改${tableComment}
+     *
+     * @param ${classname} ${tableComment}
+     * @return 结果
+     */
+    int update${className}(${className} ${classname});
+
+    /**
+     * 删除${tableComment}
+     *
+     * @param ${primaryKey.propertyName}s ${tableComment}ID数组
+     * @return 结果
+     */
+    int delete${className}ByIds(${primaryKey.javaType}[] ${primaryKey.propertyName}s);
+}

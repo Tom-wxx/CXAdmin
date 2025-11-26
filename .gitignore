@@ -1,0 +1,32 @@
+# 依赖 & 构建
+node_modules/
+target/
+dist/
+build/
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+logs/
+
+# 本地配置
+application-local.yml
+application-dev.yml
+/.claude/
+/.idea/
+/frontend/.idea/
+/frontend/dist/
+/frontend/node_modules/
+/frontend/src/views/nul

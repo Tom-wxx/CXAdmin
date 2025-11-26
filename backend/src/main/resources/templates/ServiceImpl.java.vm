@@ -1,0 +1,62 @@
+package ${packageName}.service.impl;
+
+import ${packageName}.entity.${className};
+import ${packageName}.mapper.${className}Mapper;
+import ${packageName}.service.I${className}Service;
+import com.admin.system.common.PageResult;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.Arrays;
+
+/**
+ * ${tableComment}Service实现类
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+@Service
+public class ${className}ServiceImpl extends ServiceImpl<${className}Mapper, ${className}> implements I${className}Service {
+
+    @Override
+    public PageResult<${className}> select${className}List(${className} ${classname}, Integer current, Integer size) {
+        Page<${className}> page = new Page<>(current, size);
+        LambdaQueryWrapper<${className}> queryWrapper = new LambdaQueryWrapper<>();
+
+        // 添加查询条件
+#foreach($column in $columns)
+#if(!$column.isPrimaryKey && $column.javaType == "String" && $column.columnName != "create_by" && $column.columnName != "update_by" && $column.columnName != "deleted")
+        queryWrapper.like(StringUtils.hasText(${classname}.get${column.propertyName.substring(0,1).toUpperCase()}${column.propertyName.substring(1)}()),
+            ${className}::get${column.propertyName.substring(0,1).toUpperCase()}${column.propertyName.substring(1)},
+            ${classname}.get${column.propertyName.substring(0,1).toUpperCase()}${column.propertyName.substring(1)}());
+#end
+#end
+
+        queryWrapper.orderByDesc(${className}::getCreateTime);
+        Page<${className}> result = this.page(page, queryWrapper);
+        return new PageResult<>(result.getRecords(), result.getTotal());
+    }
+
+    @Override
+    public ${className} select${className}ById(${primaryKey.javaType} ${primaryKey.propertyName}) {
+        return this.getById(${primaryKey.propertyName});
+    }
+
+    @Override
+    public int insert${className}(${className} ${classname}) {
+        return this.save(${classname}) ? 1 : 0;
+    }
+
+    @Override
+    public int update${className}(${className} ${classname}) {
+        return this.updateById(${classname}) ? 1 : 0;
+    }
+
+    @Override
+    public int delete${className}ByIds(${primaryKey.javaType}[] ${primaryKey.propertyName}s) {
+        return this.removeByIds(Arrays.asList(${primaryKey.propertyName}s)) ? ${primaryKey.propertyName}s.length : 0;
+    }
+}

@@ -1,0 +1,43 @@
+package ${packageName}.entity;
+
+import com.admin.system.common.BaseEntity;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+#if($columns.stream().anyMatch(c -> c.javaType == "Date"))
+import java.util.Date;
+#end
+#if($columns.stream().anyMatch(c -> c.javaType == "BigDecimal"))
+import java.math.BigDecimal;
+#end
+
+/**
+ * ${tableComment}实体类
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("${tableName}")
+public class ${className} extends BaseEntity {
+
+    /**
+     * ${primaryKey.columnComment}
+     */
+    @TableId(value = "${primaryKey.columnName}", type = IdType.AUTO)
+    private ${primaryKey.javaType} ${primaryKey.propertyName};
+
+#foreach($column in $columns)
+#if(!$column.isPrimaryKey && $column.columnName != "create_by" && $column.columnName != "create_time" && $column.columnName != "update_by" && $column.columnName != "update_time" && $column.columnName != "deleted")
+    /**
+     * ${column.columnComment}
+     */
+    private ${column.javaType} ${column.propertyName};
+
+#end
+#end
+}
