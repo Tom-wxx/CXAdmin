@@ -59,7 +59,7 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" type="index" width="60" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.$index + 1 }}</span>
+          <span>{{ (queryParams.current - 1) * queryParams.size + scope.$index + 1 }}</span>
         </template>
       </el-table-column>
       <el-table-column label="会话编号" align="center" prop="tokenId" show-overflow-tooltip width="260" />
@@ -86,6 +86,19 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- 分页 -->
+    <el-pagination
+      v-if="total > 0"
+      :current-page.sync="queryParams.current"
+      :page-sizes="[10, 20, 50, 100]"
+      :page-size="queryParams.size"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="total"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      style="margin-top: 15px; text-align: right"
+    />
   </div>
 </template>
 
@@ -104,10 +117,14 @@ export default {
       multiple: true,
       // 在线用户列表
       onlineList: [],
+      // 总数
+      total: 0,
       // 查询参数
       queryParams: {
         username: undefined,
-        ipaddr: undefined
+        ipaddr: undefined,
+        current: 1,
+        size: 10
       }
     }
   },
@@ -119,7 +136,8 @@ export default {
     getList() {
       this.loading = true
       listOnlineUser(this.queryParams).then(response => {
-        this.onlineList = response.data || []
+        this.onlineList = response.rows || []
+        this.total = response.total || 0
         this.loading = false
       }).catch(() => {
         this.loading = false
@@ -127,15 +145,29 @@ export default {
     },
     /** 搜索按钮操作 */
     handleQuery() {
+      this.queryParams.current = 1
       this.getList()
     },
     /** 重置按钮操作 */
     resetQuery() {
       this.queryParams = {
         username: undefined,
-        ipaddr: undefined
+        ipaddr: undefined,
+        current: 1,
+        size: 10
       }
       this.handleQuery()
+    },
+    /** 每页条数改变 */
+    handleSizeChange(size) {
+      this.queryParams.size = size
+      this.queryParams.current = 1
+      this.getList()
+    },
+    /** 当前页改变 */
+    handleCurrentChange(current) {
+      this.queryParams.current = current
+      this.getList()
     },
     /** 刷新按钮操作 */
     handleRefresh() {

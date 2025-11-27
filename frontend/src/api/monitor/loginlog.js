@@ -40,3 +40,15 @@ export function cleanLoginLog() {
     method: 'delete'
   })
 }
+
+/**
+ * 导出登录日志
+ */
+export function exportLoginLog(query) {
+  return request({
+    url: '/system/loginlog/export',
+    method: 'post',
+    params: query,
+    responseType: 'blob'
+  })
+}

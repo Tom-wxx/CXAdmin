@@ -61,6 +61,19 @@ export const constantRoutes = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
+  },
+  {
+    path: '/tool/generator/edit',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/tool/generator/editTable'),
+        name: 'EditTable',
+        meta: { title: '编辑表', activeMenu: '/tool/generator' }
+      }
+    ]
   }
 ]
 

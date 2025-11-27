@@ -1,6 +1,7 @@
 import { constantRoutes } from '@/router'
 import { getRouters } from '@/api/login'
 import Layout from '@/layout'
+import ParentView from '@/components/ParentView'
 
 const state = {
   routes: [],
@@ -47,9 +48,14 @@ function filterAsyncRouter(asyncRouterMap, parent) {
     if (route.component) {
       if (route.component === 'Layout') {
         route.component = Layout
+      } else if (route.component === 'ParentView') {
+        route.component = ParentView
       } else {
         route.component = loadView(route.component)
       }
+    } else if (route.children && route.children.length > 0 && parent) {
+      // 有子菜单但没有component的中间层级菜单，使用ParentView
+      route.component = ParentView
     }
     if (route.children != null && route.children && route.children.length) {
       route.children = filterAsyncRouter(route.children, route)

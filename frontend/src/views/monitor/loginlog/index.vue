@@ -54,6 +54,16 @@
           @click="handleClean"
         >清空</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          :loading="exportLoading"
+          @click="handleExport"
+        >导出</el-button>
+      </el-col>
     </el-row>
 
     <!-- 数据表格 -->
@@ -151,7 +161,7 @@
 </template>
 
 <script>
-import { listLoginLog, getLoginLog, delLoginLog, cleanLoginLog } from '@/api/monitor/loginlog'
+import { listLoginLog, getLoginLog, delLoginLog, cleanLoginLog, exportLoginLog } from '@/api/monitor/loginlog'
 import Pagination from '@/components/Pagination'
 
 export default {
@@ -181,7 +191,9 @@ export default {
       },
       // 详细信息对话框
       detailVisible: false,
-      detailData: {}
+      detailData: {},
+      // 导出loading
+      exportLoading: false
     }
   },
   created() {
@@ -271,6 +283,28 @@ export default {
       const minute = date.getMinutes().toString().padStart(2, '0')
       const second = date.getSeconds().toString().padStart(2, '0')
       return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+    },
+    /** 导出按钮操作 */
+    handleExport() {
+      this.$confirm('是否确认导出所有登录日志数据？', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.exportLoading = true
+        return exportLoginLog(this.queryParams)
+      }).then(response => {
+        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = '登录日志.xlsx'
+        link.click()
+        URL.revokeObjectURL(link.href)
+        this.exportLoading = false
+        this.$message.success('导出成功')
+      }).catch(() => {
+        this.exportLoading = false
+      })
     }
   }
 }

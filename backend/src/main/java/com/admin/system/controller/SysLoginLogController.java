@@ -11,8 +11,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.admin.system.utils.ExcelUtil;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * 登录日志记录
@@ -77,5 +82,23 @@ public class SysLoginLogController {
     public Result<Void> clean() {
         loginLogService.cleanLoginLog();
         return Result.success("清空登录日志成功");
+    }
+
+    /**
+     * 导出登录日志
+     */
+    @ApiOperation("导出登录日志")
+    @PreAuthorize("@ss.hasPermi('monitor:loginlog:export')")
+    @PostMapping("/export")
+    public void export(HttpServletResponse response,
+                       @ApiParam("用户账号") @RequestParam(required = false) String username,
+                       @ApiParam("登录IP地址") @RequestParam(required = false) String ipaddr,
+                       @ApiParam("登录状态") @RequestParam(required = false) String status,
+                       @ApiParam("开始时间") @RequestParam(required = false) String beginTime,
+                       @ApiParam("结束时间") @RequestParam(required = false) String endTime) throws IOException {
+        List<SysLoginLog> list = loginLogService.selectLoginLogList(username, ipaddr, status, beginTime, endTime);
+        String[] headers = {"访问ID", "用户账号", "登录IP", "登录地点", "浏览器", "操作系统", "登录状态", "登录时间"};
+        String[] fields = {"infoId", "username", "ipaddr", "loginLocation", "browser", "os", "status", "loginTime"};
+        ExcelUtil.exportExcel(response, "登录日志", headers, fields, list);
     }
 }

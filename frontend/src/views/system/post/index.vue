@@ -53,6 +53,16 @@
           @click="handleDelete"
         >删除</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          :loading="exportLoading"
+          @click="handleExport"
+        >导出</el-button>
+      </el-col>
     </el-row>
 
     <!-- 数据表格 -->
@@ -135,7 +145,7 @@
 </template>
 
 <script>
-import { pagePost, getPost, delPost, addPost, updatePost } from '@/api/system/post'
+import { pagePost, getPost, delPost, addPost, updatePost, exportPost } from '@/api/system/post'
 import Pagination from '@/components/Pagination'
 
 export default {
@@ -182,7 +192,9 @@ export default {
         postSort: [
           { required: true, message: '岗位顺序不能为空', trigger: 'blur' }
         ]
-      }
+      },
+      // 导出loading
+      exportLoading: false
     }
   },
   created() {
@@ -310,6 +322,28 @@ export default {
         return new Date(time).toLocaleString('zh-CN')
       }
       return ''
+    },
+    /** 导出按钮操作 */
+    handleExport() {
+      this.$confirm('是否确认导出所有岗位数据？', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.exportLoading = true
+        return exportPost(this.queryParams)
+      }).then(response => {
+        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = '岗位数据.xlsx'
+        link.click()
+        URL.revokeObjectURL(link.href)
+        this.exportLoading = false
+        this.$message.success('导出成功')
+      }).catch(() => {
+        this.exportLoading = false
+      })
     }
   }
 }

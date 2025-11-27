@@ -5,8 +5,10 @@ import com.admin.system.entity.SysUser;
 import com.admin.system.vo.UserVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户 业务层
@@ -84,4 +86,14 @@ public interface ISysUserService extends IService<SysUser> {
      * 根据用户ID查询角色ID列表
      */
     List<Long> selectRoleIdsByUserId(Long userId);
+
+    /**
+     * 查询用户列表（不分页，用于导出）
+     */
+    List<UserVO> selectUserList(String username, String phone, String status);
+
+    /**
+     * 导入用户数据
+     */
+    Map<String, Object> importUsers(MultipartFile file, boolean updateSupport);
 }

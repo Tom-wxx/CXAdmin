@@ -1,5 +1,6 @@
 package com.admin.system.service;
 
+import com.admin.system.common.PageResult;
 import com.admin.system.vo.OnlineUserVO;
 
 import java.util.List;
@@ -15,6 +16,11 @@ public interface IOnlineUserService {
      * 查询在线用户列表
      */
     List<OnlineUserVO> selectOnlineUserList(String username, String ipaddr);
+
+    /**
+     * 查询在线用户列表（分页）
+     */
+    PageResult<OnlineUserVO> selectOnlineUserListPage(String username, String ipaddr, Integer current, Integer size);
 
     /**
      * 强制退出用户

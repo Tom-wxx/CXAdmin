@@ -225,4 +225,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             roleMapper.batchRoleMenu(roleId, menuIds);
         }
     }
+
+    /**
+     * 查询角色列表（用于导出）
+     */
+    @Override
+    public List<RoleVO> selectRoleListForExport(String roleName, String roleKey, String status) {
+        return roleMapper.selectRoleListForExport(roleName, roleKey, status);
+    }
 }

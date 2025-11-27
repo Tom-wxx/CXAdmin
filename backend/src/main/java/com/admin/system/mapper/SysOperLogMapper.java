@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 操作日志记录 数据层
  *
@@ -29,4 +31,14 @@ public interface SysOperLogMapper extends BaseMapper<SysOperLog> {
      * 清空操作日志
      */
     int cleanOperLog();
+
+    /**
+     * 查询操作日志列表（用于导出）
+     */
+    List<SysOperLog> selectOperLogList(@Param("title") String title,
+                                        @Param("operName") String operName,
+                                        @Param("businessType") Integer businessType,
+                                        @Param("status") Integer status,
+                                        @Param("beginTime") String beginTime,
+                                        @Param("endTime") String endTime);
 }

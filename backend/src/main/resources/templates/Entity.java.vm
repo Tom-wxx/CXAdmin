@@ -6,11 +6,20 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-#if($columns.stream().anyMatch(c -> c.javaType == "Date"))
+#set($hasDate = false)
+#set($hasBigDecimal = false)
+#foreach($column in $columns)
+#if($column.javaType == "Date")
+#set($hasDate = true)
+#end
+#if($column.javaType == "BigDecimal")
+#set($hasBigDecimal = true)
+#end
+#end
+#if($hasDate)
 import java.util.Date;
 #end
-#if($columns.stream().anyMatch(c -> c.javaType == "BigDecimal"))
+#if($hasBigDecimal)
 import java.math.BigDecimal;
 #end
 

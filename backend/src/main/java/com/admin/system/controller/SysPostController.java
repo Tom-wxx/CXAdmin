@@ -14,6 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.admin.system.utils.ExcelUtil;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 import java.util.List;
 
@@ -128,6 +132,26 @@ public class SysPostController {
         post.setPostId(postId);
         boolean unique = postService.checkPostCodeUnique(post);
         return Result.success(unique);
+    }
+
+    /**
+     * 导出岗位数据
+     */
+    @ApiOperation("导出岗位数据")
+    @PreAuthorize("@ss.hasPermi('system:post:export')")
+    @PostMapping("/export")
+    public void export(HttpServletResponse response,
+                       @ApiParam("岗位编码") @RequestParam(required = false) String postCode,
+                       @ApiParam("岗位名称") @RequestParam(required = false) String postName,
+                       @ApiParam("状态") @RequestParam(required = false) String status) throws IOException {
+        SysPost queryPost = new SysPost();
+        queryPost.setPostCode(postCode);
+        queryPost.setPostName(postName);
+        queryPost.setStatus(status);
+        List<SysPost> list = postService.selectPostList(queryPost);
+        String[] headers = {"岗位ID", "岗位编码", "岗位名称", "显示顺序", "状态", "创建时间"};
+        String[] fields = {"postId", "postCode", "postName", "postSort", "status", "createTime"};
+        ExcelUtil.exportExcel(response, "岗位数据", headers, fields, list);
     }
 
 }

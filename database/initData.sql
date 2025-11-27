@@ -1,7 +1,7 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : 127.0.0.1
+ Source Server         : localhost
  Source Server Type    : MySQL
  Source Server Version : 50717
  Source Host           : localhost:3306
@@ -11,7 +11,7 @@
  Target Server Version : 50717
  File Encoding         : 65001
 
- Date: 26/11/2025 16:38:43
+ Date: 27/11/2025 14:25:32
 */
 
 SET NAMES utf8mb4;
@@ -336,7 +336,7 @@ CREATE TABLE `sys_menu`  (
   `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '' COMMENT '备注',
   `deleted` int(1) NULL DEFAULT 0 COMMENT '删除标志（0未删除 1已删除）',
   PRIMARY KEY (`menu_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1039 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '菜单权限表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1142 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '菜单权限表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_menu
@@ -357,11 +357,11 @@ INSERT INTO `sys_menu` VALUES (109, '在线用户', 2, 1, 'online', 'monitor/onl
 INSERT INTO `sys_menu` VALUES (110, '定时任务', 2, 2, 'job', 'monitor/job/index', '', 1, 0, 'C', '0', '0', 'monitor:job:list', 'time', 'admin', '2025-11-25 11:11:39', '', NULL, '定时任务菜单', 0);
 INSERT INTO `sys_menu` VALUES (111, 'Druid监控', 2, 3, 'druid', 'monitor/druid/index', '', 1, 0, 'C', '0', '0', 'monitor:druid:list', 'data-analysis', 'admin', '2025-11-25 11:11:39', '', NULL, '数据监控菜单', 0);
 INSERT INTO `sys_menu` VALUES (112, '服务监控', 2, 4, 'server', 'monitor/server/index', '', 1, 0, 'C', '0', '0', 'monitor:server:list', 'cpu', 'admin', '2025-11-25 11:11:39', '', NULL, '服务监控菜单', 0);
-INSERT INTO `sys_menu` VALUES (113, '表单构建', 3, 1, 'build', 'tool/build/index', '', 1, 0, 'C', '0', '0', 'tool:build:list', 'edit-outline', 'admin', '2025-11-25 11:11:39', '', NULL, '表单构建菜单', 0);
-INSERT INTO `sys_menu` VALUES (114, '代码生成', 3, 2, 'gen', 'tool/gen/index', '', 1, 0, 'C', '0', '0', 'tool:gen:list', 'tickets', 'admin', '2025-11-25 11:11:39', '', NULL, '代码生成菜单', 0);
+INSERT INTO `sys_menu` VALUES (113, '表单构建', 3, 1, 'build', 'tool/build/index', '', 1, 0, 'C', '1', '0', 'tool:build:list', 'edit-outline', 'admin', '2025-11-25 11:11:39', '', NULL, '表单构建菜单(暂未实现)', 0);
+INSERT INTO `sys_menu` VALUES (114, '代码生成', 3, 2, 'generator', 'tool/generator/index', '', 1, 0, 'C', '0', '0', 'tool:generator:list', 'tickets', 'admin', '2025-11-25 11:11:39', '', NULL, '代码生成菜单', 0);
 INSERT INTO `sys_menu` VALUES (115, '系统接口', 3, 3, 'swagger', 'tool/swagger/index', '', 1, 0, 'C', '0', '0', 'tool:swagger:list', 'document', 'admin', '2025-11-25 11:11:39', '', NULL, '系统接口菜单', 0);
 INSERT INTO `sys_menu` VALUES (500, '操作日志', 108, 1, 'operlog', 'monitor/operlog/index', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list', 'notebook-2', 'admin', '2025-11-25 11:11:39', '', NULL, '操作日志菜单', 0);
-INSERT INTO `sys_menu` VALUES (501, '登录日志', 108, 2, 'logininfor', 'monitor/logininfor/index', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'key', 'admin', '2025-11-25 11:11:39', '', NULL, '登录日志菜单', 0);
+INSERT INTO `sys_menu` VALUES (501, '登录日志', 108, 2, 'loginlog', 'monitor/loginlog/index', '', 1, 0, 'C', '0', '0', 'monitor:loginlog:list', 'key', 'admin', '2025-11-25 11:11:39', '', NULL, '登录日志菜单', 0);
 INSERT INTO `sys_menu` VALUES (1000, '用户查询', 100, 1, '', '', '', 1, 0, 'F', '0', '0', 'system:user:query', '#', 'admin', '2025-11-25 11:11:39', '', NULL, '', 0);
 INSERT INTO `sys_menu` VALUES (1001, '用户新增', 100, 2, '', '', '', 1, 0, 'F', '0', '0', 'system:user:add', '#', 'admin', '2025-11-25 11:11:39', '', NULL, '', 0);
 INSERT INTO `sys_menu` VALUES (1002, '用户修改', 100, 3, '', '', '', 1, 0, 'F', '0', '0', 'system:user:edit', '#', 'admin', '2025-11-25 11:11:39', '', NULL, '', 0);
@@ -395,6 +395,8 @@ INSERT INTO `sys_menu` VALUES (1035, '文件删除', 1032, 3, '', NULL, NULL, 1,
 INSERT INTO `sys_menu` VALUES (1036, '文件详情', 1032, 4, '', NULL, NULL, 1, 0, 'F', '0', '0', 'system:file:query', '#', 'admin', '2025-11-26 11:08:42', '', NULL, '文件详情按钮', 0);
 INSERT INTO `sys_menu` VALUES (1037, '个人中心', 0, 100, 'profile', 'user/profile/index', NULL, 1, 0, 'C', '1', '0', NULL, 'user', 'admin', '2025-11-26 11:08:42', '', '2025-11-26 14:39:09', '个人中心仅通过顶部用户菜单访问，已从侧边栏移除', 1);
 INSERT INTO `sys_menu` VALUES (1038, '服务器监控', 2, 1, 'server', 'monitor/server/index', NULL, 1, 0, 'C', '0', '0', 'monitor:server:view', 'monitor', 'admin', '2025-11-26 11:08:42', '', NULL, '服务器监控', 1);
+INSERT INTO `sys_menu` VALUES (1140, '代码生成查询', 114, 1, '', '', '', 1, 0, 'F', '0', '0', 'tool:generator:query', '#', 'admin', '2025-11-27 11:19:47', '', NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (1141, '代码生成执行', 114, 2, '', '', '', 1, 0, 'F', '0', '0', 'tool:generator:code', '#', 'admin', '2025-11-27 11:19:47', '', NULL, '', 0);
 
 -- ----------------------------
 -- Table structure for sys_notice
@@ -569,6 +571,8 @@ INSERT INTO `sys_role_menu` VALUES (1, 1033);
 INSERT INTO `sys_role_menu` VALUES (1, 1034);
 INSERT INTO `sys_role_menu` VALUES (1, 1035);
 INSERT INTO `sys_role_menu` VALUES (1, 1036);
+INSERT INTO `sys_role_menu` VALUES (1, 1140);
+INSERT INTO `sys_role_menu` VALUES (1, 1141);
 
 -- ----------------------------
 -- Table structure for sys_user

@@ -1,5 +1,6 @@
 package com.admin.system.service.impl;
 
+import com.admin.system.common.PageResult;
 import com.admin.system.common.exception.ServiceException;
 import com.admin.system.entity.SysDept;
 import com.admin.system.entity.SysUser;
@@ -71,6 +72,30 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         return onlineUserList.stream()
                 .sorted((o1, o2) -> o2.getLoginTime().compareTo(o1.getLoginTime()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 查询在线用户列表（分页）
+     */
+    @Override
+    public PageResult<OnlineUserVO> selectOnlineUserListPage(String username, String ipaddr, Integer current, Integer size) {
+        // 获取全部在线用户
+        List<OnlineUserVO> allUsers = selectOnlineUserList(username, ipaddr);
+
+        // 计算分页
+        long total = allUsers.size();
+        int fromIndex = (current - 1) * size;
+        int toIndex = Math.min(fromIndex + size, allUsers.size());
+
+        // 获取当前页数据
+        List<OnlineUserVO> pageData;
+        if (fromIndex >= allUsers.size()) {
+            pageData = new ArrayList<>();
+        } else {
+            pageData = allUsers.subList(fromIndex, toIndex);
+        }
+
+        return PageResult.build(pageData, total, current, size);
     }
 
     /**

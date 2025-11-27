@@ -103,3 +103,16 @@ export function checkPostCodeUnique(postCode, postId) {
     params: { postCode, postId }
   })
 }
+
+/**
+ * 导出岗位数据
+ * @param {Object} query - 查询参数
+ */
+export function exportPost(query) {
+  return request({
+    url: '/system/post/export',
+    method: 'post',
+    params: query,
+    responseType: 'blob'
+  })
+}

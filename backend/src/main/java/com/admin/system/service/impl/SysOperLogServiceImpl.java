@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * 操作日志 业务层处理
  *
@@ -73,5 +75,14 @@ public class SysOperLogServiceImpl extends ServiceImpl<SysOperLogMapper, SysOper
     @Transactional(rollbackFor = Exception.class)
     public void cleanOperLog() {
         operLogMapper.cleanOperLog();
+    }
+
+    /**
+     * 查询操作日志列表（用于导出）
+     */
+    @Override
+    public List<SysOperLog> selectOperLogList(String title, String operName, Integer businessType,
+                                               Integer status, String beginTime, String endTime) {
+        return operLogMapper.selectOperLogList(title, operName, businessType, status, beginTime, endTime);
     }
 }

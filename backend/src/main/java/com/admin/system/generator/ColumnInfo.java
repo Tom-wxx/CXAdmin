@@ -41,6 +41,11 @@ public class ColumnInfo {
     private String propertyName;
 
     /**
+     * Java属性名（大驼峰，首字母大写）
+     */
+    private String capitalizedPropertyName;
+
+    /**
      * Java类型
      */
     private String javaType;

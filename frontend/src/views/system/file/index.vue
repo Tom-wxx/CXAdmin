@@ -305,8 +305,8 @@ export default {
     getList() {
       this.loading = true
       listFile(this.queryParams).then(response => {
-        this.fileList = response.data.records
-        this.total = response.data.total
+        this.fileList = response.rows
+        this.total = response.total
         this.loading = false
       })
     },

@@ -41,6 +41,20 @@ public class PageResult<T> implements Serializable {
     public PageResult(List<T> rows, Long total) {
         this.rows = rows;
         this.total = total;
+        this.code = 200;
+        this.message = "操作成功";
+    }
+
+    /**
+     * 构建分页结果
+     */
+    public static <T> PageResult<T> build(List<T> rows, Long total, Integer current, Integer size) {
+        PageResult<T> result = new PageResult<>();
+        result.setRows(rows);
+        result.setTotal(total);
+        result.setCode(200);
+        result.setMessage("操作成功");
+        return result;
     }
 
 }

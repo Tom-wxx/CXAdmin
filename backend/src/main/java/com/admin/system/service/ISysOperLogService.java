@@ -4,6 +4,8 @@ import com.admin.system.entity.SysOperLog;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * 操作日志 业务层
  *
@@ -36,4 +38,10 @@ public interface ISysOperLogService extends IService<SysOperLog> {
      * 清空操作日志
      */
     void cleanOperLog();
+
+    /**
+     * 查询操作日志列表（用于导出）
+     */
+    List<SysOperLog> selectOperLogList(String title, String operName, Integer businessType,
+                                        Integer status, String beginTime, String endTime);
 }

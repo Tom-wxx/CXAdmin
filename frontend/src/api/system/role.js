@@ -147,3 +147,16 @@ export function saveRoleMenus(roleId, menuIds) {
     }
   })
 }
+
+/**
+ * 导出角色数据
+ * @param {Object} query - 查询参数
+ */
+export function exportRole(query) {
+  return request({
+    url: '/system/role/export',
+    method: 'post',
+    params: query,
+    responseType: 'blob'
+  })
+}

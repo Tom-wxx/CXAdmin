@@ -1,5 +1,6 @@
 package com.admin.system.service.impl;
 
+import com.admin.system.common.PageResult;
 import com.admin.system.generator.CodeGeneratorUtil;
 import com.admin.system.generator.ColumnInfo;
 import com.admin.system.generator.GenConfig;
@@ -56,6 +57,49 @@ public class CodeGeneratorServiceImpl implements ICodeGeneratorService {
     }
 
     @Override
+    public PageResult<TableInfo> getTableListPage(String tableName, Integer current, Integer size) {
+        // 构建查询条件
+        StringBuilder whereSql = new StringBuilder();
+        whereSql.append("WHERE table_schema = (SELECT DATABASE()) ");
+        whereSql.append("AND table_name NOT LIKE 'qrtz_%' ");
+
+        List<Object> countParams = new ArrayList<>();
+        if (StringUtils.hasText(tableName)) {
+            whereSql.append("AND table_name LIKE ? ");
+            countParams.add("%" + tableName + "%");
+        }
+
+        // 查询总数
+        String countSql = "SELECT COUNT(*) FROM information_schema.tables " + whereSql;
+        Long total = jdbcTemplate.queryForObject(countSql, Long.class, countParams.toArray());
+
+        // 分页查询
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT table_name, table_comment, create_time, update_time ");
+        sql.append("FROM information_schema.tables ");
+        sql.append(whereSql);
+        sql.append("ORDER BY create_time DESC ");
+        sql.append("LIMIT ? OFFSET ?");
+
+        int offset = (current - 1) * size;
+        List<Object> queryParams = new ArrayList<>(countParams);
+        queryParams.add(size);
+        queryParams.add(offset);
+
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(sql.toString(), queryParams.toArray());
+        List<TableInfo> tableList = new ArrayList<>();
+
+        for (Map<String, Object> row : results) {
+            TableInfo tableInfo = new TableInfo();
+            tableInfo.setTableName((String) row.get("table_name"));
+            tableInfo.setTableComment((String) row.get("table_comment"));
+            tableList.add(tableInfo);
+        }
+
+        return PageResult.build(tableList, total, current, size);
+    }
+
+    @Override
     public TableInfo getTableInfo(String tableName) {
         // 查询表信息
         String tableSql = "SELECT table_name, table_comment FROM information_schema.tables " +
@@ -86,7 +130,9 @@ public class CodeGeneratorServiceImpl implements ICodeGeneratorService {
             column.setColumnComment((String) columnMap.get("column_comment"));
             column.setIsPrimaryKey("PRI".equals(columnKey));
             column.setIsRequired("NO".equals(isNullable));
-            column.setPropertyName(CodeGeneratorUtil.columnToProperty(columnName));
+            String propName = CodeGeneratorUtil.columnToProperty(columnName);
+            column.setPropertyName(propName);
+            column.setCapitalizedPropertyName(propName.substring(0, 1).toUpperCase() + propName.substring(1));
             column.setJavaType(CodeGeneratorUtil.mysqlTypeToJavaType(dataType));
 
             columns.add(column);
@@ -110,6 +156,21 @@ public class CodeGeneratorServiceImpl implements ICodeGeneratorService {
 
             // 生成类名
             String className = CodeGeneratorUtil.tableToClassName(tableName, config.getTablePrefix());
+            tableInfo.setClassName(className);
+            tableInfo.setClassname(className.substring(0, 1).toLowerCase() + className.substring(1));
+
+            // 生成代码
+            return CodeGeneratorUtil.generateCode(tableInfo, config);
+        } catch (IOException e) {
+            throw new RuntimeException("代码生成失败", e);
+        }
+    }
+
+    @Override
+    public byte[] generateCustomCode(TableInfo tableInfo, GenConfig config) {
+        try {
+            // 生成类名
+            String className = CodeGeneratorUtil.tableToClassName(tableInfo.getTableName(), config.getTablePrefix());
             tableInfo.setClassName(className);
             tableInfo.setClassname(className.substring(0, 1).toLowerCase() + className.substring(1));
 

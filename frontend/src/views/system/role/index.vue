@@ -43,6 +43,16 @@
           @click="handleAdd"
         >新增</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          :loading="exportLoading"
+          @click="handleExport"
+        >导出</el-button>
+      </el-col>
     </el-row>
 
     <!-- 数据表格 -->
@@ -191,7 +201,7 @@
 </template>
 
 <script>
-import { listRole, getRole, addRole, updateRole, delRole, changeRoleStatus, getMenuIds, saveRoleMenus } from '@/api/system/role'
+import { listRole, getRole, addRole, updateRole, delRole, changeRoleStatus, getMenuIds, saveRoleMenus, exportRole } from '@/api/system/role'
 import { listMenu } from '@/api/system/menu'
 import Pagination from '@/components/Pagination'
 
@@ -250,7 +260,9 @@ export default {
       // 菜单展开状态
       menuExpand: false,
       // 菜单全选状态
-      menuNodeAll: false
+      menuNodeAll: false,
+      // 导出loading
+      exportLoading: false
     }
   },
   created() {
@@ -487,6 +499,28 @@ export default {
     cancelPermission() {
       this.permissionDialogVisible = false
       this.reset()
+    },
+    /** 导出按钮操作 */
+    handleExport() {
+      this.$confirm('是否确认导出所有角色数据？', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.exportLoading = true
+        return exportRole(this.queryParams)
+      }).then(response => {
+        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = '角色数据.xlsx'
+        link.click()
+        URL.revokeObjectURL(link.href)
+        this.exportLoading = false
+        this.$message.success('导出成功')
+      }).catch(() => {
+        this.exportLoading = false
+      })
     }
   }
 }

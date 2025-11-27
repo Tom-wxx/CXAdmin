@@ -150,7 +150,7 @@ swagger:
 file:
   upload:
     # 文件上传路径（绝对路径）
-    path: D:/uploads
+    path: C:/uploads
     # 文件访问URL前缀
     prefix: /uploads
     # 单个文件最大大小（MB）

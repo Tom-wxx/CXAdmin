@@ -23,9 +23,9 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     SysUser selectUserByUsername(@Param("username") String username);
 
     /**
-     * 查询用户列表
+     * 查询用户列表（返回Entity）
      */
-    List<SysUser> selectUserList(SysUser user);
+    List<SysUser> selectUserEntityList(SysUser user);
 
     /**
      * 分页查询用户列表（返回VO）
@@ -84,5 +84,12 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
      * 根据用户ID查询角色ID列表
      */
     List<Long> selectRoleIdsByUserId(@Param("userId") Long userId);
+
+    /**
+     * 查询用户列表（返回VO，用于导出）
+     */
+    List<UserVO> selectUserList(@Param("username") String username,
+                                 @Param("phone") String phone,
+                                 @Param("status") String status);
 
 }

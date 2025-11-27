@@ -43,7 +43,48 @@
           @click="handleAdd"
         >新增</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          @click="handleExport"
+        >导出</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="info"
+          plain
+          icon="el-icon-upload2"
+          size="mini"
+          @click="handleImport"
+        >导入</el-button>
+      </el-col>
     </el-row>
+
+    <!-- 导入对话框 -->
+    <el-dialog title="用户导入" :visible.sync="importDialogVisible" width="400px" append-to-body>
+      <el-upload
+        ref="upload"
+        :limit="1"
+        accept=".xlsx, .xls"
+        :auto-upload="false"
+        :on-change="handleFileChange"
+        drag
+      >
+        <i class="el-icon-upload"></i>
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+        <div class="el-upload__tip" slot="tip">
+          <el-checkbox v-model="updateSupport" />是否更新已存在的用户数据
+          <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="handleDownloadTemplate">下载模板</el-link>
+        </div>
+      </el-upload>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitImport">确 定</el-button>
+        <el-button @click="importDialogVisible = false">取 消</el-button>
+      </div>
+    </el-dialog>
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="userList" border>
@@ -212,7 +253,7 @@
 </template>
 
 <script>
-import { listUser, getUser, addUser, updateUser, delUser, resetUserPwd, changeUserStatus, getUserFormOptions } from '@/api/system/user'
+import { listUser, getUser, addUser, updateUser, delUser, resetUserPwd, changeUserStatus, getUserFormOptions, exportUser, downloadTemplate, importUser } from '@/api/system/user'
 import Treeselect from '@riophae/vue-treeselect'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import Pagination from '@/components/Pagination'
@@ -251,6 +292,12 @@ export default {
       postOptions: [],
       // 角色选项
       roleOptions: [],
+      // 导入对话框
+      importDialogVisible: false,
+      // 是否更新已存在数据
+      updateSupport: false,
+      // 导入文件
+      importFile: null,
       // 表单校验规则
       rules: {
         username: [
@@ -462,6 +509,70 @@ export default {
       const minute = date.getMinutes().toString().padStart(2, '0')
       const second = date.getSeconds().toString().padStart(2, '0')
       return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+    },
+    /** 导出按钮操作 */
+    handleExport() {
+      this.$confirm('是否确认导出所有用户数据?', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        exportUser(this.queryParams).then(response => {
+          const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = '用户数据.xlsx'
+          link.click()
+          window.URL.revokeObjectURL(url)
+          this.$message.success('导出成功')
+        })
+      }).catch(() => {})
+    },
+    /** 导入按钮操作 */
+    handleImport() {
+      this.importDialogVisible = true
+      this.updateSupport = false
+      this.importFile = null
+      if (this.$refs.upload) {
+        this.$refs.upload.clearFiles()
+      }
+    },
+    /** 文件改变 */
+    handleFileChange(file) {
+      this.importFile = file.raw
+    },
+    /** 下载模板 */
+    handleDownloadTemplate() {
+      downloadTemplate().then(response => {
+        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = '用户导入模板.xlsx'
+        link.click()
+        window.URL.revokeObjectURL(url)
+      })
+    },
+    /** 提交导入 */
+    submitImport() {
+      if (!this.importFile) {
+        this.$message.warning('请选择要导入的文件')
+        return
+      }
+      const formData = new FormData()
+      formData.append('file', this.importFile)
+      formData.append('updateSupport', this.updateSupport)
+      importUser(formData).then(response => {
+        this.importDialogVisible = false
+        const data = response.data
+        let message = `成功导入 ${data.successCount} 条数据`
+        if (data.failureCount > 0) {
+          message += `，失败 ${data.failureCount} 条`
+        }
+        this.$message.success(message)
+        this.getList()
+      })
     }
   }
 }

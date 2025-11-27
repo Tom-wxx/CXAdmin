@@ -29,9 +29,9 @@ public class ${className}ServiceImpl extends ServiceImpl<${className}Mapper, ${c
         // 添加查询条件
 #foreach($column in $columns)
 #if(!$column.isPrimaryKey && $column.javaType == "String" && $column.columnName != "create_by" && $column.columnName != "update_by" && $column.columnName != "deleted")
-        queryWrapper.like(StringUtils.hasText(${classname}.get${column.propertyName.substring(0,1).toUpperCase()}${column.propertyName.substring(1)}()),
-            ${className}::get${column.propertyName.substring(0,1).toUpperCase()}${column.propertyName.substring(1)},
-            ${classname}.get${column.propertyName.substring(0,1).toUpperCase()}${column.propertyName.substring(1)}());
+        queryWrapper.like(StringUtils.hasText(${classname}.get${column.capitalizedPropertyName}()),
+            ${className}::get${column.capitalizedPropertyName},
+            ${classname}.get${column.capitalizedPropertyName}());
 #end
 #end
 

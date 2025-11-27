@@ -1,5 +1,6 @@
 package com.admin.system.controller;
 
+import com.admin.system.common.PageResult;
 import com.admin.system.common.Result;
 import com.admin.system.service.IOnlineUserService;
 import com.admin.system.vo.OnlineUserVO;
@@ -26,17 +27,18 @@ public class OnlineUserController {
     private IOnlineUserService onlineUserService;
 
     /**
-     * 查询在线用户列表
+     * 查询在线用户列表（分页）
      */
     @ApiOperation("查询在线用户列表")
     @PreAuthorize("@ss.hasPermi('monitor:online:list')")
     @GetMapping("/list")
-    public Result<List<OnlineUserVO>> list(
+    public PageResult<OnlineUserVO> list(
             @ApiParam("用户名") @RequestParam(required = false) String username,
-            @ApiParam("登录地址") @RequestParam(required = false) String ipaddr) {
+            @ApiParam("登录地址") @RequestParam(required = false) String ipaddr,
+            @ApiParam("当前页") @RequestParam(defaultValue = "1") Integer current,
+            @ApiParam("每页大小") @RequestParam(defaultValue = "10") Integer size) {
 
-        List<OnlineUserVO> list = onlineUserService.selectOnlineUserList(username, ipaddr);
-        return Result.success(list);
+        return onlineUserService.selectOnlineUserListPage(username, ipaddr, current, size);
     }
 
     /**

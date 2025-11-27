@@ -55,4 +55,29 @@
         TRUNCATE TABLE sys_oper_log
     </delete>
 
+    <!-- 查询操作日志列表（用于导出） -->
+    <select id="selectOperLogList" resultMap="SysOperLogResult">
+        <include refid="selectOperLogVo"/>
+        WHERE 1=1
+        <if test="title != null and title != ''">
+            AND title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        <if test="operName != null and operName != ''">
+            AND oper_name LIKE CONCAT('%', #{operName}, '%')
+        </if>
+        <if test="businessType != null">
+            AND business_type = #{businessType}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="beginTime != null and beginTime != ''">
+            AND DATE_FORMAT(oper_time,'%Y-%m-%d') &gt;= DATE_FORMAT(#{beginTime},'%Y-%m-%d')
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND DATE_FORMAT(oper_time,'%Y-%m-%d') &lt;= DATE_FORMAT(#{endTime},'%Y-%m-%d')
+        </if>
+        ORDER BY oper_time DESC
+    </select>
+
 </mapper>

@@ -11,8 +11,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.admin.system.utils.ExcelUtil;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * 操作日志记录
@@ -78,5 +83,24 @@ public class SysOperLogController {
     public Result<Void> clean() {
         operLogService.cleanOperLog();
         return Result.success("清空操作日志成功");
+    }
+
+    /**
+     * 导出操作日志
+     */
+    @ApiOperation("导出操作日志")
+    @PreAuthorize("@ss.hasPermi('monitor:operlog:export')")
+    @PostMapping("/export")
+    public void export(HttpServletResponse response,
+                       @ApiParam("模块标题") @RequestParam(required = false) String title,
+                       @ApiParam("操作人员") @RequestParam(required = false) String operName,
+                       @ApiParam("业务类型") @RequestParam(required = false) Integer businessType,
+                       @ApiParam("操作状态") @RequestParam(required = false) Integer status,
+                       @ApiParam("开始时间") @RequestParam(required = false) String beginTime,
+                       @ApiParam("结束时间") @RequestParam(required = false) String endTime) throws IOException {
+        List<SysOperLog> list = operLogService.selectOperLogList(title, operName, businessType, status, beginTime, endTime);
+        String[] headers = {"日志ID", "模块标题", "业务类型", "操作人员", "请求方式", "操作状态", "操作IP", "操作时间"};
+        String[] fields = {"operId", "title", "businessType", "operName", "requestMethod", "status", "operIp", "operTime"};
+        ExcelUtil.exportExcel(response, "操作日志", headers, fields, list);
     }
 }

@@ -46,7 +46,7 @@
         WHERE u.username = #{username} AND u.deleted = 0
     </select>
 
-    <select id="selectUserList" parameterType="com.admin.system.entity.SysUser" resultMap="SysUserResult">
+    <select id="selectUserEntityList" parameterType="com.admin.system.entity.SysUser" resultMap="SysUserResult">
         SELECT u.user_id, u.dept_id, u.username, u.nickname, u.email, u.phonenumber, u.sex, u.avatar,
                u.status, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark
         FROM sys_user u
@@ -146,6 +146,26 @@
     <!-- 根据用户ID查询角色ID列表 -->
     <select id="selectRoleIdsByUserId" parameterType="Long" resultType="Long">
         SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
+    </select>
+
+    <!-- 查询用户列表（返回VO，用于导出） -->
+    <select id="selectUserList" resultMap="UserVOResult">
+        SELECT u.user_id, u.dept_id, u.username, u.nickname, u.email, u.phonenumber, u.sex, u.avatar,
+               u.status, u.login_ip, u.login_date, u.create_time, u.remark,
+               d.dept_name
+        FROM sys_user u
+        LEFT JOIN sys_dept d ON u.dept_id = d.dept_id
+        WHERE u.deleted = 0
+        <if test="username != null and username != ''">
+            AND u.username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="phone != null and phone != ''">
+            AND u.phonenumber LIKE CONCAT('%', #{phone}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND u.status = #{status}
+        </if>
+        ORDER BY u.create_time DESC
     </select>
 
 </mapper>

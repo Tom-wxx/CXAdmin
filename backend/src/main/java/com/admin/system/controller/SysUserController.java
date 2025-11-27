@@ -17,6 +17,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.admin.system.utils.ExcelUtil;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -199,6 +204,49 @@ public class SysUserController {
         result.put("roles", roleService.selectRoleList());
 
         return Result.success(result);
+    }
+
+    /**
+     * 导出用户数据
+     */
+    @ApiOperation("导出用户数据")
+    @PreAuthorize("@ss.hasPermi('system:user:export')")
+    @PostMapping("/export")
+    public void export(HttpServletResponse response,
+                       @ApiParam("用户名") @RequestParam(required = false) String username,
+                       @ApiParam("手机号") @RequestParam(required = false) String phone,
+                       @ApiParam("状态") @RequestParam(required = false) String status) throws IOException {
+        // 查询用户列表（不分页）
+        List<UserVO> list = userService.selectUserList(username, phone, status);
+
+        // 定义导出的表头和字段
+        String[] headers = {"用户ID", "用户名", "昵称", "部门", "手机号", "邮箱", "状态", "创建时间"};
+        String[] fields = {"userId", "username", "nickname", "deptName", "phone", "email", "status", "createTime"};
+
+        ExcelUtil.exportExcel(response, "用户数据", headers, fields, list);
+    }
+
+    /**
+     * 下载用户导入模板
+     */
+    @ApiOperation("下载用户导入模板")
+    @GetMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) throws IOException {
+        String[] headers = {"用户名", "昵称", "部门ID", "手机号", "邮箱", "性别(0男1女)", "密码"};
+        ExcelUtil.exportTemplate(response, "用户导入模板", headers);
+    }
+
+    /**
+     * 导入用户数据
+     */
+    @ApiOperation("导入用户数据")
+    @PreAuthorize("@ss.hasPermi('system:user:import')")
+    @PostMapping("/import")
+    public Result<Map<String, Object>> importData(
+            @ApiParam("Excel文件") @RequestParam("file") MultipartFile file,
+            @ApiParam("是否更新已存在用户") @RequestParam(defaultValue = "false") boolean updateSupport) {
+        Map<String, Object> result = userService.importUsers(file, updateSupport);
+        return Result.success("导入完成", result);
     }
 
 }

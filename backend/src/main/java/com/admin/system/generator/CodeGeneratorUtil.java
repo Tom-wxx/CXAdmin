@@ -24,7 +24,8 @@ public class CodeGeneratorUtil {
     public static byte[] generateCode(TableInfo tableInfo, GenConfig config) throws IOException {
         // 设置velocity资源加载器
         Properties prop = new Properties();
-        prop.put("resource.loader.file.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+        prop.put("resource.loader", "class");
+        prop.put("resource.loader.class.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
         Velocity.init(prop);
 
         // 封装模板数据
@@ -58,7 +59,7 @@ public class CodeGeneratorUtil {
     private static Map<String, Object> prepareContext(TableInfo tableInfo, GenConfig config) {
         Map<String, Object> map = new HashMap<>();
         map.put("tableName", tableInfo.getTableName());
-        map.put("tableComment", tableInfo.getTableComment());
+        map.put("tableComment", tableInfo.getTableComment() != null ? tableInfo.getTableComment() : tableInfo.getClassName());
         map.put("className", tableInfo.getClassName());
         map.put("classname", tableInfo.getClassname());
         map.put("columns", tableInfo.getColumns());
@@ -67,6 +68,9 @@ public class CodeGeneratorUtil {
         map.put("moduleName", config.getModuleName());
         map.put("author", config.getAuthor());
         map.put("datetime", new Date());
+        // 生成菜单ID (基于时间戳后6位)
+        map.put("menuId", System.currentTimeMillis() % 1000000);
+        map.put("parentMenuId", config.getParentMenuId() != null ? config.getParentMenuId() : 0);
         return map;
     }
 
@@ -75,12 +79,18 @@ public class CodeGeneratorUtil {
      */
     private static List<String> getTemplates() {
         List<String> templates = new ArrayList<>();
+        // 后端模板
         templates.add("templates/Entity.java.vm");
         templates.add("templates/Mapper.java.vm");
         templates.add("templates/Mapper.xml.vm");
         templates.add("templates/Service.java.vm");
         templates.add("templates/ServiceImpl.java.vm");
         templates.add("templates/Controller.java.vm");
+        // 前端模板
+        templates.add("templates/vue-index.vue.vm");
+        templates.add("templates/api.js.vm");
+        // SQL脚本
+        templates.add("templates/sql.vm");
         return templates;
     }
 
@@ -88,8 +98,14 @@ public class CodeGeneratorUtil {
      * 获取文件名
      */
     private static String getFileName(String template, String className, String moduleName) {
-        String packagePath = "main/java/com/admin/system/";
-        String resourcesPath = "main/resources/";
+        // 后端路径
+        String packagePath = "backend/src/main/java/com/admin/system/";
+        String resourcesPath = "backend/src/main/resources/";
+        // 前端路径
+        String vuePath = "frontend/src/views/" + moduleName + "/";
+        String apiPath = "frontend/src/api/" + moduleName + "/";
+        // 类名首字母小写
+        String classname = className.substring(0, 1).toLowerCase() + className.substring(1);
 
         if (template.contains("Entity.java.vm")) {
             return packagePath + "entity/" + className + ".java";
@@ -113,6 +129,18 @@ public class CodeGeneratorUtil {
 
         if (template.contains("Controller.java.vm")) {
             return packagePath + "controller/" + className + "Controller.java";
+        }
+
+        if (template.contains("vue-index.vue.vm")) {
+            return vuePath + classname + "/index.vue";
+        }
+
+        if (template.contains("api.js.vm")) {
+            return apiPath + classname + ".js";
+        }
+
+        if (template.contains("sql.vm")) {
+            return "sql/" + classname + "_menu.sql";
         }
 
         return null;
@@ -155,17 +183,38 @@ public class CodeGeneratorUtil {
      * MySQL类型转Java类型
      */
     public static String mysqlTypeToJavaType(String mysqlType) {
-        if (mysqlType.contains("bigint")) {
+        String type = mysqlType.toLowerCase();
+        // 整数类型
+        if (type.contains("bigint")) {
             return "Long";
-        } else if (mysqlType.contains("int")) {
+        } else if (type.contains("int")) {
             return "Integer";
-        } else if (mysqlType.contains("varchar") || mysqlType.contains("text") || mysqlType.contains("char")) {
-            return "String";
-        } else if (mysqlType.contains("datetime") || mysqlType.contains("timestamp")) {
-            return "Date";
-        } else if (mysqlType.contains("decimal") || mysqlType.contains("double")) {
+        }
+        // 浮点类型
+        else if (type.contains("decimal") || type.contains("numeric")) {
             return "BigDecimal";
-        } else {
+        } else if (type.contains("double")) {
+            return "Double";
+        } else if (type.contains("float")) {
+            return "Float";
+        }
+        // 字符串类型
+        else if (type.contains("varchar") || type.contains("text") || type.contains("char") || type.contains("json")) {
+            return "String";
+        }
+        // 日期时间类型
+        else if (type.contains("datetime") || type.contains("timestamp") || type.contains("date") || type.contains("time")) {
+            return "Date";
+        }
+        // 二进制类型
+        else if (type.contains("blob") || type.contains("binary")) {
+            return "byte[]";
+        }
+        // 布尔类型
+        else if (type.contains("bit") || type.contains("bool")) {
+            return "Boolean";
+        }
+        else {
             return "String";
         }
     }

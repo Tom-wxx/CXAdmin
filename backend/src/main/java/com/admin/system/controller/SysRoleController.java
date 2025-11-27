@@ -17,6 +17,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.admin.system.utils.ExcelUtil;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -163,5 +167,21 @@ public class SysRoleController {
             @ApiParam("菜单ID数组") @RequestParam(required = false) Long[] menuIds) {
         roleService.saveRoleMenus(roleId, menuIds);
         return Result.success("分配权限成功");
+    }
+
+    /**
+     * 导出角色数据
+     */
+    @ApiOperation("导出角色数据")
+    @PreAuthorize("@ss.hasPermi('system:role:export')")
+    @PostMapping("/export")
+    public void export(HttpServletResponse response,
+                       @ApiParam("角色名称") @RequestParam(required = false) String roleName,
+                       @ApiParam("权限字符") @RequestParam(required = false) String roleKey,
+                       @ApiParam("状态") @RequestParam(required = false) String status) throws IOException {
+        List<RoleVO> list = roleService.selectRoleListForExport(roleName, roleKey, status);
+        String[] headers = {"角色ID", "角色名称", "权限字符", "显示顺序", "状态", "创建时间"};
+        String[] fields = {"roleId", "roleName", "roleKey", "roleSort", "status", "createTime"};
+        ExcelUtil.exportExcel(response, "角色数据", headers, fields, list);
     }
 }

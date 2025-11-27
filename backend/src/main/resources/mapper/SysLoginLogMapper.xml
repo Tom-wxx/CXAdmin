@@ -44,4 +44,26 @@
         TRUNCATE TABLE sys_login_log
     </delete>
 
+    <!-- 查询登录日志列表（用于导出） -->
+    <select id="selectLoginLogList" resultMap="SysLoginLogResult">
+        <include refid="selectLoginLogVo"/>
+        WHERE 1=1
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="ipaddr != null and ipaddr != ''">
+            AND ipaddr LIKE CONCAT('%', #{ipaddr}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="beginTime != null and beginTime != ''">
+            AND DATE_FORMAT(login_time,'%Y-%m-%d') &gt;= DATE_FORMAT(#{beginTime},'%Y-%m-%d')
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND DATE_FORMAT(login_time,'%Y-%m-%d') &lt;= DATE_FORMAT(#{endTime},'%Y-%m-%d')
+        </if>
+        ORDER BY login_time DESC
+    </select>
+
 </mapper>

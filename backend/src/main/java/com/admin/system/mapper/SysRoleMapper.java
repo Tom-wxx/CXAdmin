@@ -64,4 +64,11 @@ public interface SysRoleMapper extends BaseMapper<SysRole> {
      * 批量新增角色菜单信息
      */
     int batchRoleMenu(@Param("roleId") Long roleId, @Param("menuIds") Long[] menuIds);
+
+    /**
+     * 查询角色列表（用于导出）
+     */
+    List<RoleVO> selectRoleListForExport(@Param("roleName") String roleName,
+                                          @Param("roleKey") String roleKey,
+                                          @Param("status") String status);
 }

@@ -68,7 +68,7 @@
             v-for="route in currentTopMenuChildren"
             :key="route.path"
             :item="route"
-            :base-path="route.path"
+            :base-path="getChildBasePath(route.path)"
           />
         </el-menu>
       </div>
@@ -275,6 +275,17 @@ export default {
       // 计算亮度 (使用 YIQ 公式)
       const brightness = (r * 299 + g * 587 + b * 114) / 1000
       return brightness > 155
+    },
+    // 获取子菜单的完整基础路径
+    getChildBasePath(childPath) {
+      if (childPath.startsWith('/')) {
+        return childPath
+      }
+      const parentPath = this.activeTopMenu
+      if (parentPath.endsWith('/')) {
+        return parentPath + childPath
+      }
+      return parentPath + '/' + childPath
     },
     // 顶部菜单选择事件
     handleTopMenuSelect(index) {

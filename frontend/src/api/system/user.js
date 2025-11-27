@@ -152,3 +152,42 @@ export function getUserFormOptions() {
     method: 'get'
   })
 }
+
+/**
+ * 导出用户数据
+ * @param {Object} query - 查询参数
+ */
+export function exportUser(query) {
+  return request({
+    url: '/system/user/export',
+    method: 'post',
+    params: query,
+    responseType: 'blob'
+  })
+}
+
+/**
+ * 下载用户导入模板
+ */
+export function downloadTemplate() {
+  return request({
+    url: '/system/user/importTemplate',
+    method: 'get',
+    responseType: 'blob'
+  })
+}
+
+/**
+ * 导入用户数据
+ * @param {FormData} data - 包含文件的表单数据
+ */
+export function importUser(data) {
+  return request({
+    url: '/system/user/import',
+    method: 'post',
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    data: data
+  })
+}

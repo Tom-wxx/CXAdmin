@@ -103,4 +103,22 @@
         </foreach>
     </insert>
 
+    <!-- 查询角色列表（用于导出） -->
+    <select id="selectRoleListForExport" resultMap="RoleVOResult">
+        SELECT r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope,
+               r.menu_check_strictly, r.dept_check_strictly, r.status, r.create_time, r.remark
+        FROM sys_role r
+        WHERE r.deleted = 0
+        <if test="roleName != null and roleName != ''">
+            AND r.role_name LIKE CONCAT('%', #{roleName}, '%')
+        </if>
+        <if test="roleKey != null and roleKey != ''">
+            AND r.role_key LIKE CONCAT('%', #{roleKey}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND r.status = #{status}
+        </if>
+        ORDER BY r.role_sort ASC, r.create_time DESC
+    </select>
+
 </mapper>

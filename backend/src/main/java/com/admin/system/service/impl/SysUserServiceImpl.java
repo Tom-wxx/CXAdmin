@@ -9,14 +9,17 @@ import com.admin.system.service.ISysUserService;
 import com.admin.system.vo.UserVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.InputStream;
+import java.util.*;
 
 /**
  * 用户 业务层处理
@@ -296,6 +299,120 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public List<Long> selectRoleIdsByUserId(Long userId) {
         return userMapper.selectRoleIdsByUserId(userId);
+    }
+
+    /**
+     * 查询用户列表（不分页，用于导出）
+     */
+    @Override
+    public List<UserVO> selectUserList(String username, String phone, String status) {
+        return userMapper.selectUserList(username, phone, status);
+    }
+
+    /**
+     * 导入用户数据
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> importUsers(MultipartFile file, boolean updateSupport) {
+        Map<String, Object> result = new HashMap<>();
+        int successCount = 0;
+        int failureCount = 0;
+        List<String> failureMessages = new ArrayList<>();
+
+        try (InputStream is = file.getInputStream();
+             Workbook workbook = new XSSFWorkbook(is)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            int lastRowNum = sheet.getLastRowNum();
+
+            // 从第二行开始读取（第一行是表头）
+            for (int i = 1; i <= lastRowNum; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) {
+                    continue;
+                }
+
+                try {
+                    // 读取单元格数据
+                    String username = getCellValue(row.getCell(0));
+                    String nickname = getCellValue(row.getCell(1));
+                    String deptIdStr = getCellValue(row.getCell(2));
+                    String phone = getCellValue(row.getCell(3));
+                    String email = getCellValue(row.getCell(4));
+                    String gender = getCellValue(row.getCell(5));
+                    String password = getCellValue(row.getCell(6));
+
+                    // 验证必填字段
+                    if (!StringUtils.hasText(username)) {
+                        failureCount++;
+                        failureMessages.add("第" + (i + 1) + "行: 用户名不能为空");
+                        continue;
+                    }
+
+                    // 检查用户是否存在
+                    SysUser existUser = userMapper.checkUsernameUnique(username);
+
+                    if (existUser != null) {
+                        if (updateSupport) {
+                            // 更新用户
+                            existUser.setNickname(StringUtils.hasText(nickname) ? nickname : existUser.getNickname());
+                            existUser.setPhonenumber(StringUtils.hasText(phone) ? phone : existUser.getPhonenumber());
+                            existUser.setEmail(StringUtils.hasText(email) ? email : existUser.getEmail());
+                            existUser.setSex(StringUtils.hasText(gender) ? gender : existUser.getSex());
+                            if (StringUtils.hasText(deptIdStr)) {
+                                existUser.setDeptId(Long.parseLong(deptIdStr));
+                            }
+                            userMapper.updateById(existUser);
+                            successCount++;
+                        } else {
+                            failureCount++;
+                            failureMessages.add("第" + (i + 1) + "行: 用户名'" + username + "'已存在");
+                        }
+                    } else {
+                        // 新增用户
+                        SysUser user = new SysUser();
+                        user.setUsername(username);
+                        user.setNickname(StringUtils.hasText(nickname) ? nickname : username);
+                        user.setPhonenumber(phone);
+                        user.setEmail(email);
+                        user.setSex(StringUtils.hasText(gender) ? gender : "0");
+                        if (StringUtils.hasText(deptIdStr)) {
+                            user.setDeptId(Long.parseLong(deptIdStr));
+                        }
+                        // 设置默认密码
+                        String pwd = StringUtils.hasText(password) ? password : "123456";
+                        user.setPassword(SecurityUtils.encryptPassword(pwd));
+                        user.setStatus("0"); // 正常状态
+
+                        userMapper.insert(user);
+                        successCount++;
+                    }
+                } catch (Exception e) {
+                    failureCount++;
+                    failureMessages.add("第" + (i + 1) + "行: " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            throw new ServiceException("导入失败: " + e.getMessage());
+        }
+
+        result.put("successCount", successCount);
+        result.put("failureCount", failureCount);
+        result.put("failureMessages", failureMessages);
+
+        return result;
+    }
+
+    /**
+     * 获取单元格值
+     */
+    private String getCellValue(Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+        cell.setCellType(CellType.STRING);
+        return cell.getStringCellValue().trim();
     }
 
 }

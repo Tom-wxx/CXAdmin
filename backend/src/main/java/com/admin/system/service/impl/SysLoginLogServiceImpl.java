@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * 登录日志 业务层处理
  *
@@ -73,5 +75,14 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
     @Transactional(rollbackFor = Exception.class)
     public void cleanLoginLog() {
         loginLogMapper.cleanLoginLog();
+    }
+
+    /**
+     * 查询登录日志列表（用于导出）
+     */
+    @Override
+    public List<SysLoginLog> selectLoginLogList(String username, String ipaddr, String status,
+                                                 String beginTime, String endTime) {
+        return loginLogMapper.selectLoginLogList(username, ipaddr, status, beginTime, endTime);
     }
 }

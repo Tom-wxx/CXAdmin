@@ -4,6 +4,8 @@ import com.admin.system.entity.SysLoginLog;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * 登录日志 业务层
  *
@@ -36,4 +38,10 @@ public interface ISysLoginLogService extends IService<SysLoginLog> {
      * 清空登录日志
      */
     void cleanLoginLog();
+
+    /**
+     * 查询登录日志列表（用于导出）
+     */
+    List<SysLoginLog> selectLoginLogList(String username, String ipaddr, String status,
+                                          String beginTime, String endTime);
 }

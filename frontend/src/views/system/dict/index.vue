@@ -15,11 +15,13 @@
           </div>
           <el-input
             v-model="typeQuery"
-            placeholder="请输入字典名称或类型"
+            placeholder="请输入字典名称"
             clearable
             size="small"
             prefix-icon="el-icon-search"
             style="margin-bottom: 10px"
+            @keyup.enter.native="handleTypeSearch"
+            @clear="handleTypeSearch"
           />
           <el-table
             v-loading="typeLoading"
@@ -27,7 +29,7 @@
             highlight-current-row
             @current-change="handleTypeChange"
             style="width: 100%"
-            max-height="600"
+            max-height="500"
           >
             <el-table-column prop="dictName" label="字典名称" show-overflow-tooltip />
             <el-table-column prop="dictType" label="字典类型" show-overflow-tooltip />
@@ -54,6 +56,16 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-pagination
+            v-if="typeTotal > typeQueryParams.size"
+            small
+            layout="prev, pager, next"
+            :total="typeTotal"
+            :page-size="typeQueryParams.size"
+            :current-page.sync="typeQueryParams.current"
+            @current-change="handleTypePageChange"
+            style="margin-top: 10px; text-align: center"
+          />
         </el-card>
       </el-col>
 
@@ -104,6 +116,16 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-pagination
+            v-if="dataTotal > dataQueryParams.size"
+            small
+            layout="prev, pager, next"
+            :total="dataTotal"
+            :page-size="dataQueryParams.size"
+            :current-page.sync="dataQueryParams.current"
+            @current-change="handleDataPageChange"
+            style="margin-top: 10px; text-align: center"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -190,7 +212,12 @@ export default {
       // 字典类型
       typeLoading: false,
       typeList: [],
+      typeTotal: 0,
       typeQuery: '',
+      typeQueryParams: {
+        current: 1,
+        size: 20
+      },
       currentType: null,
       typeDialogTitle: '',
       typeDialogVisible: false,
@@ -206,6 +233,12 @@ export default {
       // 字典数据
       dataLoading: false,
       dataList: [],
+      dataTotal: 0,
+      dataQueryParams: {
+        current: 1,
+        size: 20,
+        dictType: ''
+      },
       dataDialogTitle: '',
       dataDialogVisible: false,
       dataForm: {},
@@ -221,12 +254,7 @@ export default {
   },
   computed: {
     filteredTypeList() {
-      if (!this.typeQuery) {
-        return this.typeList
-      }
-      return this.typeList.filter(item =>
-        item.dictName.includes(this.typeQuery) || item.dictType.includes(this.typeQuery)
-      )
+      return this.typeList
     }
   },
   created() {
@@ -236,29 +264,53 @@ export default {
     /** 查询字典类型列表 */
     getTypeList() {
       this.typeLoading = true
-      listDictType({ current: 1, size: 1000 }).then(response => {
+      const params = { ...this.typeQueryParams }
+      if (this.typeQuery) {
+        params.dictName = this.typeQuery
+      }
+      listDictType(params).then(response => {
         this.typeList = response.rows
+        this.typeTotal = response.total
         this.typeLoading = false
       }).catch(() => {
         this.typeLoading = false
       })
     },
+    /** 字典类型搜索 */
+    handleTypeSearch() {
+      this.typeQueryParams.current = 1
+      this.getTypeList()
+    },
+    /** 字典类型分页变化 */
+    handleTypePageChange(page) {
+      this.typeQueryParams.current = page
+      this.getTypeList()
+    },
     /** 字典类型选择变化 */
     handleTypeChange(row) {
       this.currentType = row
       if (row) {
+        // 切换字典类型时重置数据分页
+        this.dataQueryParams.current = 1
         this.getDataList(row.dictType)
       }
     },
     /** 查询字典数据列表 */
     getDataList(dictType) {
       this.dataLoading = true
-      listDictData({ dictType: dictType, current: 1, size: 1000 }).then(response => {
+      this.dataQueryParams.dictType = dictType
+      listDictData(this.dataQueryParams).then(response => {
         this.dataList = response.rows
+        this.dataTotal = response.total
         this.dataLoading = false
       }).catch(() => {
         this.dataLoading = false
       })
+    },
+    /** 字典数据分页变化 */
+    handleDataPageChange(page) {
+      this.dataQueryParams.current = page
+      this.getDataList(this.dataQueryParams.dictType)
     },
     /** 新增字典类型 */
     handleAddType() {

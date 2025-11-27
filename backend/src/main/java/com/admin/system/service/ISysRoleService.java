@@ -79,4 +79,9 @@ public interface ISysRoleService extends IService<SysRole> {
      * 保存角色菜单权限
      */
     void saveRoleMenus(Long roleId, Long[] menuIds);
+
+    /**
+     * 查询角色列表（用于导出）
+     */
+    List<RoleVO> selectRoleListForExport(String roleName, String roleKey, String status);
 }

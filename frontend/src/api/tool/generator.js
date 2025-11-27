@@ -26,3 +26,13 @@ export function generateCode(data) {
     responseType: 'blob'
   })
 }
+
+// 根据自定义表信息生成代码
+export function generateCustomCode(data) {
+  return request({
+    url: '/tool/generator/generateCustom',
+    method: 'post',
+    data: data,
+    responseType: 'blob'
+  })
+}
