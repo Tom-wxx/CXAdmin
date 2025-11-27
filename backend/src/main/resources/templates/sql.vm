@@ -1,0 +1,17 @@
+-- ${tableComment}菜单
+INSERT INTO `sys_menu` VALUES (${menuId}, '${tableComment}管理', ${parentMenuId}, 1, '${classname}', '${moduleName}/${classname}/index', '', 1, 0, 'C', '0', '0', '${moduleName}:${classname}:list', 'list', 'admin', NOW(), '', NULL, '${tableComment}管理菜单', 0);
+
+-- ${tableComment}按钮权限
+INSERT INTO `sys_menu` VALUES (${menuId}1, '${tableComment}查询', ${menuId}, 1, '', '', '', 1, 0, 'F', '0', '0', '${moduleName}:${classname}:query', '#', 'admin', NOW(), '', NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (${menuId}2, '${tableComment}新增', ${menuId}, 2, '', '', '', 1, 0, 'F', '0', '0', '${moduleName}:${classname}:add', '#', 'admin', NOW(), '', NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (${menuId}3, '${tableComment}修改', ${menuId}, 3, '', '', '', 1, 0, 'F', '0', '0', '${moduleName}:${classname}:edit', '#', 'admin', NOW(), '', NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (${menuId}4, '${tableComment}删除', ${menuId}, 4, '', '', '', 1, 0, 'F', '0', '0', '${moduleName}:${classname}:remove', '#', 'admin', NOW(), '', NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (${menuId}5, '${tableComment}导出', ${menuId}, 5, '', '', '', 1, 0, 'F', '0', '0', '${moduleName}:${classname}:export', '#', 'admin', NOW(), '', NULL, '', 0);
+
+-- 为管理员角色分配权限 (role_id=1)
+INSERT INTO `sys_role_menu` VALUES (1, ${menuId});
+INSERT INTO `sys_role_menu` VALUES (1, ${menuId}1);
+INSERT INTO `sys_role_menu` VALUES (1, ${menuId}2);
+INSERT INTO `sys_role_menu` VALUES (1, ${menuId}3);
+INSERT INTO `sys_role_menu` VALUES (1, ${menuId}4);
+INSERT INTO `sys_role_menu` VALUES (1, ${menuId}5);
