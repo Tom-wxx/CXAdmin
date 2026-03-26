@@ -243,24 +243,33 @@ export default {
       if (!avatar) {
         return require('@/assets/logo.png')
       }
+
+      // 如果已经是完整URL（http或https开头），直接返回
       if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
         return avatar
       }
+
+      // 如果已经包含 /api 前缀（新格式），直接返回
+      if (avatar.startsWith('/api/')) {
+        return avatar
+      }
+
+      // 如果是 /uploads 开头（旧格式），添加 /api 前缀
+      if (avatar.startsWith('/uploads/')) {
+        return '/api' + avatar
+      }
+
+      // 其他相对路径，拼接API地址
       const baseURL = process.env.VUE_APP_BASE_API || '/api'
       return baseURL + avatar
     },
     async logout() {
       try {
         await this.$store.dispatch('user/logout')
-      } catch (error) {
-        console.error('退出登录失败:', error)
-        // 即使退出接口失败，也要清除本地状态
+      } catch (_) {
         await this.$store.dispatch('user/fedLogout')
       } finally {
-        // 跳转到登录页
-        this.$router.push('/login').catch(err => {
-          console.log('路由跳转:', err.message)
-        })
+        this.$router.push('/login').catch(() => {})
       }
     },
     // 判断颜色是否为浅色

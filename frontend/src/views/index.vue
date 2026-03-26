@@ -169,8 +169,7 @@ export default {
           this.deptDistributionData = data.deptDistribution || { labels: [], values: [] }
           this.recentLogs = data.recentLogs || []
         }
-      } catch (error) {
-        console.error('加载仪表板数据失败:', error)
+      } catch (_) {
         this.$message.error('加载仪表板数据失败')
       } finally {
         this.loading = false

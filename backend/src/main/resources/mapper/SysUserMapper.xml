@@ -112,7 +112,6 @@
         WHERE u.user_id = #{userId} AND u.deleted = 0
     </select>
 
-    <!-- 批量新增用户岗位信息 -->
     <insert id="batchUserPost">
         INSERT INTO sys_user_post(user_id, post_id) VALUES
         <foreach item="postId" collection="postIds" separator=",">
@@ -120,12 +119,10 @@
         </foreach>
     </insert>
 
-    <!-- 删除用户和岗位关联 -->
     <delete id="deleteUserPostByUserId" parameterType="Long">
         DELETE FROM sys_user_post WHERE user_id = #{userId}
     </delete>
 
-    <!-- 批量新增用户角色信息 -->
     <insert id="batchUserRole">
         INSERT INTO sys_user_role(user_id, role_id) VALUES
         <foreach item="roleId" collection="roleIds" separator=",">
@@ -133,22 +130,18 @@
         </foreach>
     </insert>
 
-    <!-- 删除用户和角色关联 -->
     <delete id="deleteUserRoleByUserId" parameterType="Long">
         DELETE FROM sys_user_role WHERE user_id = #{userId}
     </delete>
 
-    <!-- 根据用户ID查询岗位ID列表 -->
     <select id="selectPostIdsByUserId" parameterType="Long" resultType="Long">
         SELECT post_id FROM sys_user_post WHERE user_id = #{userId}
     </select>
 
-    <!-- 根据用户ID查询角色ID列表 -->
     <select id="selectRoleIdsByUserId" parameterType="Long" resultType="Long">
         SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
     </select>
 
-    <!-- 查询用户列表（返回VO，用于导出） -->
     <select id="selectUserList" resultMap="UserVOResult">
         SELECT u.user_id, u.dept_id, u.username, u.nickname, u.email, u.phonenumber, u.sex, u.avatar,
                u.status, u.login_ip, u.login_date, u.create_time, u.remark,
@@ -166,6 +159,29 @@
             AND u.status = #{status}
         </if>
         ORDER BY u.create_time DESC
+    </select>
+
+    <select id="countUsersByRoleId" parameterType="Long" resultType="Long">
+        SELECT COUNT(DISTINCT ur.user_id)
+        FROM sys_user_role ur
+        INNER JOIN sys_user u ON ur.user_id = u.user_id
+        WHERE ur.role_id = #{roleId}
+          AND u.deleted = 0
+    </select>
+
+    <select id="selectUsersByRoleIds" parameterType="java.util.List" resultMap="SysUserResult">
+        SELECT DISTINCT u.user_id, u.dept_id, u.username, u.nickname, u.email, u.phonenumber, u.sex, u.avatar,
+                        u.password, u.status, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark
+        FROM sys_user u
+        INNER JOIN sys_user_role ur ON u.user_id = ur.user_id
+        WHERE u.deleted = 0
+          AND u.status = '0'
+          <if test="roleIds != null and roleIds.size() > 0">
+            AND ur.role_id IN
+            <foreach item="roleId" collection="roleIds" open="(" separator="," close=")">
+                #{roleId}
+            </foreach>
+          </if>
     </select>
 
 </mapper>

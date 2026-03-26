@@ -1,6 +1,6 @@
 package com.admin.system.utils;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
  * @author Admin
  */
 @Component
+@RequiredArgsConstructor
 public class RedisUtil {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 设置缓存

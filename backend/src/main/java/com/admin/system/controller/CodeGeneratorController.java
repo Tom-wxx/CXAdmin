@@ -5,7 +5,7 @@ import com.admin.system.common.Result;
 import com.admin.system.generator.GenConfig;
 import com.admin.system.generator.TableInfo;
 import com.admin.system.service.ICodeGeneratorService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,10 +20,10 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/tool/generator")
+@RequiredArgsConstructor
 public class CodeGeneratorController {
 
-    @Autowired
-    private ICodeGeneratorService codeGeneratorService;
+    private final ICodeGeneratorService codeGeneratorService;
 
     /**
      * 查询数据库表列表（分页）

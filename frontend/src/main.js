@@ -9,8 +9,17 @@ import 'normalize.css/normalize.css'
 import '@/styles/index.scss'
 
 import '@/permission' // 权限控制
+import { parseTime, resetForm } from '@/utils'
 
 Vue.use(ElementUI)
+
+// 全局混入工具函数
+Vue.mixin({
+  methods: {
+    parseTime,
+    resetForm
+  }
+})
 
 Vue.config.productionTip = false
 
@@ -26,10 +35,8 @@ const isNavigationFailure = (error) => {
 
 Vue.config.errorHandler = (err, vm, info) => {
   if (isNavigationFailure(err)) {
-    // 忽略路由重复导航错误
     return
   }
-  console.error('全局错误:', err, info)
 }
 
 // 处理未捕获的 Promise 错误

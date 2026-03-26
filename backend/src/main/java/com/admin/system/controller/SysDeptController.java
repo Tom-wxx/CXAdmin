@@ -6,7 +6,7 @@ import com.admin.system.service.ISysDeptService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +21,10 @@ import java.util.List;
 @Api(tags = "部门管理")
 @RestController
 @RequestMapping("/system/dept")
+@RequiredArgsConstructor
 public class SysDeptController {
 
-    @Autowired
-    private ISysDeptService deptService;
+    private final ISysDeptService deptService;
 
     /**
      * 获取部门列表

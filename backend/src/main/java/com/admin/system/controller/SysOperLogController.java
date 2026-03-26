@@ -10,8 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.admin.system.utils.ExcelUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,10 +27,10 @@ import java.util.List;
 @Api(tags = "操作日志管理")
 @RestController
 @RequestMapping("/system/operlog")
+@RequiredArgsConstructor
 public class SysOperLogController {
 
-    @Autowired
-    private ISysOperLogService operLogService;
+    private final ISysOperLogService operLogService;
 
     /**
      * 分页查询操作日志列表

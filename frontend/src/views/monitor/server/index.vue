@@ -175,6 +175,17 @@
 
         <!-- Redis监控 -->
         <el-tab-pane label="Redis监控" name="redis">
+          <div class="redis-header">
+            <div></div>
+            <el-button
+              type="primary"
+              size="small"
+              icon="el-icon-s-management"
+              @click="goCacheMonitor"
+            >
+              进入缓存监控
+            </el-button>
+          </div>
           <el-row :gutter="20" v-loading="loading">
             <el-col :span="8">
               <el-card shadow="hover" class="stat-card-small">
@@ -261,6 +272,43 @@
                   <div class="info-item">
                     <span class="info-label">网络输出：</span>
                     <span class="info-value">{{ redisInfo.totalNetOutputBytes || '0B' }}</span>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+
+            <el-col :span="12">
+              <el-card shadow="hover" class="info-card">
+                <div class="card-header-custom">
+                  <i class="el-icon-document-copy" style="color: #909399"></i>
+                  <span>持久化状态</span>
+                </div>
+                <div class="info-list">
+                  <div class="info-item">
+                    <span class="info-label">AOF持久化：</span>
+                    <span class="info-value">
+                      <el-tag
+                        :type="redisInfo.aofEnabledStatus ? 'success' : 'info'"
+                        size="small"
+                      >
+                        {{ redisInfo.aofEnabled || '未知' }}
+                      </el-tag>
+                    </span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">RDB快照状态：</span>
+                    <span class="info-value">
+                      <el-tag
+                        :type="redisInfo.rdbLastSaveStatusOk ? 'success' : 'danger'"
+                        size="small"
+                      >
+                        {{ redisInfo.rdbLastSaveStatus || '未知' }}
+                      </el-tag>
+                    </span>
+                  </div>
+                  <div class="info-item" v-if="redisInfo.rdbLastSaveTime">
+                    <span class="info-label">上次RDB保存：</span>
+                    <span class="info-value">{{ formatTimestamp(redisInfo.rdbLastSaveTime) }}</span>
                   </div>
                 </div>
               </el-card>
@@ -361,8 +409,7 @@ export default {
           this.redisInfo = response.data.redis || {}
           this.dbInfo = response.data.database || {}
         }
-      } catch (error) {
-        console.error('获取服务器信息失败:', error)
+      } catch (_) {
         this.$message.error('获取服务器信息失败')
       } finally {
         this.loading = false
@@ -399,6 +446,18 @@ export default {
         clearInterval(this.refreshInterval)
         this.refreshInterval = null
       }
+    },
+    /** 跳转到缓存监控 */
+    goCacheMonitor() {
+      this.$router.push('/monitor/cache')
+    },
+    /** 格式化时间戳 */
+    formatTimestamp(timestamp) {
+      if (!timestamp || timestamp === '0') {
+        return '从未保存'
+      }
+      const date = new Date(parseInt(timestamp) * 1000)
+      return date.toLocaleString('zh-CN')
     }
   }
 }
@@ -428,6 +487,13 @@ export default {
       display: flex;
       align-items: center;
     }
+  }
+
+  .redis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
   }
 
   .info-card {

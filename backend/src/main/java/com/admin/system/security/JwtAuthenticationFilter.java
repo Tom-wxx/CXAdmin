@@ -1,10 +1,11 @@
 package com.admin.system.security;
 
+import com.admin.system.common.constants.SystemConstants;
 import com.admin.system.config.JwtProperties;
 import com.admin.system.utils.JwtUtil;
 import com.admin.system.utils.RedisUtil;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -26,13 +27,11 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtProperties jwtProperties;
-
-    @Autowired
-    private RedisUtil redisUtil;
+    private final JwtProperties jwtProperties;
+    private final RedisUtil redisUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -43,19 +42,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.debug("请求URI: {}, Token存在: {}", requestURI, StringUtils.hasText(token));
 
         if (StringUtils.hasText(token)) {
-            LoginUser loginUser = getLoginUser(token);
-            if (loginUser != null) {
-                log.debug("从Redis获取到用户: {}", loginUser.getUsername());
-                if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                    verifyToken(loginUser);
-                    UsernamePasswordAuthenticationToken authenticationToken =
-                            new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
-                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                    log.debug("用户认证成功: {}", loginUser.getUsername());
+            try {
+                LoginUser loginUser = getLoginUser(token);
+                if (loginUser != null) {
+                    log.debug("从Redis获取到用户: {}", loginUser.getUsername());
+                    if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                        verifyToken(loginUser);
+                        UsernamePasswordAuthenticationToken authenticationToken =
+                                new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
+                        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                        log.debug("用户认证成功: {}", loginUser.getUsername());
+                    }
+                } else {
+                    log.warn("Redis中未找到token对应的用户信息");
                 }
-            } else {
-                log.warn("Redis中未找到token对应的用户信息，Token: {}", token.substring(0, Math.min(20, token.length())));
+            } catch (Exception e) {
+                log.error("Token认证过程中发生异常: {}", e.getMessage());
+                // Redis不可用或其他异常时，不设置认证信息，请求将被Spring Security拦截为未认证
+                SecurityContextHolder.clearContext();
             }
         }
         chain.doFilter(request, response);
@@ -76,7 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * 获取登录用户信息
      */
     private LoginUser getLoginUser(String token) {
-        String userKey = "login_tokens:" + token;
+        String userKey = SystemConstants.LOGIN_TOKEN_KEY + token;
         return (LoginUser) redisUtil.get(userKey);
     }
 
@@ -86,7 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void verifyToken(LoginUser loginUser) {
         long expireTime = loginUser.getExpireTime();
         long currentTime = System.currentTimeMillis();
-        if (expireTime - currentTime <= 20 * 60 * 1000) {
+        if (expireTime - currentTime <= SystemConstants.TOKEN_REFRESH_THRESHOLD) {
             refreshToken(loginUser);
         }
     }
@@ -97,7 +102,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void refreshToken(LoginUser loginUser) {
         loginUser.setLoginTime(System.currentTimeMillis());
         loginUser.setExpireTime(loginUser.getLoginTime() + jwtProperties.getExpireTime() * 60 * 1000);
-        String userKey = "login_tokens:" + loginUser.getToken();
+        String userKey = SystemConstants.LOGIN_TOKEN_KEY + loginUser.getToken();
         redisUtil.set(userKey, loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
     }
 

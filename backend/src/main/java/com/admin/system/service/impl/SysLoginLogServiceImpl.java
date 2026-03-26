@@ -6,7 +6,7 @@ import com.admin.system.mapper.SysLoginLogMapper;
 import com.admin.system.service.ISysLoginLogService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +18,10 @@ import java.util.List;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLoginLog> implements ISysLoginLogService {
 
-    @Autowired
-    private SysLoginLogMapper loginLogMapper;
+    private final SysLoginLogMapper loginLogMapper;
 
     /**
      * 分页查询登录日志列表

@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,10 +23,10 @@ import org.springframework.web.bind.annotation.*;
 @Api(tags = "参数配置管理")
 @RestController
 @RequestMapping("/system/config")
+@RequiredArgsConstructor
 public class SysConfigController {
 
-    @Autowired
-    private ISysConfigService configService;
+    private final ISysConfigService configService;
 
     /**
      * 分页查询参数配置列表

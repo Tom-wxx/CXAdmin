@@ -7,7 +7,7 @@ import com.admin.system.vo.OnlineUserVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,10 +21,10 @@ import java.util.List;
 @Api(tags = "在线用户监控")
 @RestController
 @RequestMapping("/monitor/online")
+@RequiredArgsConstructor
 public class OnlineUserController {
 
-    @Autowired
-    private IOnlineUserService onlineUserService;
+    private final IOnlineUserService onlineUserService;
 
     /**
      * 查询在线用户列表（分页）

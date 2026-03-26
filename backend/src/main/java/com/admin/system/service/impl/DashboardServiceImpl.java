@@ -4,8 +4,8 @@ import com.admin.system.entity.SysOperLog;
 import com.admin.system.service.*;
 import com.admin.system.vo.DashboardVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -22,28 +22,16 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DashboardServiceImpl implements IDashboardService {
 
-    @Autowired
-    private ISysUserService userService;
-
-    @Autowired
-    private ISysRoleService roleService;
-
-    @Autowired
-    private ISysNoticeService noticeService;
-
-    @Autowired
-    private IOnlineUserService onlineUserService;
-
-    @Autowired
-    private ISysDeptService deptService;
-
-    @Autowired
-    private ISysOperLogService operLogService;
-
-    @Autowired
-    private ISysLoginLogService loginLogService;
+    private final ISysUserService userService;
+    private final ISysRoleService roleService;
+    private final ISysNoticeService noticeService;
+    private final IOnlineUserService onlineUserService;
+    private final ISysDeptService deptService;
+    private final ISysOperLogService operLogService;
+    private final ISysLoginLogService loginLogService;
 
     @Override
     public DashboardVO getDashboardData() {

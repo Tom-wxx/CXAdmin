@@ -2,7 +2,7 @@ package com.admin.system.service.impl;
 
 import com.admin.system.service.IServerMonitorService;
 import com.alibaba.druid.pool.DruidDataSource;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -28,13 +28,11 @@ import java.util.*;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class ServerMonitorServiceImpl implements IServerMonitorService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    private DataSource dataSource;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final DataSource dataSource;
 
     private static final DecimalFormat df = new DecimalFormat("0.00");
 
@@ -248,6 +246,17 @@ public class ServerMonitorServiceImpl implements IServerMonitorService {
                 // 网络流量
                 redisInfo.put("totalNetInputBytes", formatBytes(Long.parseLong(info.getProperty("total_net_input_bytes", "0"))));
                 redisInfo.put("totalNetOutputBytes", formatBytes(Long.parseLong(info.getProperty("total_net_output_bytes", "0"))));
+
+                // AOF 持久化状态
+                String aofEnabled = info.getProperty("aof_enabled", "0");
+                redisInfo.put("aofEnabled", "1".equals(aofEnabled) ? "已开启" : "未开启");
+                redisInfo.put("aofEnabledStatus", "1".equals(aofEnabled));
+
+                // RDB 持久化状态
+                String rdbLastSaveStatus = info.getProperty("rdb_last_bgsave_status", "ok");
+                redisInfo.put("rdbLastSaveStatus", "ok".equals(rdbLastSaveStatus) ? "成功" : "失败");
+                redisInfo.put("rdbLastSaveStatusOk", "ok".equals(rdbLastSaveStatus));
+                redisInfo.put("rdbLastSaveTime", info.getProperty("rdb_last_save_time", "0"));
             }
         } catch (Exception e) {
             redisInfo.put("error", "获取Redis信息失败: " + e.getMessage());

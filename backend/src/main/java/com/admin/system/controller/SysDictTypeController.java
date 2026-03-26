@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,10 +25,10 @@ import java.util.List;
 @Api(tags = "字典类型管理")
 @RestController
 @RequestMapping("/system/dict/type")
+@RequiredArgsConstructor
 public class SysDictTypeController {
 
-    @Autowired
-    private ISysDictTypeService dictTypeService;
+    private final ISysDictTypeService dictTypeService;
 
     /**
      * 分页查询字典类型列表

@@ -2,6 +2,7 @@ package com.admin.system.entity;
 
 import com.admin.system.common.BaseEntity;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -41,6 +42,7 @@ public class SysMenu extends BaseEntity {
     /**
      * 父菜单名称
      */
+    @TableField(exist = false)
     private String parentName;
 
     /**
@@ -111,6 +113,7 @@ public class SysMenu extends BaseEntity {
     /**
      * 子菜单
      */
+    @TableField(exist = false)
     private List<SysMenu> children = new ArrayList<SysMenu>();
 
 }

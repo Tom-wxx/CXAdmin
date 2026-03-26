@@ -8,8 +8,8 @@ import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.ISysFileService;
 import com.admin.system.utils.FileUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,10 +28,10 @@ import java.util.Map;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> implements ISysFileService {
 
-    @Autowired
-    private FileUploadConfig fileUploadConfig;
+    private final FileUploadConfig fileUploadConfig;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -112,6 +112,22 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
                 // 旧文件存在，删除新上传的重复文件
                 log.info("文件已存在且物理文件存在，使用已有文件: {}", existingFile.getFileName());
                 FileUtil.deleteFile(fullPath);
+
+                // 检查并更新旧文件的URL格式（兼容旧数据）
+                String oldUrl = existingFile.getFileUrl();
+                String expectedPrefix = fileUploadConfig.getFullPrefix();
+
+                // 如果旧URL格式不正确，更新为新格式
+                if (oldUrl != null && !oldUrl.startsWith(expectedPrefix)) {
+                    // 旧格式：/uploads/xxx -> 新格式：/api/uploads/xxx
+                    if (oldUrl.startsWith("/uploads/")) {
+                        String newUrl = "/api" + oldUrl;
+                        existingFile.setFileUrl(newUrl);
+                        updateById(existingFile);
+                        log.info("更新文件URL格式: {} -> {}", oldUrl, newUrl);
+                    }
+                }
+
                 return existingFile;
             } else {
                 // 旧文件记录存在但物理文件已丢失，删除旧记录，使用新文件
@@ -126,7 +142,8 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         sysFile.setFileName(newFileName);
         sysFile.setOriginalName(originalFileName);
         sysFile.setFilePath(fullPath);
-        sysFile.setFileUrl(fileUploadConfig.getPrefix() + "/" + relativeUrlPath);
+        // 使用完整的URL前缀（包含context-path）
+        sysFile.setFileUrl(fileUploadConfig.getFullPrefix() + "/" + relativeUrlPath);
         sysFile.setFileSize(file.getSize());
         sysFile.setFileType(file.getContentType());
         sysFile.setFileExt(fileExt);
@@ -135,7 +152,7 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         sysFile.setMd5(md5);
         sysFile.setDownloadCount(0);
         sysFile.setStatus("0");
-        sysFile.setCreateBy(SecurityUtils.getUsername());
+        // createBy 和 updateBy 由 MyBatis Plus 自动填充
 
         // 保存到数据库
         save(sysFile);

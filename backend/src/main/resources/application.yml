@@ -20,6 +20,18 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  # DevTools 热部署配置
+  devtools:
+    restart:
+      # 启用热部署
+      enabled: true
+      # 设置重启的目录
+      additional-paths: src/main/java
+      # 排除不需要重启的资源
+      exclude: static/**,public/**,templates/**
+    livereload:
+      # 启用浏览器自动刷新（可选）
+      enabled: true
   # 数据源配置
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
@@ -150,7 +162,7 @@ swagger:
 file:
   upload:
     # 文件上传路径（绝对路径）
-    path: C:/uploads
+    path: D:/uploads
     # 文件访问URL前缀
     prefix: /uploads
     # 单个文件最大大小（MB）

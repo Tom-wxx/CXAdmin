@@ -12,7 +12,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.quartz.SchedulerException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.*;
 @Api(tags = "定时任务管理")
 @RestController
 @RequestMapping("/monitor/job")
+@RequiredArgsConstructor
 public class SysJobController {
 
-    @Autowired
-    private ISysJobService jobService;
+    private final ISysJobService jobService;
 
     /**
      * 分页查询定时任务列表

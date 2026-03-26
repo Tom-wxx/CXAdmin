@@ -12,7 +12,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.admin.system.common.constants.SystemConstants;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -27,10 +28,10 @@ import java.util.*;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService {
 
-    @Autowired
-    private SysUserMapper userMapper;
+    private final SysUserMapper userMapper;
 
     /**
      * 分页查询用户列表
@@ -90,7 +91,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             user.setPassword(SecurityUtils.encryptPassword(userDTO.getPassword()));
         } else {
             // 默认密码
-            user.setPassword(SecurityUtils.encryptPassword("123456"));
+            user.setPassword(SecurityUtils.encryptPassword(SystemConstants.DEFAULT_PASSWORD));
         }
 
         // 保存用户
@@ -161,7 +162,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             throw new ServiceException("用户ID不能为空");
         }
 
-        // TODO: 检查用户是否为超级管理员
+        // 超级管理员不允许删除
+        if (userId.equals(SystemConstants.SUPER_ADMIN_ID)) {
+            throw new ServiceException("不允许删除超级管理员用户");
+        }
 
         // 删除用户与角色关联
         userMapper.deleteUserRoleByUserId(userId);
@@ -376,14 +380,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                         user.setNickname(StringUtils.hasText(nickname) ? nickname : username);
                         user.setPhonenumber(phone);
                         user.setEmail(email);
-                        user.setSex(StringUtils.hasText(gender) ? gender : "0");
+                        user.setSex(StringUtils.hasText(gender) ? gender : SystemConstants.STATUS_NORMAL);
                         if (StringUtils.hasText(deptIdStr)) {
                             user.setDeptId(Long.parseLong(deptIdStr));
                         }
                         // 设置默认密码
-                        String pwd = StringUtils.hasText(password) ? password : "123456";
+                        String pwd = StringUtils.hasText(password) ? password : SystemConstants.DEFAULT_PASSWORD;
                         user.setPassword(SecurityUtils.encryptPassword(pwd));
-                        user.setStatus("0"); // 正常状态
+                        user.setStatus(SystemConstants.STATUS_NORMAL);
 
                         userMapper.insert(user);
                         successCount++;

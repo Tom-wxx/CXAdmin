@@ -2,7 +2,7 @@ package com.admin.system.config;
 
 import com.admin.system.security.JwtAuthenticationFilter;
 import com.admin.system.security.UserDetailsServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,13 +25,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    private UserDetailsServiceImpl userDetailsService;
-
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * 密码加密
@@ -60,8 +58,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 // CSRF禁用，因为不使用session
                 .csrf().disable()
-                // 禁用HTTP响应标头
-                .headers().frameOptions().disable()
+                // 安全响应头配置
+                .headers()
+                    // 允许同源iframe嵌入（Druid监控需要）
+                    .frameOptions().sameOrigin()
+                    // 防止MIME类型嗅探
+                    .contentTypeOptions().and()
+                    // XSS保护
+                    .xssProtection().block(true).and()
                 .and()
                 // 基于token，所以不需要session
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

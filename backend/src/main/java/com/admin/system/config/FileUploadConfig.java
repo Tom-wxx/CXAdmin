@@ -1,6 +1,7 @@
 package com.admin.system.config;
 
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -25,6 +26,12 @@ public class FileUploadConfig implements WebMvcConfigurer {
      * 文件访问前缀
      */
     private String prefix = "/uploads";
+
+    /**
+     * 服务器 context-path
+     */
+    @Value("${server.servlet.context-path:}")
+    private String contextPath;
 
     /**
      * 最大文件大小（MB）
@@ -101,5 +108,18 @@ public class FileUploadConfig implements WebMvcConfigurer {
     public boolean isAllowedSize(long fileSize) {
         long maxSizeBytes = maxSize * 1024L * 1024L;
         return fileSize <= maxSizeBytes;
+    }
+
+    /**
+     * 获取完整的访问URL前缀（包含context-path）
+     * 用于生成可访问的文件URL
+     */
+    public String getFullPrefix() {
+        if (contextPath == null || contextPath.isEmpty()) {
+            return prefix;
+        }
+        // 确保 context-path 不以 / 结尾，prefix 以 / 开头
+        String ctx = contextPath.endsWith("/") ? contextPath.substring(0, contextPath.length() - 1) : contextPath;
+        return ctx + prefix;
     }
 }

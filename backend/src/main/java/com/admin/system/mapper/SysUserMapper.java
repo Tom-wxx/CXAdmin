@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 用户表 数据层
+ * User data layer
  *
  * @author Admin
  */
@@ -18,17 +18,17 @@ import java.util.List;
 public interface SysUserMapper extends BaseMapper<SysUser> {
 
     /**
-     * 根据用户名查询用户
+     * Select user by username
      */
     SysUser selectUserByUsername(@Param("username") String username);
 
     /**
-     * 查询用户列表（返回Entity）
+     * Select user list (Entity)
      */
     List<SysUser> selectUserEntityList(SysUser user);
 
     /**
-     * 分页查询用户列表（返回VO）
+     * Select user page (VO)
      */
     Page<UserVO> selectUserPage(Page<SysUser> page,
                                  @Param("username") String username,
@@ -36,60 +36,70 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
                                  @Param("status") String status);
 
     /**
-     * 根据用户ID查询用户详情（返回VO）
+     * Select user by ID (VO)
      */
     UserVO selectUserVOById(@Param("userId") Long userId);
 
     /**
-     * 校验用户名称是否唯一
+     * Check username unique
      */
     SysUser checkUsernameUnique(@Param("username") String username);
 
     /**
-     * 校验手机号码是否唯一
+     * Check phone unique
      */
     SysUser checkPhoneUnique(@Param("phonenumber") String phonenumber);
 
     /**
-     * 校验email是否唯一
+     * Check email unique
      */
     SysUser checkEmailUnique(@Param("email") String email);
 
     /**
-     * 批量新增用户岗位信息
+     * Batch insert user post
      */
     int batchUserPost(@Param("userId") Long userId, @Param("postIds") List<Long> postIds);
 
     /**
-     * 删除用户和岗位关联
+     * Delete user post by user ID
      */
     int deleteUserPostByUserId(@Param("userId") Long userId);
 
     /**
-     * 批量新增用户角色信息
+     * Batch insert user role
      */
     int batchUserRole(@Param("userId") Long userId, @Param("roleIds") List<Long> roleIds);
 
     /**
-     * 删除用户和角色关联
+     * Delete user role by user ID
      */
     int deleteUserRoleByUserId(@Param("userId") Long userId);
 
     /**
-     * 根据用户ID查询岗位ID列表
+     * Select post IDs by user ID
      */
     List<Long> selectPostIdsByUserId(@Param("userId") Long userId);
 
     /**
-     * 根据用户ID查询角色ID列表
+     * Select role IDs by user ID
      */
     List<Long> selectRoleIdsByUserId(@Param("userId") Long userId);
 
     /**
-     * 查询用户列表（返回VO，用于导出）
+     * Select user list (VO, for export)
      */
     List<UserVO> selectUserList(@Param("username") String username,
                                  @Param("phone") String phone,
                                  @Param("status") String status);
+
+    /**
+     * Count users by role ID
+     */
+    Long countUsersByRoleId(@Param("roleId") Long roleId);
+
+    /**
+     * Select users by role IDs
+     */
+    List<SysUser> selectUsersByRoleIds(@Param("roleIds") List<Long> roleIds);
 
 }

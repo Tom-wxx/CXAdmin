@@ -2,6 +2,7 @@ import axios from 'axios'
 import { Message, MessageBox } from 'element-ui'
 import store from '@/store'
 import { getToken } from '@/utils/auth'
+import { HTTP_OK, HTTP_UNAUTHORIZED, HTTP_SERVER_ERROR } from '@/utils/constants'
 
 // 创建axios实例
 const service = axios.create({
@@ -15,15 +16,10 @@ service.interceptors.request.use(
     const token = getToken()
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
-      console.log('请求URL:', config.url)
-      console.log('Token:', token.substring(0, 20) + '...')
-    } else {
-      console.warn('警告: 没有找到 token')
     }
     return config
   },
   error => {
-    console.log(error)
     return Promise.reject(error)
   }
 )
@@ -32,9 +28,9 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
-    const code = res.code || 200
+    const code = res.code || HTTP_OK
 
-    if (code === 401) {
+    if (code === HTTP_UNAUTHORIZED) {
       MessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', {
         confirmButtonText: '重新登录',
         cancelButtonText: '取消',
@@ -45,14 +41,14 @@ service.interceptors.response.use(
         })
       })
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
-    } else if (code === 500) {
+    } else if (code === HTTP_SERVER_ERROR) {
       Message({
         message: res.message || 'Error',
         type: 'error',
         duration: 5 * 1000
       })
       return Promise.reject(new Error(res.message || 'Error'))
-    } else if (code !== 200) {
+    } else if (code !== HTTP_OK) {
       Message({
         message: res.message || 'Error',
         type: 'error',
@@ -64,7 +60,6 @@ service.interceptors.response.use(
     }
   },
   error => {
-    console.log('err' + error)
     let { message } = error
     if (message === 'Network Error') {
       message = '后端接口连接异常'

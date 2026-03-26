@@ -10,8 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.admin.system.utils.ExcelUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,10 +27,10 @@ import java.util.List;
 @Api(tags = "登录日志管理")
 @RestController
 @RequestMapping("/system/loginlog")
+@RequiredArgsConstructor
 public class SysLoginLogController {
 
-    @Autowired
-    private ISysLoginLogService loginLogService;
+    private final ISysLoginLogService loginLogService;
 
     /**
      * 分页查询登录日志列表

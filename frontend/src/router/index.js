@@ -63,6 +63,19 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/monitor/cache',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/monitor/cache/index'),
+        name: 'CacheMonitor',
+        meta: { title: '缓存监控', icon: 'redis', activeMenu: '/monitor/server' }
+      }
+    ]
+  },
+  {
     path: '/tool/generator/edit',
     component: Layout,
     hidden: true,

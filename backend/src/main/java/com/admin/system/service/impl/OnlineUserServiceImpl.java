@@ -6,10 +6,11 @@ import com.admin.system.entity.SysDept;
 import com.admin.system.entity.SysUser;
 import com.admin.system.security.LoginUser;
 import com.admin.system.service.IOnlineUserService;
+import com.admin.system.common.constants.SystemConstants;
 import com.admin.system.service.ISysDeptService;
 import com.admin.system.utils.RedisUtil;
 import com.admin.system.vo.OnlineUserVO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -25,16 +26,12 @@ import java.util.stream.Collectors;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class OnlineUserServiceImpl implements IOnlineUserService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    private RedisUtil redisUtil;
-
-    @Autowired
-    private ISysDeptService deptService;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisUtil redisUtil;
+    private final ISysDeptService deptService;
 
     /**
      * 查询在线用户列表
@@ -42,7 +39,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     @Override
     public List<OnlineUserVO> selectOnlineUserList(String username, String ipaddr) {
         // 获取所有在线用户的key
-        Set<String> keys = redisTemplate.keys("login_tokens:*");
+        Set<String> keys = redisTemplate.keys(SystemConstants.LOGIN_TOKEN_KEY + "*");
         if (keys == null || keys.isEmpty()) {
             return new ArrayList<>();
         }
@@ -107,7 +104,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             throw new ServiceException("会话编号不能为空");
         }
 
-        String key = "login_tokens:" + tokenId;
+        String key = SystemConstants.LOGIN_TOKEN_KEY + tokenId;
         if (!redisUtil.hasKey(key)) {
             throw new ServiceException("用户已退出或会话已过期");
         }
@@ -126,7 +123,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         List<String> keys = new ArrayList<>();
         for (String tokenId : tokenIds) {
-            keys.add("login_tokens:" + tokenId);
+            keys.add(SystemConstants.LOGIN_TOKEN_KEY + tokenId);
         }
 
         redisUtil.delete(keys);
@@ -139,7 +136,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         OnlineUserVO vo = new OnlineUserVO();
 
         // 提取token（去掉前缀 "login_tokens:"）
-        String token = key.substring("login_tokens:".length());
+        String token = key.substring(SystemConstants.LOGIN_TOKEN_KEY.length());
         vo.setTokenId(token);
 
         // 用户信息

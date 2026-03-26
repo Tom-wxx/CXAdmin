@@ -5,7 +5,7 @@ import com.admin.system.entity.SysJobLog;
 import com.admin.system.mapper.SysJobLogMapper;
 import com.admin.system.service.ISysJobLogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,10 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog> implements ISysJobLogService {
 
-    @Autowired
-    private SysJobLogMapper jobLogMapper;
+    private final SysJobLogMapper jobLogMapper;
 
     /**
      * 删除任务日志

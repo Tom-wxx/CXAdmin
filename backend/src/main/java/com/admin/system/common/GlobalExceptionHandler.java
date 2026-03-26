@@ -11,6 +11,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+
 /**
  * 全局异常处理器
  *
@@ -81,6 +84,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 约束违反异常（@Validated + @RequestParam 参数校验）
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Result<Void> handleConstraintViolationException(ConstraintViolationException e) {
+        log.error("参数约束异常：{}", e.getMessage());
+        String message = e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .findFirst()
+                .orElse("参数校验失败");
+        return Result.fail(ResultCode.PARAM_ERROR.getCode(), message);
+    }
+
+    /**
      * 业务异常
      */
     @ExceptionHandler(ServiceException.class)
@@ -98,7 +114,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public Result<Void> handleRuntimeException(RuntimeException e) {
-        log.error("运行时异常：{}", e.getMessage());
+        log.error("运行时异常：{}", e.getMessage(), e);
         return Result.fail(e.getMessage());
     }
 

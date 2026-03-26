@@ -6,7 +6,8 @@ import com.admin.system.service.ISysMenuService;
 import com.admin.system.vo.MetaVo;
 import com.admin.system.vo.RouterVo;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.admin.system.common.constants.SystemConstants;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -18,10 +19,10 @@ import java.util.stream.Collectors;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> implements ISysMenuService {
 
-    @Autowired
-    private SysMenuMapper menuMapper;
+    private final SysMenuMapper menuMapper;
 
     @Override
     public Set<String> selectMenuPermsByUserId(Long userId) {
@@ -31,7 +32,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     @Override
     public List<SysMenu> selectMenuTreeByUserId(Long userId) {
         List<SysMenu> menus = null;
-        if (userId != null && userId == 1L) {
+        if (userId != null && userId == SystemConstants.SUPER_ADMIN_ID) {
             menus = menuMapper.selectMenuList(new SysMenu());
         } else {
             menus = menuMapper.selectMenuTreeByUserId(userId);

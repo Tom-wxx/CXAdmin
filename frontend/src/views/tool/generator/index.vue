@@ -285,8 +285,7 @@ export default {
       getTable(tableName).then(response => {
         this.tableInfo = response.data
         this.previewDialogVisible = true
-      }).catch(error => {
-        console.error('预览失败:', error)
+      }).catch(() => {
         this.$message.error('获取表信息失败')
       })
     },

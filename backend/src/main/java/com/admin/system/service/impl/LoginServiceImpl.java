@@ -1,26 +1,35 @@
 package com.admin.system.service.impl;
 
+import com.admin.system.common.constants.SystemConstants;
 import com.admin.system.config.JwtProperties;
 import com.admin.system.dto.LoginDTO;
 import com.admin.system.entity.SysFile;
+import com.admin.system.entity.SysLoginLog;
 import com.admin.system.entity.SysMenu;
 import com.admin.system.entity.SysUser;
 import com.admin.system.security.LoginUser;
 import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.ILoginService;
 import com.admin.system.service.ISysFileService;
+import com.admin.system.service.ISysLoginLogService;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.service.ISysUserService;
+import com.admin.system.utils.CaptchaUtil;
+import com.admin.system.utils.IpUtil;
 import com.admin.system.utils.JwtUtil;
 import com.admin.system.utils.RedisUtil;
 import com.admin.system.vo.RouterVo;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -29,65 +38,137 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Admin
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class LoginServiceImpl implements ILoginService {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
+    private final RedisUtil redisUtil;
+    private final JwtProperties jwtProperties;
+    private final ISysUserService userService;
+    private final ISysMenuService menuService;
+    private final ISysFileService fileService;
+    private final ISysLoginLogService loginLogService;
 
-    @Autowired
-    private RedisUtil redisUtil;
+    /**
+     * 登录失败最大重试次数
+     */
+    private static final int MAX_LOGIN_RETRY_COUNT = 5;
 
-    @Autowired
-    private JwtProperties jwtProperties;
-
-    @Autowired
-    private ISysUserService userService;
-
-    @Autowired
-    private ISysMenuService menuService;
-
-    @Autowired
-    private ISysFileService fileService;
+    /**
+     * 登录失败锁定时间（分钟）
+     */
+    private static final int LOGIN_LOCK_TIME_MINUTES = 10;
 
     @Override
     public Map<String, Object> login(LoginDTO loginDTO) {
-        // 验证码校验
-        validateCaptcha(loginDTO.getCode(), loginDTO.getUuid());
+        String username = loginDTO.getUsername();
+        String msg = "登录成功";
+        Integer status = SystemConstants.OPER_SUCCESS;
 
-        // 用户认证
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword())
-        );
+        try {
+            // 验证码校验
+            validateCaptcha(loginDTO.getCode(), loginDTO.getUuid());
 
-        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+            // 登录限流检查
+            checkLoginRetryLimit(username);
 
-        // 生成token
-        String token = JwtUtil.generateToken(
-                loginUser.getUsername(),
-                jwtProperties.getSecret(),
-                jwtProperties.getExpireTime()
-        );
+            // 用户认证
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, loginDTO.getPassword())
+            );
 
-        loginUser.setToken(token);
-        loginUser.setLoginTime(System.currentTimeMillis());
-        loginUser.setExpireTime(loginUser.getLoginTime() + jwtProperties.getExpireTime() * 60 * 1000);
+            // 认证成功，清除登录失败计数
+            clearLoginRetryCount(username);
 
-        // 保存用户信息到Redis
-        String userKey = "login_tokens:" + token;
-        redisUtil.set(userKey, loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
+            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
 
-        // 返回token
-        Map<String, Object> result = new HashMap<>();
-        result.put("token", token);
-        return result;
+            // 清除存储到Redis之前的敏感信息
+            if (loginUser.getUser() != null) {
+                loginUser.getUser().setPassword(null);
+            }
+
+            // 生成token
+            String token = JwtUtil.generateToken(
+                    loginUser.getUsername(),
+                    jwtProperties.getSecret(),
+                    jwtProperties.getExpireTime()
+            );
+
+            loginUser.setToken(token);
+            loginUser.setLoginTime(System.currentTimeMillis());
+            loginUser.setExpireTime(loginUser.getLoginTime() + jwtProperties.getExpireTime() * 60 * 1000);
+
+            // 保存用户信息到Redis
+            String userKey = SystemConstants.LOGIN_TOKEN_KEY + token;
+            redisUtil.set(userKey, loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
+
+            // 记录登录日志
+            recordLoginLog(username, status, msg);
+
+            // 返回token
+            Map<String, Object> result = new HashMap<>();
+            result.put("token", token);
+            return result;
+        } catch (Exception e) {
+            status = SystemConstants.OPER_FAIL;
+            msg = e.getMessage();
+            // 认证失败时增加失败计数（验证码错误不计入限流）
+            if (!(e instanceof RuntimeException && ("验证码已过期".equals(e.getMessage()) || "验证码错误".equals(e.getMessage())))) {
+                incrementLoginRetryCount(username);
+            }
+            // 记录登录失败日志
+            recordLoginLog(username, status, msg);
+            throw e;
+        }
+    }
+
+    /**
+     * 检查登录重试次数是否超过限制
+     */
+    private void checkLoginRetryLimit(String username) {
+        String retryKey = SystemConstants.LOGIN_RETRY_KEY + username;
+        Object retryCount = redisUtil.get(retryKey);
+        if (retryCount != null && Integer.parseInt(retryCount.toString()) >= MAX_LOGIN_RETRY_COUNT) {
+            throw new RuntimeException("登录失败次数过多，请" + LOGIN_LOCK_TIME_MINUTES + "分钟后再试");
+        }
+    }
+
+    /**
+     * 增加登录失败计数
+     */
+    private void incrementLoginRetryCount(String username) {
+        try {
+            String retryKey = SystemConstants.LOGIN_RETRY_KEY + username;
+            Long count = redisUtil.increment(retryKey);
+            if (count != null && count == 1L) {
+                // 首次失败，设置过期时间
+                redisUtil.expire(retryKey, LOGIN_LOCK_TIME_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            // Redis不可用时不阻断登录流程
+            log.warn("记录登录失败次数异常: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 清除登录失败计数
+     */
+    private void clearLoginRetryCount(String username) {
+        try {
+            String retryKey = SystemConstants.LOGIN_RETRY_KEY + username;
+            redisUtil.delete(retryKey);
+        } catch (Exception e) {
+            log.warn("清除登录失败计数异常: {}", e.getMessage());
+        }
     }
 
     @Override
     public void logout() {
         LoginUser loginUser = SecurityUtils.getLoginUser();
         if (loginUser != null) {
-            String userKey = "login_tokens:" + loginUser.getToken();
+            String userKey = SystemConstants.LOGIN_TOKEN_KEY + loginUser.getToken();
             redisUtil.delete(userKey);
         }
     }
@@ -96,13 +177,13 @@ public class LoginServiceImpl implements ILoginService {
     public Map<String, Object> getCaptcha() {
         // 生成验证码
         String uuid = UUID.randomUUID().toString();
-        String[] captcha = com.admin.system.util.CaptchaUtil.generateCaptcha();
+        String[] captcha = CaptchaUtil.generateCaptcha();
         String code = captcha[0]; // 验证码文本
         String base64Image = captcha[1]; // 验证码图片
 
         // 保存验证码到Redis，有效期2分钟
-        String captchaKey = "captcha:" + uuid;
-        redisUtil.set(captchaKey, code.toLowerCase(), 2, TimeUnit.MINUTES);
+        String captchaKey = SystemConstants.CAPTCHA_KEY + uuid;
+        redisUtil.set(captchaKey, code.toLowerCase(), SystemConstants.CAPTCHA_EXPIRATION, TimeUnit.MINUTES);
 
         Map<String, Object> result = new HashMap<>();
         result.put("uuid", uuid);
@@ -157,6 +238,12 @@ public class LoginServiceImpl implements ILoginService {
         // 上传文件
         SysFile sysFile = fileService.uploadFile(file);
 
+        // 设置文件用途为"头像展示"
+        SysFile updateFile = new SysFile();
+        updateFile.setFileId(sysFile.getFileId());
+        updateFile.setRemark("头像展示 - " + loginUser.getUser().getNickname());
+        fileService.updateById(updateFile);
+
         // 直接更新用户头像，不先查询（避免查询不存在的字段）
         SysUser user = new SysUser();
         user.setUserId(loginUser.getUserId());
@@ -165,7 +252,7 @@ public class LoginServiceImpl implements ILoginService {
 
         // 更新Redis中的用户信息
         loginUser.getUser().setAvatar(sysFile.getFileUrl());
-        String userKey = "login_tokens:" + loginUser.getToken();
+        String userKey = SystemConstants.LOGIN_TOKEN_KEY + loginUser.getToken();
         redisUtil.set(userKey, loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
 
         // 返回结果
@@ -179,7 +266,7 @@ public class LoginServiceImpl implements ILoginService {
      * 验证码校验
      */
     private void validateCaptcha(String code, String uuid) {
-        String captchaKey = "captcha:" + uuid;
+        String captchaKey = SystemConstants.CAPTCHA_KEY + uuid;
         Object captcha = redisUtil.get(captchaKey);
         if (captcha == null) {
             throw new RuntimeException("验证码已过期");
@@ -189,6 +276,32 @@ public class LoginServiceImpl implements ILoginService {
             throw new RuntimeException("验证码错误");
         }
         redisUtil.delete(captchaKey);
+    }
+
+    /**
+     * 记录登录日志
+     */
+    private void recordLoginLog(String username, Integer status, String msg) {
+        try {
+            SysLoginLog loginLog = new SysLoginLog();
+            loginLog.setUsername(username);
+            loginLog.setStatus(String.valueOf(status));
+            loginLog.setMsg(msg);
+            loginLog.setLoginTime(new Date());
+
+            // 获取IP地址
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                loginLog.setIpaddr(IpUtil.getIpAddr(request));
+            }
+
+            // 异步保存登录日志
+            loginLogService.save(loginLog);
+        } catch (Exception e) {
+            // 记录日志失败不影响登录流程
+            log.warn("记录登录日志失败: {}", e.getMessage());
+        }
     }
 
 }

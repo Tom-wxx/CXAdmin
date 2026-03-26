@@ -6,7 +6,7 @@ import com.admin.system.service.ILoginService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,10 +20,10 @@ import java.util.Map;
  */
 @Api(tags = "登录管理")
 @RestController
+@RequiredArgsConstructor
 public class LoginController {
 
-    @Autowired
-    private ILoginService loginService;
+    private final ILoginService loginService;
 
     /**
      * 登录

@@ -118,7 +118,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="文件名称" prop="originalName" :show-overflow-tooltip="true">
+        <el-table-column label="文件名称" prop="originalName" :show-overflow-tooltip="true" min-width="150">
           <template slot-scope="scope">
             <span class="file-name" @click="handlePreview(scope.row)">{{ scope.row.originalName }}</span>
           </template>
@@ -135,13 +135,27 @@
             {{ formatFileSize(scope.row.fileSize) }}
           </template>
         </el-table-column>
+        <el-table-column label="上传者" align="center" prop="createBy" width="120" />
+        <el-table-column label="存储路径" prop="filePath" :show-overflow-tooltip="true" min-width="200">
+          <template slot-scope="scope">
+            <el-tooltip :content="scope.row.filePath" placement="top">
+              <span class="file-path">{{ scope.row.filePath }}</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="文件用途" prop="remark" :show-overflow-tooltip="true" min-width="150">
+          <template slot-scope="scope">
+            <span v-if="scope.row.remark" class="file-remark">{{ scope.row.remark }}</span>
+            <span v-else class="text-muted">未填写</span>
+          </template>
+        </el-table-column>
         <el-table-column label="下载次数" align="center" prop="downloadCount" width="100" />
         <el-table-column label="上传时间" align="center" prop="createTime" width="180">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width">
+        <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width">
           <template slot-scope="scope">
             <el-button
               size="mini"
@@ -149,6 +163,12 @@
               icon="el-icon-view"
               @click="handlePreview(scope.row)"
             >预览</el-button>
+            <el-button
+              size="mini"
+              type="text"
+              icon="el-icon-edit"
+              @click="handleEdit(scope.row)"
+            >编辑</el-button>
             <el-button
               size="mini"
               type="text"
@@ -204,6 +224,41 @@
       </div>
     </el-dialog>
 
+    <!-- 编辑对话框 -->
+    <el-dialog title="编辑文件信息" :visible.sync="editDialogVisible" width="600px" @close="handleEditClose">
+      <el-form :model="editForm" :rules="editRules" ref="editForm" label-width="100px">
+        <el-form-item label="文件名称">
+          <el-input v-model="editForm.originalName" disabled />
+        </el-form-item>
+        <el-form-item label="文件用途" prop="remark">
+          <el-input
+            v-model="editForm.remark"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入文件的用途或描述"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="文件大小">
+          <el-input :value="formatFileSize(editForm.fileSize)" disabled />
+        </el-form-item>
+        <el-form-item label="上传者">
+          <el-input v-model="editForm.createBy" disabled />
+        </el-form-item>
+        <el-form-item label="上传时间">
+          <el-input :value="parseTime(editForm.createTime)" disabled />
+        </el-form-item>
+        <el-form-item label="存储路径">
+          <el-input v-model="editForm.filePath" disabled />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitEdit">确 定</el-button>
+      </div>
+    </el-dialog>
+
     <!-- 预览对话框 -->
     <el-dialog
       :title="previewFile.originalName"
@@ -251,7 +306,7 @@
 </template>
 
 <script>
-import { listFile, deleteFile, getFileStatistics, getFileUrl, downloadFile } from '@/api/system/file'
+import { listFile, updateFile, deleteFile, getFileStatistics, getFileUrl, downloadFile } from '@/api/system/file'
 import { getToken } from '@/utils/auth'
 import Pagination from '@/components/Pagination'
 
@@ -291,6 +346,14 @@ export default {
       uploadUrl: process.env.VUE_APP_BASE_API + '/system/file/upload',
       uploadHeaders: { Authorization: 'Bearer ' + getToken() },
       uploadFileList: [],
+      // 编辑对话框
+      editDialogVisible: false,
+      editForm: {},
+      editRules: {
+        remark: [
+          { max: 500, message: '文件用途不能超过500个字符', trigger: 'blur' }
+        ]
+      },
       // 预览对话框
       previewDialogVisible: false,
       previewFile: {}
@@ -378,6 +441,40 @@ export default {
     /** 上传对话框关闭 */
     handleUploadClose() {
       this.$refs.upload.clearFiles()
+    },
+    /** 编辑文件 */
+    handleEdit(row) {
+      this.editForm = { ...row }
+      this.editDialogVisible = true
+    },
+    /** 提交编辑 */
+    submitEdit() {
+      this.$refs.editForm.validate((valid) => {
+        if (valid) {
+          // 调用更新接口
+          const params = {
+            fileId: this.editForm.fileId,
+            remark: this.editForm.remark
+          }
+
+          updateFile(params).then(response => {
+            if (response.code === 200) {
+              this.$message.success('更新成功')
+              this.editDialogVisible = false
+              this.getList()
+            } else {
+              this.$message.error(response.message || '更新失败')
+            }
+          }).catch(() => {
+            this.$message.error('更新失败，请稍后重试')
+          })
+        }
+      })
+    },
+    /** 编辑对话框关闭 */
+    handleEditClose() {
+      this.editForm = {}
+      this.$refs.editForm.resetFields()
     },
     /** 预览文件 */
     handlePreview(row) {
@@ -607,6 +704,21 @@ export default {
         }
       }
     }
+  }
+
+  .file-path {
+    color: #606266;
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  .file-remark {
+    color: #303133;
+  }
+
+  .text-muted {
+    color: #909399;
+    font-style: italic;
   }
 }
 </style>

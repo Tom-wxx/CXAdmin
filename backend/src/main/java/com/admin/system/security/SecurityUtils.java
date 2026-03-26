@@ -17,7 +17,7 @@ public class SecurityUtils {
     public static LoginUser getLoginUser() {
         try {
             return (LoginUser) getAuthentication().getPrincipal();
-        } catch (Exception e) {
+        } catch (ClassCastException | NullPointerException e) {
             return null;
         }
     }
@@ -33,24 +33,16 @@ public class SecurityUtils {
      * 获取用户名
      */
     public static String getUsername() {
-        try {
-            LoginUser loginUser = getLoginUser();
-            return loginUser != null ? loginUser.getUsername() : "系统";
-        } catch (Exception e) {
-            return "系统";
-        }
+        LoginUser loginUser = getLoginUser();
+        return loginUser != null ? loginUser.getUsername() : "系统";
     }
 
     /**
      * 获取用户ID
      */
     public static Long getUserId() {
-        try {
-            LoginUser loginUser = getLoginUser();
-            return loginUser != null ? loginUser.getUserId() : null;
-        } catch (Exception e) {
-            return null;
-        }
+        LoginUser loginUser = getLoginUser();
+        return loginUser != null ? loginUser.getUserId() : null;
     }
 
     /**

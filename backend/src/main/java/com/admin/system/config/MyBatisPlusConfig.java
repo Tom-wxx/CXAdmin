@@ -37,17 +37,17 @@ public class MyBatisPlusConfig {
         return new MetaObjectHandler() {
             @Override
             public void insertFill(MetaObject metaObject) {
-                String username = SecurityUtils.getUsername();
-                this.strictInsertFill(metaObject, "createBy", String.class, username);
+                Long userId = SecurityUtils.getUserId();
+                this.strictInsertFill(metaObject, "createBy", Long.class, userId);
                 this.strictInsertFill(metaObject, "createTime", Date.class, new Date());
-                this.strictInsertFill(metaObject, "updateBy", String.class, username);
+                this.strictInsertFill(metaObject, "updateBy", Long.class, userId);
                 this.strictInsertFill(metaObject, "updateTime", Date.class, new Date());
             }
 
             @Override
             public void updateFill(MetaObject metaObject) {
-                String username = SecurityUtils.getUsername();
-                this.strictUpdateFill(metaObject, "updateBy", String.class, username);
+                Long userId = SecurityUtils.getUserId();
+                this.strictUpdateFill(metaObject, "updateBy", Long.class, userId);
                 this.strictUpdateFill(metaObject, "updateTime", Date.class, new Date());
             }
         };

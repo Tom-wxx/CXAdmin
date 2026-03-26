@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.admin.system.mapper.SysNotificationTemplateMapper">
+
+    <resultMap id="SysNotificationTemplateResult" type="com.admin.system.entity.SysNotificationTemplate">
+        <id property="id" column="id"/>
+        <result property="templateCode" column="template_code"/>
+        <result property="templateName" column="template_name"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="type" column="type"/>
+        <result property="priority" column="priority"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="deleted" column="deleted"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <!-- 根据模板编码查询模板 -->
+    <select id="selectByTemplateCode" resultMap="SysNotificationTemplateResult">
+        SELECT *
+        FROM sys_notification_template
+        WHERE template_code = #{templateCode}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
+</mapper>

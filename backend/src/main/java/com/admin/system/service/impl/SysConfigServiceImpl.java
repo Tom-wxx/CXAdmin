@@ -6,7 +6,8 @@ import com.admin.system.mapper.SysConfigMapper;
 import com.admin.system.service.ISysConfigService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.admin.system.common.constants.SystemConstants;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig> implements ISysConfigService {
 
-    @Autowired
-    private SysConfigMapper configMapper;
+    private final SysConfigMapper configMapper;
 
     /**
      * 分页查询参数配置列表
@@ -85,7 +86,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
         }
 
         // 系统内置参数不能删除
-        if ("Y".equals(config.getConfigType())) {
+        if (SystemConstants.CONFIG_TYPE_BUILTIN.equals(config.getConfigType())) {
             throw new ServiceException("系统内置参数不能删除");
         }
 

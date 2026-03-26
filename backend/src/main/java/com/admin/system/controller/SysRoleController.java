@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,10 +31,10 @@ import java.util.List;
 @Api(tags = "角色管理")
 @RestController
 @RequestMapping("/system/role")
+@RequiredArgsConstructor
 public class SysRoleController {
 
-    @Autowired
-    private ISysRoleService roleService;
+    private final ISysRoleService roleService;
 
     /**
      * 分页查询角色列表

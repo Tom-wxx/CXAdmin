@@ -1,4 +1,4 @@
-package com.admin.system.util;
+package com.admin.system.utils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -82,7 +82,7 @@ public class CaptchaUtil {
             byte[] bytes = baos.toByteArray();
             base64Image = "data:image/png;base64," + Base64.getEncoder().encodeToString(bytes);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("生成验证码图片失败", e);
         }
 
         return new String[]{code.toString(), base64Image};

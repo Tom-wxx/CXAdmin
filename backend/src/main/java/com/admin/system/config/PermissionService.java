@@ -1,5 +1,6 @@
 package com.admin.system.config;
 
+import com.admin.system.common.constants.SystemConstants;
 import com.admin.system.security.LoginUser;
 import com.admin.system.security.SecurityUtils;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,10 @@ public class PermissionService {
         if (loginUser == null || CollectionUtils.isEmpty(loginUser.getPermissions())) {
             return false;
         }
+        // 超级管理员直接放行
+        if (isSuperAdmin(loginUser)) {
+            return true;
+        }
         return hasPermissions(loginUser.getPermissions(), permission);
     }
 
@@ -39,6 +44,12 @@ public class PermissionService {
      */
     private boolean hasPermissions(Set<String> permissions, String permission) {
         return permissions.contains(ALL_PERMISSION) || permissions.contains(permission);
+    }
+
+    private boolean isSuperAdmin(LoginUser loginUser) {
+        boolean isAdminId = loginUser.getUserId() != null && loginUser.getUserId() == SystemConstants.SUPER_ADMIN_ID;
+        boolean isAdminName = SystemConstants.SUPER_ADMIN_USERNAME.equalsIgnoreCase(loginUser.getUsername());
+        return isAdminId || isAdminName;
     }
 
 }

@@ -5,7 +5,7 @@ import com.admin.system.entity.SysNotice;
 import com.admin.system.mapper.SysNoticeMapper;
 import com.admin.system.service.ISysNoticeService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,10 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice> implements ISysNoticeService {
 
-    @Autowired
-    private SysNoticeMapper noticeMapper;
+    private final SysNoticeMapper noticeMapper;
 
     /**
      * 新增通知公告

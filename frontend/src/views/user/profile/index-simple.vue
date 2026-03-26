@@ -22,10 +22,7 @@ export default {
       }
     }
   },
-  mounted() {
-    console.log('个人中心页面已挂载')
-    console.log('用户数据:', this.user)
-  },
+  mounted() {},
   methods: {
     testClick() {
       alert('按钮点击成功！')

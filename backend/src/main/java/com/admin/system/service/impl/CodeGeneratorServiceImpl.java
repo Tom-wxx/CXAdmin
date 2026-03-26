@@ -6,7 +6,7 @@ import com.admin.system.generator.ColumnInfo;
 import com.admin.system.generator.GenConfig;
 import com.admin.system.generator.TableInfo;
 import com.admin.system.service.ICodeGeneratorService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -22,10 +22,10 @@ import java.util.Map;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class CodeGeneratorServiceImpl implements ICodeGeneratorService {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public List<TableInfo> getTableList(String tableName) {

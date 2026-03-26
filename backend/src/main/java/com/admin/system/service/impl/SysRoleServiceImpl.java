@@ -8,8 +8,9 @@ import com.admin.system.service.ISysRoleService;
 import com.admin.system.vo.RoleVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.admin.system.mapper.SysUserMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +22,11 @@ import java.util.List;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> implements ISysRoleService {
 
-    @Autowired
-    private SysRoleMapper roleMapper;
+    private final SysRoleMapper roleMapper;
+    private final SysUserMapper userMapper;
 
     /**
      * 分页查询角色列表
@@ -133,7 +135,13 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             throw new ServiceException("角色ID不能为空");
         }
 
-        // TODO: 检查角色是否已分配用户
+        // 检查角色是否已分配用户
+        Long userCount = userMapper.countUsersByRoleId(roleId);
+        if (userCount != null && userCount > 0) {
+            SysRole role = roleMapper.selectById(roleId);
+            String roleName = role != null ? role.getRoleName() : String.valueOf(roleId);
+            throw new ServiceException("角色'" + roleName + "'已分配给" + userCount + "个用户，不能删除");
+        }
 
         // 删除角色与菜单关联
         roleMapper.deleteRoleMenuByRoleId(roleId);

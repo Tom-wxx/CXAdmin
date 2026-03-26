@@ -4,7 +4,7 @@ import com.admin.system.common.Result;
 import com.admin.system.service.IServerMonitorService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,10 +20,10 @@ import java.util.Map;
 @Api(tags = "服务器监控")
 @RestController
 @RequestMapping("/monitor/server")
+@RequiredArgsConstructor
 public class ServerMonitorController {
 
-    @Autowired
-    private IServerMonitorService serverMonitorService;
+    private final IServerMonitorService serverMonitorService;
 
     /**
      * 获取服务器监控信息

@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,10 +29,10 @@ import java.util.List;
 @Api(tags = "岗位管理")
 @RestController
 @RequestMapping("/system/post")
+@RequiredArgsConstructor
 public class SysPostController {
 
-    @Autowired
-    private ISysPostService postService;
+    private final ISysPostService postService;
 
     /**
      * 获取岗位列表

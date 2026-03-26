@@ -2,9 +2,11 @@ package com.admin.system.entity;
 
 import com.admin.system.common.BaseEntity;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -79,6 +81,7 @@ public class SysUser extends BaseEntity {
     /**
      * 密码
      */
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     /**
@@ -98,23 +101,27 @@ public class SysUser extends BaseEntity {
     private Date loginDate;
 
     /**
-     * 角色对象
+     * 角色对象（非数据库字段）
      */
+    @TableField(exist = false)
     private List<SysRole> roles;
 
     /**
-     * 角色组
+     * 角色组（非数据库字段）
      */
+    @TableField(exist = false)
     private Long[] roleIds;
 
     /**
-     * 岗位组
+     * 岗位组（非数据库字段）
      */
+    @TableField(exist = false)
     private Long[] postIds;
 
     /**
-     * 角色ID
+     * 角色ID（非数据库字段）
      */
+    @TableField(exist = false)
     private Long roleId;
 
 }

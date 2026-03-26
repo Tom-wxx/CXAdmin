@@ -3,7 +3,8 @@ package com.admin.system.security;
 import com.admin.system.entity.SysUser;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.service.ISysUserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.admin.system.common.constants.SystemConstants;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,13 +18,11 @@ import java.util.Set;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    @Autowired
-    private ISysUserService userService;
-
-    @Autowired
-    private ISysMenuService menuService;
+    private final ISysUserService userService;
+    private final ISysMenuService menuService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -31,7 +30,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException("用户不存在：" + username);
         }
-        if ("1".equals(user.getStatus())) {
+        if (SystemConstants.STATUS_DISABLE.equals(user.getStatus())) {
             throw new RuntimeException("用户已被停用");
         }
         // 获取用户权限

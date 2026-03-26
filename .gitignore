@@ -30,3 +30,9 @@ application-dev.yml
 /frontend/dist/
 /frontend/node_modules/
 /frontend/src/views/nul
+nul
+frontend/nul
+
+# 临时文件
+*.tmp
+*.bak

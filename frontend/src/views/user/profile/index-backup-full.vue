@@ -216,8 +216,7 @@ export default {
     getUserProfile() {
       getUserProfile().then(response => {
         this.user = response.data
-      }).catch(error => {
-        console.error('获取用户信息失败，使用临时数据:', error)
+      }).catch(() => {
         // 后端接口未实现时，使用 Vuex 中的用户数据
         this.user = {
           username: this.$store.state.user.name || 'admin',
@@ -241,8 +240,7 @@ export default {
             this.$message.success('修改成功')
             // 更新 Vuex 中的用户信息
             this.$store.dispatch('user/getInfo')
-          }).catch(error => {
-            console.error('更新用户信息失败:', error)
+          }).catch(() => {
             this.$message.error('个人中心后端接口未实现，无法保存')
           })
         }
@@ -262,8 +260,7 @@ export default {
             this.$store.dispatch('user/logout').then(() => {
               this.$router.push('/login')
             })
-          }).catch(error => {
-            console.error('修改密码失败:', error)
+          }).catch(() => {
             this.$message.error('个人中心后端接口未实现，无法修改密码')
           })
         }

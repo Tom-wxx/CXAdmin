@@ -374,14 +374,26 @@ export default {
     this.loadUserInfo()
   },
   methods: {
-    // 获取头像完整URL
+    // 获取头像完整URL（兼容新旧格式）
     getAvatarUrl(avatar) {
       if (!avatar) return ''
+
       // 如果已经是完整URL（http或https开头），直接返回
       if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
         return avatar
       }
-      // 如果是相对路径，拼接API地址
+
+      // 如果已经包含 /api 前缀（新格式），直接返回
+      if (avatar.startsWith('/api/')) {
+        return avatar
+      }
+
+      // 如果是 /uploads 开头（旧格式），添加 /api 前缀
+      if (avatar.startsWith('/uploads/')) {
+        return '/api' + avatar
+      }
+
+      // 其他相对路径，拼接API地址
       const baseURL = process.env.VUE_APP_BASE_API || '/api'
       return baseURL + avatar
     },
@@ -467,8 +479,7 @@ export default {
         } else {
           this.$message.error(res.message || '头像上传失败')
         }
-      } catch (error) {
-        console.error('头像上传失败:', error)
+      } catch (_) {
         this.$message.error('头像上传失败，请稍后重试')
       } finally {
         this.uploadingAvatar = false

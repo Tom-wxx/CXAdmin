@@ -6,7 +6,7 @@ import com.admin.system.mapper.SysDictTypeMapper;
 import com.admin.system.service.ISysDictTypeService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +18,10 @@ import java.util.List;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDictType> implements ISysDictTypeService {
 
-    @Autowired
-    private SysDictTypeMapper dictTypeMapper;
+    private final SysDictTypeMapper dictTypeMapper;
 
     /**
      * 分页查询字典类型列表

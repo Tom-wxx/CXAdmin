@@ -11,7 +11,7 @@ import org.quartz.JobDataMap;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +24,11 @@ import java.util.List;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> implements ISysJobService {
 
-    @Autowired
-    private Scheduler scheduler;
-
-    @Autowired
-    private SysJobMapper jobMapper;
+    private final Scheduler scheduler;
+    private final SysJobMapper jobMapper;
 
     /**
      * 项目启动时，初始化定时器 主要是防止手动修改数据库导致未同步到定时任务处理

@@ -5,7 +5,8 @@ import com.admin.system.entity.SysDept;
 import com.admin.system.mapper.SysDeptMapper;
 import com.admin.system.service.ISysDeptService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.admin.system.common.constants.SystemConstants;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -21,10 +22,10 @@ import java.util.stream.Collectors;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> implements ISysDeptService {
 
-    @Autowired
-    private SysDeptMapper deptMapper;
+    private final SysDeptMapper deptMapper;
 
     /**
      * 查询部门管理数据
@@ -152,7 +153,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
 
         SysDept info = deptMapper.selectDeptById(dept.getParentId());
         // 如果父节点不为正常状态,则不允许新增子节点
-        if (!"0".equals(info.getStatus())) {
+        if (!SystemConstants.STATUS_NORMAL.equals(info.getStatus())) {
             throw new ServiceException("部门停用，不允许新增");
         }
 
@@ -186,7 +187,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
 
         int result = deptMapper.updateById(dept);
         if (result > 0) {
-            if (!"0".equals(dept.getStatus())) {
+            if (!SystemConstants.STATUS_NORMAL.equals(dept.getStatus())) {
                 // 如果该部门是停用状态，则将其所有正常状态的子部门状态修改为停用
                 updateDeptStatusNormal(dept);
             }
@@ -203,8 +204,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
             // 如果存在正常的子部门，更新其状态为停用
             List<SysDept> children = deptMapper.selectChildrenDeptById(dept.getDeptId());
             for (SysDept child : children) {
-                if ("0".equals(child.getStatus())) {
-                    child.setStatus("1");
+                if (SystemConstants.STATUS_NORMAL.equals(child.getStatus())) {
+                    child.setStatus(SystemConstants.STATUS_DISABLE);
                     deptMapper.updateById(child);
                 }
             }

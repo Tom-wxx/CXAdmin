@@ -2,6 +2,7 @@ package com.admin.system.entity;
 
 import com.admin.system.common.BaseEntity;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -70,18 +71,21 @@ public class SysRole extends BaseEntity {
     private String status;
 
     /**
-     * 菜单组
+     * 菜单组（非数据库字段）
      */
+    @TableField(exist = false)
     private Long[] menuIds;
 
     /**
-     * 部门组（数据权限）
+     * 部门组（数据权限，非数据库字段）
      */
+    @TableField(exist = false)
     private Long[] deptIds;
 
     /**
-     * 角色菜单权限
+     * 角色菜单权限（非数据库字段）
      */
+    @TableField(exist = false)
     private boolean flag = false;
 
 }

@@ -6,7 +6,7 @@ import com.admin.system.mapper.SysOperLogMapper;
 import com.admin.system.service.ISysOperLogService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +18,10 @@ import java.util.List;
  * @author Admin
  */
 @Service
+@RequiredArgsConstructor
 public class SysOperLogServiceImpl extends ServiceImpl<SysOperLogMapper, SysOperLog> implements ISysOperLogService {
 
-    @Autowired
-    private SysOperLogMapper operLogMapper;
+    private final SysOperLogMapper operLogMapper;
 
     /**
      * 分页查询操作日志列表

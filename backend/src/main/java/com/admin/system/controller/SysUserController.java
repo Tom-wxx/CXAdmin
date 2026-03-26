@@ -1,5 +1,6 @@
 package com.admin.system.controller;
 
+import com.admin.system.annotation.Log;
 import com.admin.system.common.PageResult;
 import com.admin.system.common.Result;
 import com.admin.system.dto.PageQuery;
@@ -12,7 +13,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,9 @@ import com.admin.system.utils.ExcelUtil;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -34,19 +38,14 @@ import java.util.Map;
 @Api(tags = "用户管理")
 @RestController
 @RequestMapping("/system/user")
+@Validated
+@RequiredArgsConstructor
 public class SysUserController {
 
-    @Autowired
-    private ISysUserService userService;
-
-    @Autowired
-    private com.admin.system.service.ISysDeptService deptService;
-
-    @Autowired
-    private com.admin.system.service.ISysPostService postService;
-
-    @Autowired
-    private com.admin.system.service.ISysRoleService roleService;
+    private final ISysUserService userService;
+    private final com.admin.system.service.ISysDeptService deptService;
+    private final com.admin.system.service.ISysPostService postService;
+    private final com.admin.system.service.ISysRoleService roleService;
 
     /**
      * 分页查询用户列表
@@ -92,6 +91,7 @@ public class SysUserController {
     /**
      * 新增用户
      */
+    @Log(title = "用户管理", businessType = Log.BusinessType.INSERT)
     @ApiOperation("新增用户")
     @PreAuthorize("@ss.hasPermi('system:user:add')")
     @PostMapping
@@ -103,6 +103,7 @@ public class SysUserController {
     /**
      * 修改用户
      */
+    @Log(title = "用户管理", businessType = Log.BusinessType.UPDATE)
     @ApiOperation("修改用户")
     @PreAuthorize("@ss.hasPermi('system:user:edit')")
     @PutMapping
@@ -114,6 +115,7 @@ public class SysUserController {
     /**
      * 删除用户
      */
+    @Log(title = "用户管理", businessType = Log.BusinessType.DELETE)
     @ApiOperation("删除用户")
     @PreAuthorize("@ss.hasPermi('system:user:remove')")
     @DeleteMapping("/{userIds}")
@@ -125,12 +127,13 @@ public class SysUserController {
     /**
      * 重置密码
      */
+    @Log(title = "用户管理", businessType = Log.BusinessType.UPDATE)
     @ApiOperation("重置密码")
     @PreAuthorize("@ss.hasPermi('system:user:resetPwd')")
     @PutMapping("/resetPwd")
     public Result<Void> resetPwd(
-            @ApiParam("用户ID") @RequestParam Long userId,
-            @ApiParam("新密码") @RequestParam String newPassword) {
+            @ApiParam("用户ID") @RequestParam @NotNull(message = "用户ID不能为空") Long userId,
+            @ApiParam("新密码") @RequestParam @NotBlank(message = "新密码不能为空") @Size(min = 6, max = 20, message = "密码长度在6-20之间") String newPassword) {
         userService.resetPassword(userId, newPassword);
         return Result.success("重置密码成功");
     }
@@ -138,6 +141,7 @@ public class SysUserController {
     /**
      * 修改用户状态
      */
+    @Log(title = "用户管理", businessType = Log.BusinessType.UPDATE)
     @ApiOperation("修改用户状态")
     @PreAuthorize("@ss.hasPermi('system:user:edit')")
     @PutMapping("/changeStatus")
