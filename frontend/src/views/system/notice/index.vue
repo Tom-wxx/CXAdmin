@@ -1,46 +1,15 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="公告标题" prop="noticeTitle">
-        <el-input
-          v-model="queryParams.noticeTitle"
-          placeholder="请输入公告标题"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="公告类型" prop="noticeType">
-        <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable style="width: 200px">
-          <el-option label="通知" value="1" />
-          <el-option label="公告" value="2" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="公告状态" clearable style="width: 200px">
-          <el-option label="正常" value="0" />
-          <el-option label="关闭" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList" />
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="noticeList" border>
@@ -48,14 +17,12 @@
       <el-table-column label="公告标题" align="center" prop="noticeTitle" show-overflow-tooltip />
       <el-table-column label="公告类型" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.noticeType === '1'" type="success" size="small">通知</el-tag>
-          <el-tag v-else-if="scope.row.noticeType === '2'" type="warning" size="small">公告</el-tag>
+          <DictTag :options="noticeTypeOptions" :value="scope.row.noticeType" />
         </template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="success" size="small">正常</el-tag>
-          <el-tag v-else type="info" size="small">关闭</el-tag>
+          <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" width="120" />
@@ -133,12 +100,10 @@
       <el-descriptions :column="2" border>
         <el-descriptions-item label="公告标题">{{ viewForm.noticeTitle }}</el-descriptions-item>
         <el-descriptions-item label="公告类型">
-          <el-tag v-if="viewForm.noticeType === '1'" type="success" size="small">通知</el-tag>
-          <el-tag v-else-if="viewForm.noticeType === '2'" type="warning" size="small">公告</el-tag>
+          <DictTag :options="noticeTypeOptions" :value="viewForm.noticeType" />
         </el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag v-if="viewForm.status === '0'" type="success" size="small">正常</el-tag>
-          <el-tag v-else type="info" size="small">关闭</el-tag>
+          <DictTag :options="statusOptions" :value="viewForm.status" />
         </el-descriptions-item>
         <el-descriptions-item label="创建者">{{ viewForm.createBy }}</el-descriptions-item>
         <el-descriptions-item label="创建时间" :span="2">{{ parseTime(viewForm.createTime) }}</el-descriptions-item>
@@ -157,14 +122,37 @@
 <script>
 import { listNotice, getNotice, addNotice, updateNotice, delNotice } from '@/api/system/notice'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const NOTICE_TYPE_OPTIONS = [
+  { value: '1', label: '通知', type: 'success' },
+  { value: '2', label: '公告', type: 'warning' }
+]
+const STATUS_OPTIONS = [
+  { value: '0', label: '正常', type: 'success' },
+  { value: '1', label: '关闭', type: 'info' }
+]
 
 export default {
   name: 'Notice',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar,
+    DictTag
   },
   data() {
     return {
+      // 搜索字段配置
+      searchFields: [
+        { prop: 'noticeTitle', label: '公告标题', type: 'input' },
+        { prop: 'noticeType', label: '公告类型', type: 'select', options: NOTICE_TYPE_OPTIONS, placeholder: '公告类型' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '公告状态' }
+      ],
+      noticeTypeOptions: NOTICE_TYPE_OPTIONS,
+      statusOptions: STATUS_OPTIONS,
       // 加载状态
       loading: true,
       // 通知公告列表

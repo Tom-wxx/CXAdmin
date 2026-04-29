@@ -1,70 +1,19 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="用户账号" prop="username">
-        <el-input
-          v-model="queryParams.username"
-          placeholder="请输入用户账号"
-          clearable
-          style="width: 180px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="登录地址" prop="ipaddr">
-        <el-input
-          v-model="queryParams.ipaddr"
-          placeholder="请输入登录IP地址"
-          clearable
-          style="width: 180px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="登录状态" clearable style="width: 180px">
-          <el-option label="成功" value="0" />
-          <el-option label="失败" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="登录时间">
-        <el-date-picker
-          v-model="dateRange"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-        ></el-date-picker>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
+    <TableToolbar show-export show-refresh :export-disabled="exportLoading" @export="handleExport" @refresh="getList">
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-delete"
-          size="mini"
-          @click="handleClean"
-        >清空</el-button>
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="handleClean">清空</el-button>
       </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          :loading="exportLoading"
-          @click="handleExport"
-        >导出</el-button>
-      </el-col>
-    </el-row>
+    </TableToolbar>
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="loginLogList" border>
@@ -76,8 +25,7 @@
       <el-table-column label="操作系统" align="center" prop="os" show-overflow-tooltip />
       <el-table-column label="登录状态" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="success" size="small">成功</el-tag>
-          <el-tag v-else type="danger" size="small">失败</el-tag>
+          <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="提示消息" align="center" prop="msg" show-overflow-tooltip />
@@ -137,8 +85,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="登录状态：">
-              <el-tag v-if="detailData.status === '0'" type="success">成功</el-tag>
-              <el-tag v-else type="danger">失败</el-tag>
+              <DictTag :options="statusOptions" :value="detailData.status" size="default" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -163,22 +110,39 @@
 <script>
 import { listLoginLog, getLoginLog, delLoginLog, cleanLoginLog, exportLoginLog } from '@/api/monitor/loginlog'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const STATUS_OPTIONS = [
+  { value: '0', label: '成功', type: 'success' },
+  { value: '1', label: '失败', type: 'danger' }
+]
 
 export default {
   name: 'LoginLog',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar,
+    DictTag
   },
   data() {
     return {
+      // 搜索字段配置
+      searchFields: [
+        { prop: 'username', label: '用户账号', type: 'input', width: '180px' },
+        { prop: 'ipaddr', label: '登录地址', type: 'input', placeholder: '请输入登录IP地址', width: '180px' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '登录状态', width: '180px' },
+        { prop: 'dateRange', label: '登录时间', type: 'daterange' }
+      ],
+      statusOptions: STATUS_OPTIONS,
       // 加载状态
       loading: true,
       // 登录日志列表
       loginLogList: [],
       // 总条数
       total: 0,
-      // 日期范围
-      dateRange: [],
       // 查询参数
       queryParams: {
         current: 1,
@@ -186,6 +150,7 @@ export default {
         username: undefined,
         ipaddr: undefined,
         status: undefined,
+        dateRange: [],
         beginTime: undefined,
         endTime: undefined
       },
@@ -203,9 +168,10 @@ export default {
     /** 查询登录日志列表 */
     getList() {
       this.loading = true
-      if (this.dateRange && this.dateRange.length === 2) {
-        this.queryParams.beginTime = this.dateRange[0]
-        this.queryParams.endTime = this.dateRange[1]
+      const range = this.queryParams.dateRange
+      if (range && range.length === 2) {
+        this.queryParams.beginTime = range[0]
+        this.queryParams.endTime = range[1]
       } else {
         this.queryParams.beginTime = undefined
         this.queryParams.endTime = undefined
@@ -223,18 +189,10 @@ export default {
       this.queryParams.current = 1
       this.getList()
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作（SearchForm 已自动清字段，这里只做分页归位） */
     resetQuery() {
-      this.dateRange = []
-      this.queryParams = {
-        current: 1,
-        size: 10,
-        username: undefined,
-        ipaddr: undefined,
-        status: undefined,
-        beginTime: undefined,
-        endTime: undefined
-      }
+      this.queryParams.current = 1
+      this.queryParams.size = 10
       this.handleQuery()
     },
     /** 详细按钮操作 */

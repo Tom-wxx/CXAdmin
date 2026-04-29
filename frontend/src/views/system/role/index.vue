@@ -1,59 +1,23 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="角色名称" prop="roleName">
-        <el-input
-          v-model="queryParams.roleName"
-          placeholder="请输入角色名称"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="权限字符" prop="roleKey">
-        <el-input
-          v-model="queryParams.roleKey"
-          placeholder="请输入权限字符"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="角色状态" clearable style="width: 200px">
-          <el-option label="正常" value="0" />
-          <el-option label="停用" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          :loading="exportLoading"
-          @click="handleExport"
-        >导出</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar
+      show-add
+      show-export
+      show-refresh
+      :export-disabled="exportLoading"
+      @add="handleAdd"
+      @export="handleExport"
+      @refresh="getList"
+    />
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="roleList" border>
@@ -204,14 +168,29 @@
 import { listRole, getRole, addRole, updateRole, delRole, changeRoleStatus, getMenuIds, saveRoleMenus, exportRole } from '@/api/system/role'
 import { listMenu } from '@/api/system/menu'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+
+const STATUS_OPTIONS = [
+  { value: '0', label: '正常' },
+  { value: '1', label: '停用' }
+]
 
 export default {
   name: 'Role',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar
   },
   data() {
     return {
+      // 搜索字段配置
+      searchFields: [
+        { prop: 'roleName', label: '角色名称', type: 'input' },
+        { prop: 'roleKey', label: '权限字符', type: 'input' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '角色状态' }
+      ],
       // 加载状态
       loading: true,
       // 角色列表

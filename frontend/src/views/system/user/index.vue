@@ -1,67 +1,24 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="用户名" prop="username">
-        <el-input
-          v-model="queryParams.username"
-          placeholder="请输入用户名"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="手机号" prop="phone">
-        <el-input
-          v-model="queryParams.phone"
-          placeholder="请输入手机号"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="用户状态" clearable style="width: 200px">
-          <el-option label="正常" value="0" />
-          <el-option label="停用" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          @click="handleExport"
-        >导出</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="el-icon-upload2"
-          size="mini"
-          @click="handleImport"
-        >导入</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar
+      show-add
+      show-export
+      show-import
+      show-refresh
+      @add="handleAdd"
+      @export="handleExport"
+      @import="handleImport"
+      @refresh="getList"
+    />
 
     <!-- 导入对话框 -->
     <el-dialog title="用户导入" :visible.sync="importDialogVisible" width="400px" append-to-body>
@@ -185,11 +142,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="性别" prop="gender">
-              <el-select v-model="form.gender" placeholder="请选择性别" style="width: 100%">
-                <el-option label="男" value="0" />
-                <el-option label="女" value="1" />
-                <el-option label="未知" value="2" />
-              </el-select>
+              <DictSelect v-model="form.gender" :options="genderOptions" width="100%" placeholder="请选择性别" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -257,12 +210,28 @@ import { listUser, getUser, addUser, updateUser, delUser, resetUserPwd, changeUs
 import Treeselect from '@riophae/vue-treeselect'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictSelect from '@/components/DictSelect'
+
+const STATUS_OPTIONS = [
+  { value: '0', label: '正常' },
+  { value: '1', label: '停用' }
+]
+const GENDER_OPTIONS = [
+  { value: '0', label: '男' },
+  { value: '1', label: '女' },
+  { value: '2', label: '未知' }
+]
 
 export default {
   name: 'User',
   components: {
     Treeselect,
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar,
+    DictSelect
   },
   data() {
     return {
@@ -280,6 +249,14 @@ export default {
         phone: undefined,
         status: undefined
       },
+      // 搜索表单字段配置
+      searchFields: [
+        { prop: 'username', label: '用户名', type: 'input' },
+        { prop: 'phone', label: '手机号', type: 'input' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '用户状态' }
+      ],
+      // 性别选项
+      genderOptions: GENDER_OPTIONS,
       // 对话框标题
       dialogTitle: '',
       // 对话框显示状态

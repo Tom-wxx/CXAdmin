@@ -1,69 +1,26 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="岗位编码" prop="postCode">
-        <el-input
-          v-model="queryParams.postCode"
-          placeholder="请输入岗位编码"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="岗位名称" prop="postName">
-        <el-input
-          v-model="queryParams.postName"
-          placeholder="请输入岗位名称"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="岗位状态" clearable style="width: 200px">
-          <el-option label="正常" value="0" />
-          <el-option label="停用" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-delete"
-          size="mini"
-          :disabled="multiple"
-          @click="handleDelete"
-        >删除</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          :loading="exportLoading"
-          @click="handleExport"
-        >导出</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar
+      show-add
+      show-delete
+      show-export
+      show-refresh
+      :multiple="multiple"
+      :export-disabled="exportLoading"
+      @add="handleAdd"
+      @delete="handleDelete"
+      @export="handleExport"
+      @refresh="getList"
+    />
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="postList" @selection-change="handleSelectionChange" border>
@@ -147,14 +104,29 @@
 <script>
 import { pagePost, getPost, delPost, addPost, updatePost, exportPost } from '@/api/system/post'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+
+const STATUS_OPTIONS = [
+  { value: '0', label: '正常' },
+  { value: '1', label: '停用' }
+]
 
 export default {
   name: 'Post',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar
   },
   data() {
     return {
+      // 搜索字段配置
+      searchFields: [
+        { prop: 'postCode', label: '岗位编码', type: 'input' },
+        { prop: 'postName', label: '岗位名称', type: 'input' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '岗位状态' }
+      ],
       // 遮罩层
       loading: true,
       // 选中数组
