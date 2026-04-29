@@ -41,7 +41,7 @@
 
 ### 环境要求
 
-- JDK 8+
+- JDK 17+
 - Maven 3.6+
 - Node.js 14+
 - MySQL 8.0

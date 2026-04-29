@@ -1,3 +1,31 @@
+-- ====================================================================
+-- Admin System - Consolidated Database Init Script
+-- ====================================================================
+-- Merged from: initData.sql, *_system.sql, add_*.sql (in dependency order)
+-- Usage:
+--   mysql -u root -p -e "CREATE DATABASE admin_system DEFAULT CHARACTER SET utf8mb4;"
+--   mysql -u root -p admin_system < database/init.sql
+--
+-- Order:
+--   1. initData.sql                      Core RBAC schema + seed data
+--   2. notification_system.sql           Notification module tables
+--   3. message_system.sql                Message module tables
+--   4. workflow_system.sql               Workflow module tables
+--   5. add_notification_permissions.sql  Notification menus / perms
+--   6. add_message_permissions.sql       Message menus / perms
+--   7. add_workflow_permissions.sql      Workflow menus / perms
+--   8. add_cache_monitor_permissions.sql Cache-monitor menu / perms
+--   9. add_job_permissions.sql           Job module button perms
+--  10. add_statistics_permissions.sql    Statistics menus / perms
+--  11. add_schedule_jobs.sql             Sample scheduled job rows
+-- ====================================================================
+
+
+
+-- ====================================================================
+-- Section: initData.sql
+-- ====================================================================
+
 /*
  Navicat Premium Data Transfer
 
@@ -640,3 +668,744 @@ INSERT INTO `sys_user_role` VALUES (1, 1);
 INSERT INTO `sys_user_role` VALUES (2, 2);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
+-- ====================================================================
+-- Section: notification_system.sql
+-- ====================================================================
+
+-- ====================================================================
+-- 站内消息/通知中心模块数据库脚本
+-- ====================================================================
+
+-- ----------------------------
+-- 1. 站内通知表
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_notification`;
+CREATE TABLE `sys_notification` (
+    `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '通知ID',
+    `title` VARCHAR(200) NOT NULL COMMENT '通知标题',
+    `content` TEXT COMMENT '通知内容',
+    `type` VARCHAR(50) NOT NULL DEFAULT 'system' COMMENT '通知类型（system:系统通知, todo:待办提醒, approval:审批消息, announce:公告）',
+    `priority` VARCHAR(20) NOT NULL DEFAULT 'normal' COMMENT '优先级（normal:普通, important:重要, urgent:紧急）',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'unread' COMMENT '状态（unread:未读, read:已读）',
+    `user_id` BIGINT(20) NOT NULL COMMENT '接收用户ID',
+    `sender_id` BIGINT(20) COMMENT '发送者ID（系统消息可为空）',
+    `sender_name` VARCHAR(64) COMMENT '发送者名称',
+    `link_url` VARCHAR(500) COMMENT '关联链接',
+    `link_type` VARCHAR(50) COMMENT '链接类型',
+    `read_time` DATETIME COMMENT '阅读时间',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_by` BIGINT(20) DEFAULT NULL COMMENT '创建者',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` BIGINT(20) DEFAULT NULL COMMENT '更新者',
+    `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    `deleted` INT(1) DEFAULT 0 COMMENT '删除标志（0代表存在 1代表删除）',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_status` (`status`),
+    KEY `idx_type` (`type`),
+    KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='站内通知表';
+
+-- ----------------------------
+-- 2. 通知模板表
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_notification_template`;
+CREATE TABLE `sys_notification_template` (
+    `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '模板ID',
+    `template_code` VARCHAR(100) NOT NULL COMMENT '模板编码',
+    `template_name` VARCHAR(200) NOT NULL COMMENT '模板名称',
+    `title` VARCHAR(200) NOT NULL COMMENT '通知标题模板',
+    `content` TEXT NOT NULL COMMENT '通知内容模板',
+    `type` VARCHAR(50) NOT NULL DEFAULT 'system' COMMENT '通知类型',
+    `priority` VARCHAR(20) NOT NULL DEFAULT 'normal' COMMENT '优先级',
+    `status` VARCHAR(20) NOT NULL DEFAULT '1' COMMENT '状态（0停用 1启用）',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_by` BIGINT(20) DEFAULT NULL COMMENT '创建者',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` BIGINT(20) DEFAULT NULL COMMENT '更新者',
+    `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    `deleted` INT(1) DEFAULT 0 COMMENT '删除标志（0代表存在 1代表删除）',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_template_code` (`template_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='通知模板表';
+
+-- ----------------------------
+-- 3. 初始化通知模板数据
+-- 字段顺序: id, template_code, template_name, title, content, type, priority, status, create_time, create_by, update_time, update_by, remark, deleted
+-- ----------------------------
+INSERT INTO `sys_notification_template` VALUES
+(1, 'USER_REGISTER', '用户注册通知', '欢迎加入系统', '尊敬的{userName}，欢迎您注册成为我们的用户！', 'system', 'normal', '1', NOW(), 1, NOW(), NULL, NULL, 0),
+(2, 'PASSWORD_RESET', '密码重置通知', '密码已重置', '{userName}，您的密码已被管理员重置，请及时修改密码。', 'system', 'important', '1', NOW(), 1, NOW(), NULL, NULL, 0),
+(3, 'ROLE_CHANGE', '角色变更通知', '您的角色已变更', '{userName}，您的角色已被修改为：{roleName}', 'system', 'normal', '1', NOW(), 1, NOW(), NULL, NULL, 0),
+(4, 'APPROVAL_PENDING', '待审批通知', '您有新的审批待处理', '{userName}，您有一条来自{senderName}的审批待处理，请及时处理。', 'approval', 'important', '1', NOW(), 1, NOW(), NULL, NULL, 0),
+(5, 'APPROVAL_APPROVED', '审批通过通知', '您的审批已通过', '{userName}，您提交的审批已通过。', 'approval', 'normal', '1', NOW(), 1, NOW(), NULL, NULL, 0),
+(6, 'APPROVAL_REJECTED', '审批驳回通知', '您的审批已驳回', '{userName}，您提交的审批已被驳回，驳回原因：{reason}', 'approval', 'important', '1', NOW(), 1, NOW(), NULL, NULL, 0),
+(7, 'SYSTEM_ANNOUNCE', '系统公告', '系统公告', '{content}', 'announce', 'urgent', '1', NOW(), 1, NOW(), NULL, NULL, 0);
+
+-- ----------------------------
+-- 4. 插入测试数据
+-- 字段顺序: id, title, content, type, priority, status, user_id, sender_id, sender_name, link_url, link_type, read_time, create_time, create_by, update_time, update_by, remark, deleted
+-- ----------------------------
+INSERT INTO `sys_notification` VALUES
+(1, '欢迎使用系统', '欢迎您使用本系统，如有任何问题请联系管理员。', 'system', 'normal', 'unread', 1, NULL, '系统', NULL, NULL, NULL, NOW(), 1, NOW(), NULL, NULL, 0),
+(2, '密码安全提示', '为了您的账号安全，建议您定期修改密码。', 'system', 'important', 'unread', 1, NULL, '系统', '/user/profile', 'profile', NULL, NOW(), 1, NOW(), NULL, NULL, 0);
+
+
+-- ====================================================================
+-- Section: message_system.sql
+-- ====================================================================
+
+-- =====================================================
+-- 信息发送模块数据库设计
+-- 功能：支持邮件、短信等多种消息发送方式
+-- 作者：Admin System
+-- 日期：2025-11-28
+-- =====================================================
+
+USE admin_system;
+
+-- ----------------------------
+-- 1. 消息模板表
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_message`;
+CREATE TABLE `sys_message` (
+  `message_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '消息ID',
+  `message_name` varchar(100) NOT NULL COMMENT '消息名称',
+  `message_code` varchar(100) NOT NULL COMMENT '消息编码（唯一标识）',
+  `message_type` char(1) NOT NULL DEFAULT '1' COMMENT '消息类型（1邮件 2短信 3站内信 4微信）',
+  `subject` varchar(200) DEFAULT NULL COMMENT '消息主题/标题',
+  `content` text NOT NULL COMMENT '消息内容模板（支持变量占位符）',
+  `variables` varchar(500) DEFAULT NULL COMMENT '可用变量说明（JSON格式）',
+  `status` char(1) DEFAULT '0' COMMENT '状态（0正常 1停用）',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `create_by` bigint(20) DEFAULT NULL COMMENT '创建者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `update_by` bigint(20) DEFAULT NULL COMMENT '更新者',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `deleted` int(1) DEFAULT 0 COMMENT '删除标志（0未删除 1已删除）',
+  PRIMARY KEY (`message_id`),
+  UNIQUE KEY `uk_message_code` (`message_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='消息模板表';
+
+-- ----------------------------
+-- 2. 消息配置表
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_message_config`;
+CREATE TABLE `sys_message_config` (
+  `config_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+  `message_type` char(1) NOT NULL COMMENT '消息类型（1邮件 2短信 3站内信 4微信）',
+  `config_name` varchar(100) NOT NULL COMMENT '配置名称',
+  `config_data` text NOT NULL COMMENT '配置数据（JSON格式）',
+  `is_default` char(1) DEFAULT '0' COMMENT '是否默认配置（0否 1是）',
+  `status` char(1) DEFAULT '0' COMMENT '状态（0正常 1停用）',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `create_by` bigint(20) DEFAULT NULL COMMENT '创建者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `update_by` bigint(20) DEFAULT NULL COMMENT '更新者',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `deleted` int(1) DEFAULT 0 COMMENT '删除标志（0未删除 1已删除）',
+  PRIMARY KEY (`config_id`),
+  KEY `idx_message_type` (`message_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='消息配置表';
+
+-- ----------------------------
+-- 3. 消息发送日志表
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_message_log`;
+CREATE TABLE `sys_message_log` (
+  `log_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '日志ID',
+  `message_id` bigint(20) DEFAULT NULL COMMENT '消息模板ID',
+  `message_type` char(1) NOT NULL COMMENT '消息类型（1邮件 2短信 3站内信 4微信）',
+  `receiver` varchar(200) NOT NULL COMMENT '接收者（邮箱/手机号/用户ID）',
+  `subject` varchar(200) DEFAULT NULL COMMENT '消息主题',
+  `content` text NOT NULL COMMENT '实际发送内容',
+  `send_status` char(1) DEFAULT '0' COMMENT '发送状态（0成功 1失败 2发送中）',
+  `send_time` datetime DEFAULT NULL COMMENT '发送时间',
+  `error_msg` varchar(500) DEFAULT NULL COMMENT '错误信息',
+  `retry_count` int(3) DEFAULT 0 COMMENT '重试次数',
+  `send_by` bigint(20) DEFAULT NULL COMMENT '发送人',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_message_type` (`message_type`),
+  KEY `idx_receiver` (`receiver`),
+  KEY `idx_send_time` (`send_time`),
+  KEY `idx_send_status` (`send_status`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='消息发送日志表';
+
+-- ----------------------------
+-- 初始化消息模板数据
+-- ----------------------------
+INSERT INTO `sys_message` VALUES
+(1, '用户注册欢迎邮件', 'USER_REGISTER_EMAIL', '1', '欢迎注册管理系统',
+ '尊敬的 ${username}：\n\n您好！欢迎注册我们的管理系统。\n\n您的账号信息如下：\n用户名：${username}\n注册时间：${registerTime}\n\n如有任何问题，请随时联系我们。\n\n祝您使用愉快！',
+ '{"username":"用户名","registerTime":"注册时间"}', '0', NOW(), 1, NULL, NULL, '用户注册成功后发送的欢迎邮件', 0),
+
+(2, '密码重置邮件', 'PASSWORD_RESET_EMAIL', '1', '密码重置通知',
+ '尊敬的 ${username}：\n\n您好！您的密码已重置。\n\n新密码：${newPassword}\n\n为了账号安全，请尽快登录系统修改密码。\n\n如非本人操作，请立即联系管理员。',
+ '{"username":"用户名","newPassword":"新密码"}', '0', NOW(), 1, NULL, NULL, '密码重置后发送的通知邮件', 0),
+
+(3, '登录验证码短信', 'LOGIN_CODE_SMS', '2', NULL,
+ '【管理系统】您的登录验证码是：${code}，有效期${expireMinutes}分钟，请勿泄露给他人。',
+ '{"code":"验证码","expireMinutes":"有效期分钟数"}', '0', NOW(), 1, NULL, NULL, '登录时发送的验证码短信', 0),
+
+(4, '系统公告通知', 'SYSTEM_NOTICE', '3', '${noticeTitle}',
+ '${noticeContent}',
+ '{"noticeTitle":"公告标题","noticeContent":"公告内容"}', '0', NOW(), 1, NULL, NULL, '系统公告站内信通知', 0);
+
+-- ----------------------------
+-- 初始化消息配置数据（示例配置）
+-- ----------------------------
+INSERT INTO `sys_message_config` VALUES
+(1, '1', '默认邮件配置',
+ '{"host":"smtp.qq.com","port":"587","username":"your-email@qq.com","password":"your-auth-code","from":"your-email@qq.com","fromName":"管理系统","ssl":true}',
+ '1', '0', NOW(), 1, NULL, NULL, 'QQ邮箱SMTP配置示例', 0),
+
+(2, '2', '默认短信配置',
+ '{"provider":"aliyun","accessKeyId":"your-access-key","accessKeySecret":"your-access-secret","signName":"管理系统","templateCode":"SMS_123456"}',
+ '1', '0', NOW(), 1, NULL, NULL, '阿里云短信配置示例', 0);
+
+-- ----------------------------
+-- 查看创建结果
+-- ----------------------------
+SELECT '✅ 消息系统数据库初始化完成！' AS '执行状态';
+SELECT TABLE_NAME AS '表名', TABLE_COMMENT AS '说明'
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = 'admin_system'
+  AND TABLE_NAME IN ('sys_message', 'sys_message_config', 'sys_message_log');
+
+
+-- ====================================================================
+-- Section: workflow_system.sql
+-- ====================================================================
+
+-- ====================================================================
+-- 工作流审批系统数据库脚本
+-- ====================================================================
+
+-- ----------------------------
+-- 1. 审批流程定义表
+-- ----------------------------
+DROP TABLE IF EXISTS `wf_process_definition`;
+CREATE TABLE `wf_process_definition` (
+    `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '流程ID',
+    `process_key` VARCHAR(100) NOT NULL COMMENT '流程标识',
+    `process_name` VARCHAR(200) NOT NULL COMMENT '流程名称',
+    `process_type` VARCHAR(50) NOT NULL COMMENT '流程类型（leave:请假, expense:报销, purchase:采购）',
+    `description` TEXT COMMENT '流程描述',
+    `approver_type` VARCHAR(20) NOT NULL DEFAULT 'specified' COMMENT '审批人类型（specified:指定人员, role:指定角色, dept_leader:部门领导, custom:自定义）',
+    `approver_ids` VARCHAR(500) COMMENT '审批人ID列表（逗号分隔）',
+    `approver_roles` VARCHAR(500) COMMENT '审批角色ID列表（逗号分隔）',
+    `approval_level` INT(2) DEFAULT 1 COMMENT '审批层级（1:一级, 2:二级, 3:三级）',
+    `status` VARCHAR(20) NOT NULL DEFAULT '1' COMMENT '状态（0停用 1启用）',
+    `sort_order` INT(4) DEFAULT 0 COMMENT '排序',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_by` BIGINT(20) DEFAULT NULL COMMENT '创建者',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` BIGINT(20) DEFAULT NULL COMMENT '更新者',
+    `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    `deleted` INT(1) DEFAULT 0 COMMENT '删除标志（0代表存在 1代表删除）',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_process_key` (`process_key`),
+    KEY `idx_process_type` (`process_type`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='审批流程定义表';
+
+-- ----------------------------
+-- 2. 审批流程实例表
+-- ----------------------------
+DROP TABLE IF EXISTS `wf_process_instance`;
+CREATE TABLE `wf_process_instance` (
+    `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '实例ID',
+    `process_def_id` BIGINT(20) NOT NULL COMMENT '流程定义ID',
+    `process_key` VARCHAR(100) NOT NULL COMMENT '流程标识',
+    `process_name` VARCHAR(200) NOT NULL COMMENT '流程名称',
+    `instance_no` VARCHAR(50) NOT NULL COMMENT '实例编号',
+    `title` VARCHAR(200) NOT NULL COMMENT '申请标题',
+    `content` TEXT COMMENT '申请内容',
+    `form_data` TEXT COMMENT '表单数据（JSON格式）',
+    `current_level` INT(2) DEFAULT 1 COMMENT '当前审批层级',
+    `total_level` INT(2) DEFAULT 1 COMMENT '总审批层级',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态（pending:待审批, approved:已通过, rejected:已驳回, cancelled:已取消）',
+    `submitter_id` BIGINT(20) NOT NULL COMMENT '提交人ID',
+    `submitter_name` VARCHAR(64) COMMENT '提交人姓名',
+    `submit_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
+    `finish_time` DATETIME COMMENT '完成时间',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_by` BIGINT(20) DEFAULT NULL COMMENT '创建者',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` BIGINT(20) DEFAULT NULL COMMENT '更新者',
+    `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    `deleted` INT(1) DEFAULT 0 COMMENT '删除标志（0代表存在 1代表删除）',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_instance_no` (`instance_no`),
+    KEY `idx_process_def_id` (`process_def_id`),
+    KEY `idx_submitter_id` (`submitter_id`),
+    KEY `idx_status` (`status`),
+    KEY `idx_submit_time` (`submit_time`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='审批流程实例表';
+
+-- ----------------------------
+-- 3. 审批任务表
+-- ----------------------------
+DROP TABLE IF EXISTS `wf_task`;
+CREATE TABLE `wf_task` (
+    `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '任务ID',
+    `process_instance_id` BIGINT(20) NOT NULL COMMENT '流程实例ID',
+    `task_name` VARCHAR(200) NOT NULL COMMENT '任务名称',
+    `task_level` INT(2) NOT NULL COMMENT '任务层级',
+    `approver_id` BIGINT(20) NOT NULL COMMENT '审批人ID',
+    `approver_name` VARCHAR(64) COMMENT '审批人姓名',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态（pending:待处理, approved:已通过, rejected:已驳回）',
+    `approval_time` DATETIME COMMENT '审批时间',
+    `approval_comment` TEXT COMMENT '审批意见',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_by` BIGINT(20) DEFAULT NULL COMMENT '创建者',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` BIGINT(20) DEFAULT NULL COMMENT '更新者',
+    `deleted` INT(1) DEFAULT 0 COMMENT '删除标志（0代表存在 1代表删除）',
+    PRIMARY KEY (`id`),
+    KEY `idx_process_instance_id` (`process_instance_id`),
+    KEY `idx_approver_id` (`approver_id`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='审批任务表';
+
+-- ----------------------------
+-- 4. 审批历史记录表
+-- ----------------------------
+DROP TABLE IF EXISTS `wf_history`;
+CREATE TABLE `wf_history` (
+    `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '记录ID',
+    `process_instance_id` BIGINT(20) NOT NULL COMMENT '流程实例ID',
+    `task_id` BIGINT(20) COMMENT '任务ID',
+    `action` VARCHAR(50) NOT NULL COMMENT '操作类型（submit:提交, approve:通过, reject:驳回, cancel:取消）',
+    `operator_id` BIGINT(20) NOT NULL COMMENT '操作人ID',
+    `operator_name` VARCHAR(64) COMMENT '操作人姓名',
+    `comment` TEXT COMMENT '操作意见',
+    `operation_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    `deleted` INT(1) DEFAULT 0 COMMENT '删除标志（0代表存在 1代表删除）',
+    PRIMARY KEY (`id`),
+    KEY `idx_process_instance_id` (`process_instance_id`),
+    KEY `idx_operator_id` (`operator_id`),
+    KEY `idx_operation_time` (`operation_time`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='审批历史记录表';
+
+-- ----------------------------
+-- 5. 初始化流程定义数据
+-- ----------------------------
+INSERT INTO `wf_process_definition` VALUES
+(1, 'leave_process', '请假审批流程', 'leave', '员工请假申请流程', 'role', NULL, '2', 1, '1', 1, NOW(), 1, NOW(), NULL, '部门主管审批', 0),
+(2, 'expense_process', '报销审批流程', 'expense', '费用报销申请流程', 'role', NULL, '2', 2, '1', 2, NOW(), 1, NOW(), NULL, '一级审批：部门主管，二级审批：财务', 0),
+(3, 'purchase_process', '采购审批流程', 'purchase', '物品采购申请流程', 'role', NULL, '2', 2, '1', 3, NOW(), 1, NOW(), NULL, '一级审批：部门主管，二级审批：总经理', 0);
+
+
+-- ====================================================================
+-- Section: add_notification_permissions.sql
+-- ====================================================================
+
+-- ====================================================================
+-- 站内消息/通知中心模块权限配置
+-- ====================================================================
+
+-- 1. 添加通知中心菜单（一级菜单）
+-- 字段顺序: menu_id, menu_name, parent_id, order_num, path, component, query, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, update_time, update_by, remark, deleted
+INSERT INTO `sys_menu` VALUES (2100, '消息中心', 0, 6, 'notification', NULL, NULL, 1, 0, 'M', '0', '0', '', 'message', NOW(), 1, NULL, NULL, '', 0);
+
+-- 2. 添加我的通知菜单（二级菜单）
+INSERT INTO `sys_menu` VALUES (2101, '我的通知', 2100, 1, 'my-notification', 'system/notification/index', NULL, 1, 0, 'C', '0', '0', 'system:notification:list', 'bell', NOW(), 1, NULL, NULL, '', 0);
+
+-- 3. 添加通知模板菜单（二级菜单，仅管理员可见）
+INSERT INTO `sys_menu` VALUES (2102, '通知模板', 2100, 2, 'notification-template', 'system/notification/template', NULL, 1, 0, 'C', '0', '0', 'system:notification:template:list', 'form', NOW(), 1, NULL, NULL, '', 0);
+
+-- 4. 添加通知模板管理按钮权限
+INSERT INTO `sys_menu` VALUES (2103, '模板查询', 2102, 1, '', NULL, NULL, 1, 0, 'F', '0', '0', 'system:notification:template:query', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2104, '模板新增', 2102, 2, '', NULL, NULL, 1, 0, 'F', '0', '0', 'system:notification:template:add', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2105, '模板修改', 2102, 3, '', NULL, NULL, 1, 0, 'F', '0', '0', 'system:notification:template:edit', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2106, '模板删除', 2102, 4, '', NULL, NULL, 1, 0, 'F', '0', '0', 'system:notification:template:remove', '#', NOW(), 1, NULL, NULL, '', 0);
+
+-- 5. 添加发送通知权限（仅管理员）
+INSERT INTO `sys_menu` VALUES (2107, '发送通知', 2101, 5, '', NULL, NULL, 1, 0, 'F', '0', '0', 'system:notification:send', '#', NOW(), 1, NULL, NULL, '', 0);
+
+-- 6. 将菜单分配给超级管理员角色（角色ID=1）
+INSERT INTO `sys_role_menu` VALUES (1, 2100);
+INSERT INTO `sys_role_menu` VALUES (1, 2101);
+INSERT INTO `sys_role_menu` VALUES (1, 2102);
+INSERT INTO `sys_role_menu` VALUES (1, 2103);
+INSERT INTO `sys_role_menu` VALUES (1, 2104);
+INSERT INTO `sys_role_menu` VALUES (1, 2105);
+INSERT INTO `sys_role_menu` VALUES (1, 2106);
+INSERT INTO `sys_role_menu` VALUES (1, 2107);
+
+COMMIT;
+
+
+-- ====================================================================
+-- Section: add_message_permissions.sql
+-- ====================================================================
+
+-- =====================================================
+-- 消息管理模块菜单权限配置
+-- 功能：为消息管理模块添加完整的菜单和操作权限
+-- 执行：mysql -u root -proot admin_system < database/add_message_permissions.sql
+-- =====================================================
+
+USE admin_system;
+
+-- 删除可能存在的旧权限（避免重复执行时报错）
+DELETE FROM `sys_menu` WHERE `menu_id` >= 1200 AND `menu_id` < 1300;
+
+-- =====================================================
+-- 1. 创建一级菜单：消息管理（目录）
+-- =====================================================
+INSERT INTO `sys_menu` VALUES (
+    1200, '消息管理', 0, 5, 'message', NULL, NULL, 1, 0, 'M', '0', '0', '',
+    'email', NOW(), 1, NULL, NULL, '消息发送管理目录', 0
+);
+
+-- =====================================================
+-- 2. 创建二级菜单：消息模板、消息配置、消息日志
+-- =====================================================
+
+-- 2.1 消息模板管理
+INSERT INTO `sys_menu` VALUES (
+    1201, '消息模板', 1200, 1, 'template', 'system/message/index', NULL, 1, 0, 'C', '0', '0',
+    'system:message:list', 'documentation', NOW(), 1, NULL, NULL, '消息模板管理菜单', 0
+);
+
+-- 2.2 消息配置管理
+INSERT INTO `sys_menu` VALUES (
+    1202, '消息配置', 1200, 2, 'config', 'system/message/config', NULL, 1, 0, 'C', '0', '0',
+    'system:message:config:list', 'setting', NOW(), 1, NULL, NULL, '消息配置管理菜单', 0
+);
+
+-- 2.3 消息发送日志
+INSERT INTO `sys_menu` VALUES (
+    1203, '发送日志', 1200, 3, 'log', 'system/message/log', NULL, 1, 0, 'C', '0', '0',
+    'system:message:log:list', 'log', NOW(), 1, NULL, NULL, '消息发送日志菜单', 0
+);
+
+-- =====================================================
+-- 3. 创建按钮权限：消息模板（1201）
+-- =====================================================
+INSERT INTO `sys_menu` VALUES (1210, '消息模板查询', 1201, 1, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:query', '#', NOW(), 1, NULL, NULL, '消息模板查询按钮', 0);
+INSERT INTO `sys_menu` VALUES (1211, '消息模板新增', 1201, 2, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:add', '#', NOW(), 1, NULL, NULL, '消息模板新增按钮', 0);
+INSERT INTO `sys_menu` VALUES (1212, '消息模板修改', 1201, 3, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:edit', '#', NOW(), 1, NULL, NULL, '消息模板修改按钮', 0);
+INSERT INTO `sys_menu` VALUES (1213, '消息模板删除', 1201, 4, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:remove', '#', NOW(), 1, NULL, NULL, '消息模板删除按钮', 0);
+
+-- =====================================================
+-- 4. 创建按钮权限：消息配置（1202）
+-- =====================================================
+INSERT INTO `sys_menu` VALUES (1220, '消息配置查询', 1202, 1, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:config:query', '#', NOW(), 1, NULL, NULL, '消息配置查询按钮', 0);
+INSERT INTO `sys_menu` VALUES (1221, '消息配置新增', 1202, 2, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:config:add', '#', NOW(), 1, NULL, NULL, '消息配置新增按钮', 0);
+INSERT INTO `sys_menu` VALUES (1222, '消息配置修改', 1202, 3, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:config:edit', '#', NOW(), 1, NULL, NULL, '消息配置修改按钮', 0);
+INSERT INTO `sys_menu` VALUES (1223, '消息配置删除', 1202, 4, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:config:remove', '#', NOW(), 1, NULL, NULL, '消息配置删除按钮', 0);
+INSERT INTO `sys_menu` VALUES (1224, '消息配置测试', 1202, 5, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:config:test', '#', NOW(), 1, NULL, NULL, '消息配置测试发送按钮', 0);
+
+-- =====================================================
+-- 5. 创建按钮权限：消息发送日志（1203）
+-- =====================================================
+INSERT INTO `sys_menu` VALUES (1230, '发送日志查询', 1203, 1, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:log:query', '#', NOW(), 1, NULL, NULL, '发送日志查询按钮', 0);
+INSERT INTO `sys_menu` VALUES (1231, '发送日志删除', 1203, 2, '', '', NULL, 1, 0, 'F', '0', '0', 'system:message:log:remove', '#', NOW(), 1, NULL, NULL, '发送日志删除按钮', 0);
+
+-- =====================================================
+-- 6. 为超级管理员角色（role_id=1）分配所有消息管理权限
+-- =====================================================
+
+-- 先删除可能存在的旧分配
+DELETE FROM `sys_role_menu` WHERE `menu_id` >= 1200 AND `menu_id` < 1300 AND `role_id` = 1;
+
+-- 分配一级菜单权限
+INSERT INTO `sys_role_menu` VALUES (1, 1200);
+
+-- 分配二级菜单权限
+INSERT INTO `sys_role_menu` VALUES (1, 1201);
+INSERT INTO `sys_role_menu` VALUES (1, 1202);
+INSERT INTO `sys_role_menu` VALUES (1, 1203);
+
+-- 分配消息模板按钮权限
+INSERT INTO `sys_role_menu` VALUES (1, 1210);
+INSERT INTO `sys_role_menu` VALUES (1, 1211);
+INSERT INTO `sys_role_menu` VALUES (1, 1212);
+INSERT INTO `sys_role_menu` VALUES (1, 1213);
+
+-- 分配消息配置按钮权限
+INSERT INTO `sys_role_menu` VALUES (1, 1220);
+INSERT INTO `sys_role_menu` VALUES (1, 1221);
+INSERT INTO `sys_role_menu` VALUES (1, 1222);
+INSERT INTO `sys_role_menu` VALUES (1, 1223);
+INSERT INTO `sys_role_menu` VALUES (1, 1224);
+
+-- 分配消息发送日志按钮权限
+INSERT INTO `sys_role_menu` VALUES (1, 1230);
+INSERT INTO `sys_role_menu` VALUES (1, 1231);
+
+-- =====================================================
+-- 7. 验证权限配置
+-- =====================================================
+SELECT
+    m.menu_id AS '菜单ID',
+    m.menu_name AS '菜单名称',
+    m.parent_id AS '父级ID',
+    m.menu_type AS '类型',
+    m.perms AS '权限标识',
+    CASE WHEN rm.role_id IS NOT NULL THEN '✓ 已分配' ELSE '✗ 未分配' END AS '超管权限'
+FROM sys_menu m
+LEFT JOIN sys_role_menu rm ON m.menu_id = rm.menu_id AND rm.role_id = 1
+WHERE m.menu_id >= 1200 AND m.menu_id < 1300
+ORDER BY m.menu_id;
+
+-- =====================================================
+-- 8. 显示执行结果
+-- =====================================================
+SELECT '✅ 消息管理模块权限配置完成！' AS '执行状态';
+SELECT '共创建 1 个一级菜单、3 个二级菜单、13 个按钮权限' AS '统计信息';
+SELECT '请重新登录系统，权限将立即生效' AS '温馨提示';
+SELECT '访问路径：消息管理 > 消息模板/消息配置/发送日志' AS '使用说明';
+
+
+-- ====================================================================
+-- Section: add_workflow_permissions.sql
+-- ====================================================================
+
+-- 工作流模块权限配置
+
+-- 1. 添加工作流顶级菜单
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('工作流', 0, 5, 'workflow', NULL, 1, 0, 'M', '0', '0', '', 'tree', NOW(), 1, '工作流管理目录');
+
+-- 获取刚插入的工作流菜单ID
+SET @workflow_menu_id = LAST_INSERT_ID();
+
+-- 2. 添加流程定义管理菜单
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('流程定义', @workflow_menu_id, 1, 'definition', 'workflow/definition/index', 1, 0, 'C', '0', '0', 'workflow:definition:list', 'form', NOW(), 1, '流程定义管理菜单');
+
+SET @definition_menu_id = LAST_INSERT_ID();
+
+-- 流程定义按钮权限
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('流程定义查询', @definition_menu_id, 1, '', NULL, 1, 0, 'F', '0', '0', 'workflow:definition:query', '#', NOW(), 1, '');
+
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('流程定义新增', @definition_menu_id, 2, '', NULL, 1, 0, 'F', '0', '0', 'workflow:definition:add', '#', NOW(), 1, '');
+
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('流程定义修改', @definition_menu_id, 3, '', NULL, 1, 0, 'F', '0', '0', 'workflow:definition:edit', '#', NOW(), 1, '');
+
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('流程定义删除', @definition_menu_id, 4, '', NULL, 1, 0, 'F', '0', '0', 'workflow:definition:remove', '#', NOW(), 1, '');
+
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('流程定义发布', @definition_menu_id, 5, '', NULL, 1, 0, 'F', '0', '0', 'workflow:definition:publish', '#', NOW(), 1, '');
+
+-- 3. 添加待办任务菜单
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('待办任务', @workflow_menu_id, 2, 'pending', 'workflow/pending/index', 1, 0, 'C', '0', '0', 'workflow:task:list', 'guide', NOW(), 1, '待办任务菜单');
+
+SET @pending_menu_id = LAST_INSERT_ID();
+
+-- 待办任务按钮权限
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('任务审批', @pending_menu_id, 1, '', NULL, 1, 0, 'F', '0', '0', 'workflow:task:approve', '#', NOW(), 1, '');
+
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('任务驳回', @pending_menu_id, 2, '', NULL, 1, 0, 'F', '0', '0', 'workflow:task:reject', '#', NOW(), 1, '');
+
+-- 4. 添加已办任务菜单
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('已办任务', @workflow_menu_id, 3, 'completed', 'workflow/completed/index', 1, 0, 'C', '0', '0', 'workflow:task:list', 'tab', NOW(), 1, '已办任务菜单');
+
+-- 5. 添加我的流程菜单
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('我的流程', @workflow_menu_id, 4, 'myProcess', 'workflow/myProcess/index', 1, 0, 'C', '0', '0', 'workflow:process:list', 'list', NOW(), 1, '我的流程菜单');
+
+SET @myprocess_menu_id = LAST_INSERT_ID();
+
+-- 我的流程按钮权限
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('流程查询', @myprocess_menu_id, 1, '', NULL, 1, 0, 'F', '0', '0', 'workflow:process:query', '#', NOW(), 1, '');
+
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('发起流程', @myprocess_menu_id, 2, '', NULL, 1, 0, 'F', '0', '0', 'workflow:process:start', '#', NOW(), 1, '');
+
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('取消流程', @myprocess_menu_id, 3, '', NULL, 1, 0, 'F', '0', '0', 'workflow:process:cancel', '#', NOW(), 1, '');
+
+-- 6. 添加流程详情菜单（隐藏菜单，不在侧边栏显示）
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, remark)
+VALUES ('流程详情', @workflow_menu_id, 5, 'detail', 'workflow/detail/index', 1, 0, 'C', '1', '0', 'workflow:process:query', 'eye', NOW(), 1, '流程详情页面');
+
+-- 7. 给管理员角色分配所有工作流权限
+-- 首先获取工作流模块下的所有菜单ID
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 1, menu_id FROM sys_menu WHERE menu_id = @workflow_menu_id
+UNION ALL
+SELECT 1, menu_id FROM sys_menu WHERE parent_id = @workflow_menu_id
+UNION ALL
+SELECT 1, menu_id FROM sys_menu WHERE parent_id IN (SELECT menu_id FROM sys_menu WHERE parent_id = @workflow_menu_id);
+
+
+-- ====================================================================
+-- Section: add_cache_monitor_permissions.sql
+-- ====================================================================
+
+-- 添加缓存监控相关权限
+-- 执行方式：在MySQL客户端执行此脚本，或使用命令：
+-- mysql -u root -proot admin_system < add_cache_monitor_permissions.sql
+
+USE admin_system;
+
+-- 添加缓存监控菜单（menu_id=1142）
+INSERT INTO `sys_menu` VALUES (1142, '缓存监控', 2, 5, 'cache', 'monitor/cache/index', '', 1, 0, 'C', '0', '0', 'monitor:cache:list', 'coin', NOW(), 1, NULL, NULL, '缓存监控菜单', 0);
+
+-- 添加缓存监控的按钮权限
+INSERT INTO `sys_menu` VALUES (1143, '缓存查询', 1142, 1, '', '', '', 1, 0, 'F', '0', '0', 'monitor:cache:query', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (1144, '缓存删除', 1142, 2, '', '', '', 1, 0, 'F', '0', '0', 'monitor:cache:remove', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (1145, '缓存清空', 1142, 3, '', '', '', 1, 0, 'F', '0', '0', 'monitor:cache:clear', '#', NOW(), 1, NULL, NULL, '', 0);
+
+-- 给管理员角色（role_id=1）分配缓存监控权限
+INSERT INTO `sys_role_menu` (role_id, menu_id) VALUES (1, 1142);
+INSERT INTO `sys_role_menu` (role_id, menu_id) VALUES (1, 1143);
+INSERT INTO `sys_role_menu` (role_id, menu_id) VALUES (1, 1144);
+INSERT INTO `sys_role_menu` (role_id, menu_id) VALUES (1, 1145);
+
+SELECT '缓存监控权限添加成功！' AS message;
+
+
+-- ====================================================================
+-- Section: add_job_permissions.sql
+-- ====================================================================
+
+-- =====================================================
+-- 定时任务按钮权限配置
+-- 功能：为定时任务模块添加完整的操作权限
+-- 执行：mysql -u root -proot admin_system < database/add_job_permissions.sql
+-- =====================================================
+
+USE admin_system;
+
+-- 删除可能存在的旧权限（避免重复执行时报错）
+DELETE FROM `sys_menu` WHERE `menu_id` IN (1100, 1101, 1102, 1103, 1104, 1105);
+
+-- 添加定时任务按钮权限
+INSERT INTO `sys_menu` VALUES (1100, '定时任务查询', 110, 1, '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:query', '#', NOW(), 1, NULL, NULL, '定时任务查询按钮', 0);
+INSERT INTO `sys_menu` VALUES (1101, '定时任务新增', 110, 2, '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:add', '#', NOW(), 1, NULL, NULL, '定时任务新增按钮', 0);
+INSERT INTO `sys_menu` VALUES (1102, '定时任务修改', 110, 3, '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:edit', '#', NOW(), 1, NULL, NULL, '定时任务修改按钮', 0);
+INSERT INTO `sys_menu` VALUES (1103, '定时任务删除', 110, 4, '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:remove', '#', NOW(), 1, NULL, NULL, '定时任务删除按钮', 0);
+INSERT INTO `sys_menu` VALUES (1104, '定时任务状态修改', 110, 5, '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:changeStatus', '#', NOW(), 1, NULL, NULL, '定时任务状态修改按钮', 0);
+INSERT INTO `sys_menu` VALUES (1105, '定时任务执行', 110, 6, '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:run', '#', NOW(), 1, NULL, NULL, '定时任务立即执行按钮', 0);
+
+-- 为超级管理员角色（role_id=1）分配所有定时任务权限
+-- 先删除可能存在的旧分配
+DELETE FROM `sys_role_menu` WHERE `menu_id` IN (110, 1100, 1101, 1102, 1103, 1104, 1105) AND `role_id` = 1;
+
+-- 重新分配权限
+INSERT INTO `sys_role_menu` VALUES (1, 110);   -- 定时任务菜单
+INSERT INTO `sys_role_menu` VALUES (1, 1100);  -- 查询权限
+INSERT INTO `sys_role_menu` VALUES (1, 1101);  -- 新增权限
+INSERT INTO `sys_role_menu` VALUES (1, 1102);  -- 修改权限
+INSERT INTO `sys_role_menu` VALUES (1, 1103);  -- 删除权限
+INSERT INTO `sys_role_menu` VALUES (1, 1104);  -- 状态修改权限
+INSERT INTO `sys_role_menu` VALUES (1, 1105);  -- 执行权限
+
+-- 验证权限配置
+SELECT
+    m.menu_id,
+    m.menu_name,
+    m.parent_id,
+    m.menu_type,
+    m.perms,
+    CASE WHEN rm.role_id IS NOT NULL THEN '已分配' ELSE '未分配' END AS '超管权限状态'
+FROM sys_menu m
+LEFT JOIN sys_role_menu rm ON m.menu_id = rm.menu_id AND rm.role_id = 1
+WHERE m.menu_id = 110 OR m.parent_id = 110
+ORDER BY m.menu_id;
+
+-- 显示执行结果
+SELECT '✅ 定时任务权限配置完成！' AS '执行状态';
+SELECT '请重新登录系统，权限将立即生效' AS '提示';
+
+
+-- ====================================================================
+-- Section: add_statistics_permissions.sql
+-- ====================================================================
+
+-- ====================================================================
+-- 数据报表统计模块权限配置
+-- ====================================================================
+
+-- 1. 添加统计分析菜单（一级菜单）
+-- 字段顺序: menu_id, menu_name, parent_id, order_num, path, component, query, is_frame, is_cache, menu_type, visible, status, perms, icon, create_time, create_by, update_time, update_by, remark, deleted
+INSERT INTO `sys_menu` VALUES (2200, '统计分析', 0, 7, 'statistics', NULL, NULL, 1, 0, 'M', '0', '0', '', 'chart', NOW(), 1, NULL, NULL, '', 0);
+
+-- 2. 添加数据报表菜单（二级菜单）
+INSERT INTO `sys_menu` VALUES (2201, '数据报表', 2200, 1, 'report', 'statistics/index', NULL, 1, 0, 'C', '0', '0', 'statistics:report:view', 'dashboard', NOW(), 1, NULL, NULL, '', 0);
+
+-- 3. 添加统计分析按钮权限
+INSERT INTO `sys_menu` VALUES (2202, '用户增长', 2201, 1, '', NULL, NULL, 1, 0, 'F', '0', '0', 'statistics:user:growth', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2203, '登录统计', 2201, 2, '', NULL, NULL, 1, 0, 'F', '0', '0', 'statistics:login:trend', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2204, '登录状态', 2201, 3, '', NULL, NULL, 1, 0, 'F', '0', '0', 'statistics:login:status', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2205, '操作统计', 2201, 4, '', NULL, NULL, 1, 0, 'F', '0', '0', 'statistics:operation:trend', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2206, '部门分布', 2201, 5, '', NULL, NULL, 1, 0, 'F', '0', '0', 'statistics:dept:distribution', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2207, '角色分布', 2201, 6, '', NULL, NULL, 1, 0, 'F', '0', '0', 'statistics:role:distribution', '#', NOW(), 1, NULL, NULL, '', 0);
+INSERT INTO `sys_menu` VALUES (2208, '操作类型', 2201, 7, '', NULL, NULL, 1, 0, 'F', '0', '0', 'statistics:operation:type', '#', NOW(), 1, NULL, NULL, '', 0);
+
+-- 4. 将菜单分配给超级管理员角色（角色ID=1）
+INSERT INTO `sys_role_menu` VALUES (1, 2200);
+INSERT INTO `sys_role_menu` VALUES (1, 2201);
+INSERT INTO `sys_role_menu` VALUES (1, 2202);
+INSERT INTO `sys_role_menu` VALUES (1, 2203);
+INSERT INTO `sys_role_menu` VALUES (1, 2204);
+INSERT INTO `sys_role_menu` VALUES (1, 2205);
+INSERT INTO `sys_role_menu` VALUES (1, 2206);
+INSERT INTO `sys_role_menu` VALUES (1, 2207);
+INSERT INTO `sys_role_menu` VALUES (1, 2208);
+
+COMMIT;
+
+
+-- ====================================================================
+-- Section: add_schedule_jobs.sql
+-- ====================================================================
+
+-- 添加定时任务配置
+-- 执行方式：在MySQL客户端执行此脚本
+
+USE admin_system;
+
+-- 1. 系统信息监控任务（每5分钟执行一次）
+INSERT INTO `sys_job` (`job_name`, `job_group`, `invoke_target`, `cron_expression`, `misfire_policy`, `concurrent`, `status`, `create_time`, `create_by`, `remark`)
+VALUES
+('系统信息监控', 'DEFAULT', 'systemTask.monitorSystemInfo', '0 0/5 * * * ?', '3', '1', '1', NOW(), 1, '监控系统JVM内存、Redis缓存等信息');
+
+-- 2. 清理过期日志任务（每天凌晨3点执行）
+INSERT INTO `sys_job` (`job_name`, `job_group`, `invoke_target`, `cron_expression`, `misfire_policy`, `concurrent`, `status`, `create_time`, `create_by`, `remark`)
+VALUES
+('清理过期日志', 'DEFAULT', 'systemTask.cleanExpiredLogs', '0 0 3 * * ?', '3', '0', '1', NOW(), 1, '清理30天前的操作日志和登录日志');
+
+-- 3. 缓存预热任务（每天早上8点执行）
+INSERT INTO `sys_job` (`job_name`, `job_group`, `invoke_target`, `cron_expression`, `misfire_policy`, `concurrent`, `status`, `create_time`, `create_by`, `remark`)
+VALUES
+('缓存预热', 'DEFAULT', 'systemTask.warmUpCache', '0 0 8 * * ?', '3', '0', '1', NOW(), 1, '预热系统配置、字典等常用缓存数据');
+
+-- 4. 数据统计任务（每天晚上23点执行）
+INSERT INTO `sys_job` (`job_name`, `job_group`, `invoke_target`, `cron_expression`, `misfire_policy`, `concurrent`, `status`, `create_time`, `create_by`, `remark`)
+VALUES
+('数据统计', 'DEFAULT', 'systemTask.statisticsData', '0 0 23 * * ?', '3', '0', '1', NOW(), 1, '统计当日登录次数、操作次数等数据');
+
+-- 5. 清理临时文件任务（每天凌晨2点执行）
+INSERT INTO `sys_job` (`job_name`, `job_group`, `invoke_target`, `cron_expression`, `misfire_policy`, `concurrent`, `status`, `create_time`, `create_by`, `remark`)
+VALUES
+('清理临时文件', 'DEFAULT', 'systemTask.cleanTempFiles', '0 0 2 * * ?', '3', '0', '1', NOW(), 1, '清理上传目录中的临时文件');
+
+-- 6. 健康检查任务（每10分钟执行一次）
+INSERT INTO `sys_job` (`job_name`, `job_group`, `invoke_target`, `cron_expression`, `misfire_policy`, `concurrent`, `status`, `create_time`, `create_by`, `remark`)
+VALUES
+('健康检查', 'DEFAULT', 'systemTask.healthCheck', '0 0/10 * * * ?', '3', '1', '1', NOW(), 1, '检查数据库、Redis等服务的连接状态');
+
+-- 查询创建的任务
+SELECT job_id, job_name, job_group, invoke_target, cron_expression, status, remark
+FROM sys_job
+ORDER BY job_id DESC
+LIMIT 6;

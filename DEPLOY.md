@@ -11,7 +11,7 @@
 
 #### 软件环境
 - 操作系统：Linux (CentOS 7+ / Ubuntu 18.04+)
-- JDK：1.8+
+- JDK：17+
 - MySQL：8.0+
 - Redis：5.0+
 - Nginx：1.18+
@@ -20,8 +20,8 @@
 
 #### 1. 安装JDK
 ```bash
-# 安装OpenJDK
-yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
+# 安装OpenJDK 17
+yum install java-17-openjdk java-17-openjdk-devel
 
 # 验证安装
 java -version

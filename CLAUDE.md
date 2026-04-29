@@ -6,10 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Enterprise-level admin management system built with Spring Boot 2.7.18 backend and Vue 2.6.14 frontend, featuring RBAC (Role-Based Access Control), JWT authentication, and comprehensive system monitoring capabilities.
 
+> **Note:** `AGENTS.md` describes a multi-module Maven layout (`admin-common` / `admin-framework` / `admin-system` / `admin-workflow` / `admin-admin`). That layout is **not** the current state — there is no root `pom.xml`; `backend/pom.xml` is a single-module Spring Boot jar (`com.admin:admin-system:1.0.0`). Treat `AGENTS.md` as aspirational, not authoritative.
+
 ## Technology Stack
 
 **Backend:**
-- Java 8 with Spring Boot 2.7.18
+- Java 17 with Spring Boot 2.7.18 (the pom previously declared 1.8 — see note below on `jjwt 0.9.1` + `jaxb-api`)
 - Spring Security + JWT (stateless authentication with Redis)
 - MyBatis Plus 3.5.3.1 for ORM
 - MySQL 8.0 database
@@ -26,6 +28,16 @@ Enterprise-level admin management system built with Spring Boot 2.7.18 backend a
 - Axios 0.27.2 for HTTP requests
 
 ## Common Development Commands
+
+### Helper scripts (project root, Windows)
+
+```cmd
+:: Verify JDK / Maven / Node / npm / MySQL / Redis are installed and reachable
+check-environment.bat
+
+:: Probe whether backend (8080), frontend (8081), MySQL (3306), Redis (6379) are up
+check-services.bat
+```
 
 ### Backend (Spring Boot)
 
@@ -100,24 +112,14 @@ taskkill /PID <process_id> /F
 
 ### Database Setup
 
+`database/init.sql` is a single consolidated script that bundles the core RBAC schema, the notification / message / workflow module tables, every per-module menu/permission seed, and sample scheduled-job rows — all in dependency order. Apply it against an empty database:
+
 ```bash
-# Login to MySQL
-mysql -u root -p
-
-# Execute database scripts (in order)
-source database/schema.sql
-source database/init-data.sql
-
-# If login fails with default password, run:
-source database/fix-password.sql
+mysql -u root -p -e "CREATE DATABASE admin_system DEFAULT CHARACTER SET utf8mb4;"
+mysql -u root -p admin_system < database/init.sql
 ```
 
-**Windows alternative:**
-```cmd
-mysql -u root -p < database\schema.sql
-mysql -u root -p < database\init-data.sql
-mysql -u root -p < database\fix-password.sql
-```
+The file is internally split into 11 labeled sections (search for `-- Section:` to navigate); the earlier `initData.sql` / `*_system.sql` / `add_*.sql` files referenced in older docs have been removed in favour of this single entry point.
 
 **Database Credentials (application.yml):**
 - Database: `admin_system`
@@ -150,6 +152,9 @@ mysql -u root -p < database\fix-password.sql
 
 ```
 com.admin.system/
+├── AdminSystemApplication.java  # Spring Boot entry point
+├── annotation/          # Custom annotations (e.g. @Log for operation logging, @DataScope)
+├── aspect/              # AOP aspects backing the annotations above (operation log, data-scope filter)
 ├── common/              # Common utilities and base classes
 │   ├── BaseEntity       # Base entity with common fields (createBy, createTime, updateBy, updateTime, deleted)
 │   ├── Result           # Unified API response wrapper (code, message, data, timestamp)
@@ -198,6 +203,9 @@ com.admin.system/
 │   ├── AbstractQuartzJob  # Base class for scheduled jobs
 │   ├── QuartzJobExecution # Allow concurrent job execution
 │   └── QuartzDisallowConcurrentExecution # Disallow concurrent execution
+├── task/                # Concrete scheduled task beans invoked by Quartz cron entries in sys_job
+├── monitor/             # Server / cache / online-user monitoring endpoints (Oshi-based)
+├── generator/           # MyBatis Plus code-generator templates and runner (Velocity)
 ├── util/                # Utility classes (note: both util/ and utils/ exist)
 └── utils/               # Additional utility classes (JwtUtil, RedisUtil, CaptchaUtil, etc.)
 ```
@@ -481,9 +489,10 @@ Assign menu permissions to roles in `sys_role_menu` table.
 
 ## Testing
 
-- Test directory structure exists at `backend/src/test/java/com/admin/` but no test files implemented yet
-- When adding tests, use JUnit 5 with Spring Boot Test
-- Spring Boot Test dependencies already included in pom.xml
+- Test directory exists at `backend/src/test/java/com/admin/` but no test files are implemented yet
+- When adding tests, use JUnit 5 with Spring Boot Test (`spring-boot-starter-test` is already on the pom)
+- `AGENTS.md` recommends mirroring the production package paths under `src/test/java`, mocking external calls, and adding smoke tests around auth/security when touching the security layer
+- No frontend automation is set up — UI changes require manual smoke testing (login, navigation, table search/sort/pagination, form validation, logout)
 
 ## Important Notes
 
@@ -543,8 +552,11 @@ taskkill /PID <process_id> /F
 
 **Build/dependency errors:**
 - Clear Maven cache: `mvn clean` or delete `~/.m2/repository`
-- Ensure Java 8+ is installed: `java -version`
+- Ensure JDK 17 is installed: `java -version`
 - Ensure Maven is installed: `mvn -version`
+
+**JDK 17 / `jjwt 0.9.1` quirk:**
+- `jjwt 0.9.1` references `javax.xml.bind.DatatypeConverter`, which was removed from the JDK in Java 11. The pom keeps an explicit `jaxb-api 2.3.1` dependency as a runtime shim — do **not** delete it without first upgrading jjwt to `0.11.x` and rewriting `JwtUtil` (the parser API and `signWith(...)` signature changed).
 
 ### Frontend Issues
 
@@ -569,7 +581,7 @@ taskkill /PID <process_id> /F
 
 **Login issues:**
 - Default credentials: username=admin, password=admin123
-- If password doesn't work, check if `database/fix-password.sql` needs to be run
+- If password doesn't match, the `sys_user` row may have been seeded with a stale BCrypt hash — re-apply `database/initData.sql` or update the hash directly (BCrypt of `admin123`)
 - Verify backend `/login` endpoint is accessible
 
 ### Common Runtime Issues
