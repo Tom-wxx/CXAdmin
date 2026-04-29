@@ -1,30 +1,26 @@
-// 从 localStorage 读取保存的侧边栏颜色
 const getSidebarColor = () => {
-  return localStorage.getItem('sidebarColor') || '#304156'
+  return localStorage.getItem('sidebarColor') || '#001529'
 }
 
-// 从 localStorage 读取保存的侧边栏位置
 const getSidebarPosition = () => {
   return localStorage.getItem('sidebarPosition') || 'left'
 }
 
 const state = {
-  title: '后台管理系统',
+  title: 'CXAdmin',
   fixedHeader: true,
   sidebarLogo: true,
   sidebarColor: getSidebarColor(),
-  sidebarPosition: getSidebarPosition() // 侧边栏位置: 'left' | 'top'
+  sidebarPosition: getSidebarPosition()
 }
 
 const mutations = {
   CHANGE_SETTING: (state, { key, value }) => {
     if (state.hasOwnProperty(key)) {
       state[key] = value
-      // 如果是侧边栏颜色，保存到 localStorage
       if (key === 'sidebarColor') {
         localStorage.setItem('sidebarColor', value)
       }
-      // 如果是侧边栏位置，保存到 localStorage
       if (key === 'sidebarPosition') {
         localStorage.setItem('sidebarPosition', value)
       }
