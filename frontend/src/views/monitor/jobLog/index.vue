@@ -1,55 +1,22 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="任务名称" prop="jobName">
-        <el-input
-          v-model="queryParams.jobName"
-          placeholder="请输入任务名称"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="任务组名" prop="jobGroup">
-        <el-select v-model="queryParams.jobGroup" placeholder="任务组名" clearable style="width: 200px">
-          <el-option label="默认" value="DEFAULT" />
-          <el-option label="系统" value="SYSTEM" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="执行状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="执行状态" clearable style="width: 200px">
-          <el-option label="成功" value="0" />
-          <el-option label="失败" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
+    <TableToolbar show-refresh @refresh="getList">
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-delete"
-          size="mini"
-          @click="handleClean"
-        >清空</el-button>
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="handleClean">清空</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-back"
-          size="mini"
-          @click="handleBack"
-        >返回</el-button>
+        <el-button type="warning" plain icon="el-icon-back" size="mini" @click="handleBack">返回</el-button>
       </el-col>
-    </el-row>
+    </TableToolbar>
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="jobLogList" border>
@@ -60,8 +27,7 @@
       <el-table-column label="日志信息" align="center" prop="jobMessage" show-overflow-tooltip />
       <el-table-column label="执行状态" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="success" size="small">成功</el-tag>
-          <el-tag v-else type="danger" size="small">失败</el-tag>
+          <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="执行时间" align="center" prop="createTime" width="160">
@@ -116,8 +82,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="执行状态：">
-              <el-tag v-if="viewForm.status === '0'" type="success" size="small">成功</el-tag>
-              <el-tag v-else type="danger" size="small">失败</el-tag>
+              <DictTag :options="statusOptions" :value="viewForm.status" />
             </el-form-item>
           </el-col>
           <el-col :span="24" v-if="viewForm.status === '1'">
@@ -139,14 +104,36 @@
 <script>
 import { listJobLog, getJobLog, delJobLog, cleanJobLog } from '@/api/monitor/job'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const JOB_GROUP_OPTIONS = [
+  { value: 'DEFAULT', label: '默认' },
+  { value: 'SYSTEM', label: '系统' }
+]
+const STATUS_OPTIONS = [
+  { value: '0', label: '成功', type: 'success' },
+  { value: '1', label: '失败', type: 'danger' }
+]
 
 export default {
   name: 'JobLog',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar,
+    DictTag
   },
   data() {
     return {
+      // 搜索字段配置
+      searchFields: [
+        { prop: 'jobName', label: '任务名称', type: 'input' },
+        { prop: 'jobGroup', label: '任务组名', type: 'select', options: JOB_GROUP_OPTIONS, placeholder: '任务组名' },
+        { prop: 'status', label: '执行状态', type: 'select', options: STATUS_OPTIONS, placeholder: '执行状态' }
+      ],
+      statusOptions: STATUS_OPTIONS,
       // 加载状态
       loading: true,
       // 任务日志列表
@@ -187,15 +174,10 @@ export default {
       this.queryParams.current = 1
       this.getList()
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作（SearchForm 已自动清字段） */
     resetQuery() {
-      this.queryParams = {
-        current: 1,
-        size: 10,
-        jobName: undefined,
-        jobGroup: undefined,
-        status: undefined
-      }
+      this.queryParams.current = 1
+      this.queryParams.size = 10
       this.handleQuery()
     },
     /** 查看按钮操作 */

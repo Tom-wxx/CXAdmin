@@ -1,65 +1,23 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" :inline="true" label-width="80px">
-      <el-form-item label="消息名称" prop="messageName">
-        <el-input
-          v-model="queryParams.messageName"
-          placeholder="请输入消息名称"
-          clearable
-          size="small"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="消息编码" prop="messageCode">
-        <el-input
-          v-model="queryParams.messageCode"
-          placeholder="请输入消息编码"
-          clearable
-          size="small"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="消息类型" prop="messageType">
-        <el-select v-model="queryParams.messageType" placeholder="请选择消息类型" clearable size="small">
-          <el-option label="邮件" value="1" />
-          <el-option label="短信" value="2" />
-          <el-option label="站内信" value="3" />
-          <el-option label="微信" value="4" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="请选择状态" clearable size="small">
-          <el-option label="正常" value="0" />
-          <el-option label="停用" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="danger"
-          icon="el-icon-delete"
-          size="mini"
-          :disabled="multiple"
-          @click="handleDelete"
-        >删除</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar
+      show-add
+      show-delete
+      show-refresh
+      :multiple="multiple"
+      @add="handleAdd"
+      @delete="handleDelete"
+      @refresh="getList"
+    />
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="messageList" @selection-change="handleSelectionChange">
@@ -69,10 +27,7 @@
       <el-table-column label="消息编码" align="center" prop="messageCode" :show-overflow-tooltip="true" />
       <el-table-column label="消息类型" align="center" prop="messageType" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.messageType === '1'" type="success">邮件</el-tag>
-          <el-tag v-else-if="scope.row.messageType === '2'" type="warning">短信</el-tag>
-          <el-tag v-else-if="scope.row.messageType === '3'" type="info">站内信</el-tag>
-          <el-tag v-else-if="scope.row.messageType === '4'" type="primary">微信</el-tag>
+          <DictTag :options="messageTypeOptions" :value="scope.row.messageType" />
         </template>
       </el-table-column>
       <el-table-column label="消息主题" align="center" prop="subject" :show-overflow-tooltip="true" />
@@ -161,14 +116,38 @@
 <script>
 import { listMessage, getMessage, addMessage, updateMessage, delMessage, changeMessageStatus } from '@/api/system/message'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const MESSAGE_TYPE_OPTIONS = [
+  { value: '1', label: '邮件', type: 'success' },
+  { value: '2', label: '短信', type: 'warning' },
+  { value: '3', label: '站内信', type: 'info' },
+  { value: '4', label: '微信', type: '' }
+]
+const STATUS_OPTIONS = [
+  { value: '0', label: '正常' },
+  { value: '1', label: '停用' }
+]
 
 export default {
   name: 'Message',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar,
+    DictTag
   },
   data() {
     return {
+      searchFields: [
+        { prop: 'messageName', label: '消息名称', type: 'input' },
+        { prop: 'messageCode', label: '消息编码', type: 'input' },
+        { prop: 'messageType', label: '消息类型', type: 'select', options: MESSAGE_TYPE_OPTIONS, placeholder: '请选择消息类型' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '请选择状态' }
+      ],
+      messageTypeOptions: MESSAGE_TYPE_OPTIONS,
       loading: true,
       ids: [],
       multiple: true,
@@ -241,7 +220,8 @@ export default {
       this.getList()
     },
     resetQuery() {
-      this.resetForm('queryForm')
+      this.queryParams.current = 1
+      this.queryParams.size = 10
       this.handleQuery()
     },
     handleSelectionChange(selection) {

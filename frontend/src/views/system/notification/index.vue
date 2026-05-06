@@ -1,83 +1,37 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" :inline="true" label-width="80px">
-      <el-form-item label="通知标题" prop="title">
-        <el-input
-          v-model="queryParams.title"
-          placeholder="请输入通知标题"
-          clearable
-          size="small"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="通知类型" prop="type">
-        <el-select v-model="queryParams.type" placeholder="通知类型" clearable size="small">
-          <el-option label="系统通知" value="system" />
-          <el-option label="待办提醒" value="todo" />
-          <el-option label="审批消息" value="approval" />
-          <el-option label="公告" value="announce" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="状态" clearable size="small">
-          <el-option label="未读" value="unread" />
-          <el-option label="已读" value="read" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 操作按钮 -->
-    <el-row :gutter="10" class="mb8">
+    <TableToolbar show-refresh @refresh="getList">
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-check"
-          size="mini"
-          :disabled="multiple"
-          @click="handleMarkAsRead"
-        >标记已读</el-button>
+        <el-button type="success" plain icon="el-icon-check" size="mini" :disabled="multiple" @click="handleMarkAsRead">标记已读</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-finished"
-          size="mini"
-          @click="handleMarkAllAsRead"
-        >全部已读</el-button>
+        <el-button type="success" plain icon="el-icon-finished" size="mini" @click="handleMarkAllAsRead">全部已读</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-delete"
-          size="mini"
-          :disabled="multiple"
-          @click="handleDelete"
-        >删除</el-button>
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete">删除</el-button>
       </el-col>
-    </el-row>
+    </TableToolbar>
 
     <!-- 通知列表 -->
     <el-table v-loading="loading" :data="notificationList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="状态" align="center" width="80">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === 'unread'" type="danger" size="small">未读</el-tag>
-          <el-tag v-else type="info" size="small">已读</el-tag>
+          <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="优先级" align="center" width="80">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.priority === 'urgent'" type="danger" size="small">紧急</el-tag>
-          <el-tag v-else-if="scope.row.priority === 'important'" type="warning" size="small">重要</el-tag>
-          <el-tag v-else type="info" size="small">普通</el-tag>
+          <DictTag :options="priorityOptions" :value="scope.row.priority || 'normal'" />
         </template>
       </el-table-column>
       <el-table-column label="通知标题" prop="title" :show-overflow-tooltip="true" min-width="200">
@@ -144,9 +98,7 @@
           <span v-else>{{ viewForm.type }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="优先级">
-          <el-tag v-if="viewForm.priority === 'urgent'" type="danger" size="small">紧急</el-tag>
-          <el-tag v-else-if="viewForm.priority === 'important'" type="warning" size="small">重要</el-tag>
-          <el-tag v-else type="info" size="small">普通</el-tag>
+          <DictTag :options="priorityOptions" :value="viewForm.priority || 'normal'" />
         </el-descriptions-item>
         <el-descriptions-item label="发送者">
           {{ viewForm.senderName || '系统' }}
@@ -175,14 +127,43 @@ import {
   delNotification
 } from '@/api/system/notification'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const TYPE_OPTIONS = [
+  { value: 'system', label: '系统通知' },
+  { value: 'todo', label: '待办提醒' },
+  { value: 'approval', label: '审批消息' },
+  { value: 'announce', label: '公告' }
+]
+const STATUS_OPTIONS = [
+  { value: 'unread', label: '未读', type: 'danger' },
+  { value: 'read', label: '已读', type: 'info' }
+]
+const PRIORITY_OPTIONS = [
+  { value: 'urgent', label: '紧急', type: 'danger' },
+  { value: 'important', label: '重要', type: 'warning' },
+  { value: 'normal', label: '普通', type: 'info' }
+]
 
 export default {
   name: 'Notification',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar,
+    DictTag
   },
   data() {
     return {
+      searchFields: [
+        { prop: 'title', label: '通知标题', type: 'input' },
+        { prop: 'type', label: '通知类型', type: 'select', options: TYPE_OPTIONS, placeholder: '通知类型' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '状态' }
+      ],
+      statusOptions: STATUS_OPTIONS,
+      priorityOptions: PRIORITY_OPTIONS,
       // 遮罩层
       loading: true,
       // 选中数组
@@ -225,9 +206,10 @@ export default {
       this.queryParams.pageNum = 1
       this.getList()
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作（SearchForm 已自动清字段） */
     resetQuery() {
-      this.resetForm('queryForm')
+      this.queryParams.pageNum = 1
+      this.queryParams.pageSize = 10
       this.handleQuery()
     },
     // 多选框选中数据

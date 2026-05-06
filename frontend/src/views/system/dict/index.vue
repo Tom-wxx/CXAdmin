@@ -35,8 +35,7 @@
             <el-table-column prop="dictType" label="字典类型" show-overflow-tooltip />
             <el-table-column label="状态" width="60">
               <template slot-scope="scope">
-                <el-tag v-if="scope.row.status === '0'" type="success" size="small">正常</el-tag>
-                <el-tag v-else type="danger" size="small">停用</el-tag>
+                <DictTag :options="statusOptions" :value="scope.row.status" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="120">
@@ -95,8 +94,7 @@
             <el-table-column prop="dictSort" label="排序" width="80" />
             <el-table-column label="状态" width="80">
               <template slot-scope="scope">
-                <el-tag v-if="scope.row.status === '0'" type="success" size="small">正常</el-tag>
-                <el-tag v-else type="danger" size="small">停用</el-tag>
+                <DictTag :options="statusOptions" :value="scope.row.status" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="150">
@@ -204,11 +202,21 @@
 <script>
 import { listDictType, getDictType, addDictType, updateDictType, delDictType } from '@/api/system/dict/type'
 import { listDictData, getDictData, addDictData, updateDictData, delDictData } from '@/api/system/dict/data'
+import DictTag from '@/components/DictTag'
+
+const STATUS_OPTIONS = [
+  { value: '0', label: '正常', type: 'success' },
+  { value: '1', label: '停用', type: 'danger' }
+]
 
 export default {
   name: 'Dict',
+  components: {
+    DictTag
+  },
   data() {
     return {
+      statusOptions: STATUS_OPTIONS,
       // 字典类型
       typeLoading: false,
       typeList: [],

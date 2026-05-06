@@ -1,55 +1,19 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="任务名称" prop="jobName">
-        <el-input
-          v-model="queryParams.jobName"
-          placeholder="请输入任务名称"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="任务组名" prop="jobGroup">
-        <el-select v-model="queryParams.jobGroup" placeholder="任务组名" clearable style="width: 200px">
-          <el-option label="默认" value="DEFAULT" />
-          <el-option label="系统" value="SYSTEM" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="任务状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="任务状态" clearable style="width: 200px">
-          <el-option label="正常" value="0" />
-          <el-option label="暂停" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
+    <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
+        <el-button type="success" plain icon="el-icon-document" size="mini" @click="handleJobLog">日志</el-button>
       </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-document"
-          size="mini"
-          @click="handleJobLog"
-        >日志</el-button>
-      </el-col>
-    </el-row>
+    </TableToolbar>
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="jobList" border>
@@ -149,14 +113,33 @@
 <script>
 import { listJob, getJob, addJob, updateJob, delJob, changeJobStatus, runJob } from '@/api/monitor/job'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+
+const JOB_GROUP_OPTIONS = [
+  { value: 'DEFAULT', label: '默认' },
+  { value: 'SYSTEM', label: '系统' }
+]
+const STATUS_OPTIONS = [
+  { value: '0', label: '正常' },
+  { value: '1', label: '暂停' }
+]
 
 export default {
   name: 'Job',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar
   },
   data() {
     return {
+      // 搜索字段配置
+      searchFields: [
+        { prop: 'jobName', label: '任务名称', type: 'input' },
+        { prop: 'jobGroup', label: '任务组名', type: 'select', options: JOB_GROUP_OPTIONS, placeholder: '任务组名' },
+        { prop: 'status', label: '任务状态', type: 'select', options: STATUS_OPTIONS, placeholder: '任务状态' }
+      ],
       // 加载状态
       loading: true,
       // 任务列表
@@ -216,15 +199,10 @@ export default {
       this.queryParams.current = 1
       this.getList()
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作（SearchForm 已自动清字段） */
     resetQuery() {
-      this.queryParams = {
-        current: 1,
-        size: 10,
-        jobName: undefined,
-        jobGroup: undefined,
-        status: undefined
-      }
+      this.queryParams.current = 1
+      this.queryParams.size = 10
       this.handleQuery()
     },
     /** 新增按钮操作 */

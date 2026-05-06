@@ -1,49 +1,15 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="参数名称" prop="configName">
-        <el-input
-          v-model="queryParams.configName"
-          placeholder="请输入参数名称"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="参数键名" prop="configKey">
-        <el-input
-          v-model="queryParams.configKey"
-          placeholder="请输入参数键名"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="系统内置" prop="configType">
-        <el-select v-model="queryParams.configType" placeholder="系统内置" clearable style="width: 200px">
-          <el-option label="是" value="Y" />
-          <el-option label="否" value="N" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList" />
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="configList" border>
@@ -53,8 +19,7 @@
       <el-table-column label="参数键值" align="center" prop="configValue" show-overflow-tooltip />
       <el-table-column label="系统内置" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.configType === 'Y'" type="success" size="small">是</el-tag>
-          <el-tag v-else type="info" size="small">否</el-tag>
+          <DictTag :options="configTypeOptions" :value="scope.row.configType" />
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" show-overflow-tooltip />
@@ -124,14 +89,32 @@
 <script>
 import { listConfig, getConfig, addConfig, updateConfig, delConfig } from '@/api/system/config'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const CONFIG_TYPE_OPTIONS = [
+  { value: 'Y', label: '是', type: 'success' },
+  { value: 'N', label: '否', type: 'info' }
+]
 
 export default {
   name: 'Config',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar,
+    DictTag
   },
   data() {
     return {
+      // 搜索字段配置
+      searchFields: [
+        { prop: 'configName', label: '参数名称', type: 'input' },
+        { prop: 'configKey', label: '参数键名', type: 'input' },
+        { prop: 'configType', label: '系统内置', type: 'select', options: CONFIG_TYPE_OPTIONS, placeholder: '系统内置' }
+      ],
+      configTypeOptions: CONFIG_TYPE_OPTIONS,
       // 加载状态
       loading: true,
       // 参数配置列表
@@ -189,15 +172,10 @@ export default {
       this.queryParams.current = 1
       this.getList()
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作（SearchForm 已自动清字段） */
     resetQuery() {
-      this.queryParams = {
-        current: 1,
-        size: 10,
-        configName: undefined,
-        configKey: undefined,
-        configType: undefined
-      }
+      this.queryParams.current = 1
+      this.queryParams.size = 10
       this.handleQuery()
     },
     /** 新增按钮操作 */

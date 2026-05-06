@@ -51,52 +51,19 @@
     <!-- 主内容区 -->
     <el-card class="main-card">
       <!-- 搜索栏 -->
-      <el-form :model="queryParams" ref="queryForm" :inline="true" class="search-form">
-        <el-form-item label="文件名称" prop="fileName">
-          <el-input
-            v-model="queryParams.fileName"
-            placeholder="请输入文件名称"
-            clearable
-            size="small"
-            @keyup.enter.native="handleQuery"
-          />
-        </el-form-item>
-        <el-form-item label="文件类型" prop="category">
-          <el-select v-model="queryParams.category" placeholder="请选择文件类型" clearable size="small">
-            <el-option label="全部" value=""></el-option>
-            <el-option label="图片" value="image"></el-option>
-            <el-option label="文档" value="document"></el-option>
-            <el-option label="视频" value="video"></el-option>
-            <el-option label="音频" value="audio"></el-option>
-            <el-option label="其他" value="other"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜索</el-button>
-          <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+      <SearchForm
+        :model="queryParams"
+        :fields="searchFields"
+        @search="handleQuery"
+        @reset="resetQuery"
+      />
 
       <!-- 操作按钮 -->
-      <el-row :gutter="10" class="toolbar">
+      <TableToolbar show-delete show-refresh :multiple="multiple" @delete="handleDelete" @refresh="getList">
         <el-col :span="1.5">
-          <el-button
-            type="primary"
-            icon="el-icon-upload"
-            size="small"
-            @click="handleUpload"
-          >上传文件</el-button>
+          <el-button type="primary" icon="el-icon-upload" size="mini" @click="handleUpload">上传文件</el-button>
         </el-col>
-        <el-col :span="1.5">
-          <el-button
-            type="danger"
-            icon="el-icon-delete"
-            size="small"
-            :disabled="multiple"
-            @click="handleDelete"
-          >删除</el-button>
-        </el-col>
-      </el-row>
+      </TableToolbar>
 
       <!-- 文件列表 -->
       <el-table
@@ -125,9 +92,7 @@
         </el-table-column>
         <el-table-column label="文件类型" align="center" width="100">
           <template slot-scope="scope">
-            <el-tag :type="getCategoryType(scope.row.category)" size="small">
-              {{ getCategoryLabel(scope.row.category) }}
-            </el-tag>
+            <DictTag :options="categoryOptions" :value="scope.row.category" />
           </template>
         </el-table-column>
         <el-table-column label="文件大小" align="center" width="100">
@@ -309,14 +274,34 @@
 import { listFile, updateFile, deleteFile, getFileStatistics, getFileUrl, downloadFile } from '@/api/system/file'
 import { getToken } from '@/utils/auth'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const CATEGORY_OPTIONS = [
+  { value: 'image', label: '图片', type: 'success' },
+  { value: 'document', label: '文档', type: 'warning' },
+  { value: 'video', label: '视频', type: 'danger' },
+  { value: 'audio', label: '音频', type: 'info' },
+  { value: 'other', label: '其他', type: '' }
+]
 
 export default {
   name: 'FileManagement',
   components: {
-    Pagination
+    Pagination,
+    SearchForm,
+    TableToolbar,
+    DictTag
   },
   data() {
     return {
+      // 搜索字段配置
+      searchFields: [
+        { prop: 'fileName', label: '文件名称', type: 'input' },
+        { prop: 'category', label: '文件类型', type: 'select', options: CATEGORY_OPTIONS, placeholder: '请选择文件类型' }
+      ],
+      categoryOptions: CATEGORY_OPTIONS,
       // 遮罩层
       loading: true,
       // 选中数组
@@ -384,14 +369,10 @@ export default {
       this.queryParams.pageNum = 1
       this.getList()
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作（SearchForm 已自动清字段） */
     resetQuery() {
-      this.queryParams = {
-        pageNum: 1,
-        pageSize: 10,
-        fileName: undefined,
-        category: undefined
-      }
+      this.queryParams.pageNum = 1
+      this.queryParams.pageSize = 10
       this.handleQuery()
     },
     /** 多选框选中数据 */
@@ -538,28 +519,6 @@ export default {
         other: 'el-icon-document'
       }
       return icons[category] || 'el-icon-document'
-    },
-    /** 获取分类标签 */
-    getCategoryLabel(category) {
-      const labels = {
-        image: '图片',
-        document: '文档',
-        video: '视频',
-        audio: '音频',
-        other: '其他'
-      }
-      return labels[category] || '其他'
-    },
-    /** 获取分类标签类型 */
-    getCategoryType(category) {
-      const types = {
-        image: 'success',
-        document: 'warning',
-        video: 'danger',
-        audio: 'info',
-        other: ''
-      }
-      return types[category] || ''
     },
     /** 格式化时间 */
     parseTime(time) {
