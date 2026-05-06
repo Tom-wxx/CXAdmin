@@ -1,49 +1,19 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="菜单名称" prop="menuName">
-        <el-input
-          v-model="queryParams.menuName"
-          placeholder="请输入菜单名称"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="菜单状态" clearable style="width: 200px">
-          <el-option label="正常" value="0" />
-          <el-option label="停用" value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
+    <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
+        <el-button type="info" plain icon="el-icon-sort" size="mini" @click="toggleExpandAll">展开/折叠</el-button>
       </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="el-icon-sort"
-          size="mini"
-          @click="toggleExpandAll"
-        >展开/折叠</el-button>
-      </el-col>
-    </el-row>
+    </TableToolbar>
 
     <!-- 数据表格（树形） -->
     <el-table
@@ -66,8 +36,7 @@
       <el-table-column prop="component" label="组件路径" :show-overflow-tooltip="true"></el-table-column>
       <el-table-column prop="status" label="状态" width="80">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="success">正常</el-tag>
-          <el-tag v-else type="danger">停用</el-tag>
+          <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
@@ -264,12 +233,25 @@ import { listMenu, getMenu, addMenu, updateMenu, delMenu, treeselect } from '@/a
 import Treeselect from '@riophae/vue-treeselect'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import IconSelect from '@/components/IconSelect'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const STATUS_OPTIONS = [
+  { value: '0', label: '正常', type: 'success' },
+  { value: '1', label: '停用', type: 'danger' }
+]
 
 export default {
   name: 'Menu',
-  components: { Treeselect, IconSelect },
+  components: { Treeselect, IconSelect, SearchForm, TableToolbar, DictTag },
   data() {
     return {
+      searchFields: [
+        { prop: 'menuName', label: '菜单名称', type: 'input' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '菜单状态' }
+      ],
+      statusOptions: STATUS_OPTIONS,
       // 加载状态
       loading: true,
       // 菜单列表
@@ -349,10 +331,6 @@ export default {
     },
     /** 重置按钮操作 */
     resetQuery() {
-      this.queryParams = {
-        menuName: undefined,
-        status: undefined
-      }
       this.handleQuery()
     },
     /** 新增按钮操作 */

@@ -17,9 +17,7 @@
         <el-table-column label="审批层级" prop="taskLevel" align="center" />
         <el-table-column label="审批结果" align="center" width="100">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.status === 'approved'" type="success">通过</el-tag>
-            <el-tag v-else-if="scope.row.status === 'rejected'" type="danger">驳回</el-tag>
-            <el-tag v-else type="info">{{ scope.row.status }}</el-tag>
+            <DictTag :options="statusOptions" :value="scope.row.status" />
           </template>
         </el-table-column>
         <el-table-column label="审批意见" prop="approvalComment" show-overflow-tooltip />
@@ -41,11 +39,19 @@
 
 <script>
 import { getCompletedTasks } from '@/api/workflow/workflow'
+import DictTag from '@/components/DictTag'
+
+const STATUS_OPTIONS = [
+  { value: 'approved', label: '通过', type: 'success' },
+  { value: 'rejected', label: '驳回', type: 'danger' }
+]
 
 export default {
   name: 'CompletedTasks',
+  components: { DictTag },
   data() {
     return {
+      statusOptions: STATUS_OPTIONS,
       loading: false,
       taskList: []
     }

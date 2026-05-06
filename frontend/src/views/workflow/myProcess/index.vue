@@ -22,11 +22,7 @@
         </el-table-column>
         <el-table-column label="状态" align="center" width="100">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.status === 'pending'" type="warning">审批中</el-tag>
-            <el-tag v-else-if="scope.row.status === 'approved'" type="success">已通过</el-tag>
-            <el-tag v-else-if="scope.row.status === 'rejected'" type="danger">已驳回</el-tag>
-            <el-tag v-else-if="scope.row.status === 'cancelled'" type="info">已取消</el-tag>
-            <el-tag v-else type="info">{{ scope.row.status }}</el-tag>
+            <DictTag :options="statusOptions" :value="scope.row.status" />
           </template>
         </el-table-column>
         <el-table-column label="提交时间" prop="submitTime" width="180" />
@@ -55,11 +51,21 @@
 
 <script>
 import { getMyProcesses, cancelProcess } from '@/api/workflow/workflow'
+import DictTag from '@/components/DictTag'
+
+const STATUS_OPTIONS = [
+  { value: 'pending', label: '审批中', type: 'warning' },
+  { value: 'approved', label: '已通过', type: 'success' },
+  { value: 'rejected', label: '已驳回', type: 'danger' },
+  { value: 'cancelled', label: '已取消', type: 'info' }
+]
 
 export default {
   name: 'MyProcess',
+  components: { DictTag },
   data() {
     return {
+      statusOptions: STATUS_OPTIONS,
       loading: false,
       processList: []
     }

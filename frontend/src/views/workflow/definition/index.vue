@@ -1,48 +1,15 @@
 <template>
   <div class="app-container">
     <!-- 搜索栏 -->
-    <el-form :model="queryParams" ref="queryForm" :inline="true">
-      <el-form-item label="流程名称" prop="processName">
-        <el-input
-          v-model="queryParams.processName"
-          placeholder="请输入流程名称"
-          clearable
-          size="small"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="流程类型" prop="processType">
-        <el-select v-model="queryParams.processType" placeholder="请选择" clearable size="small">
-          <el-option label="请假" value="leave" />
-          <el-option label="报销" value="expense" />
-          <el-option label="采购" value="purchase" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="请选择" clearable size="small">
-          <el-option label="草稿" value="draft" />
-          <el-option label="已发布" value="published" />
-          <el-option label="已停用" value="disabled" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm
+      :model="queryParams"
+      :fields="searchFields"
+      @search="handleQuery"
+      @reset="resetQuery"
+    />
 
     <!-- 操作按钮 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-          v-hasPermi="['workflow:definition:add']"
-        >新增</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList" />
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="definitionList" border>
@@ -50,18 +17,13 @@
       <el-table-column label="流程名称" prop="processName" />
       <el-table-column label="流程类型" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.processType === 'leave'" type="primary">请假</el-tag>
-          <el-tag v-else-if="scope.row.processType === 'expense'" type="success">报销</el-tag>
-          <el-tag v-else-if="scope.row.processType === 'purchase'" type="warning">采购</el-tag>
-          <el-tag v-else>{{ scope.row.processType }}</el-tag>
+          <DictTag :options="processTypeOptions" :value="scope.row.processType" />
         </template>
       </el-table-column>
       <el-table-column label="审批层级" prop="approvalLevel" align="center" width="100" />
       <el-table-column label="状态" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === 'draft'" type="info">草稿</el-tag>
-          <el-tag v-else-if="scope.row.status === 'published'" type="success">已发布</el-tag>
-          <el-tag v-else-if="scope.row.status === 'disabled'" type="danger">已停用</el-tag>
+          <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="创建时间" prop="createTime" width="180" />
@@ -154,11 +116,33 @@ import {
   publishDefinition,
   disableDefinition
 } from '@/api/workflow/definition'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const PROCESS_TYPE_OPTIONS = [
+  { value: 'leave', label: '请假', type: '' },
+  { value: 'expense', label: '报销', type: 'success' },
+  { value: 'purchase', label: '采购', type: 'warning' }
+]
+const STATUS_OPTIONS = [
+  { value: 'draft', label: '草稿', type: 'info' },
+  { value: 'published', label: '已发布', type: 'success' },
+  { value: 'disabled', label: '已停用', type: 'danger' }
+]
 
 export default {
   name: 'ProcessDefinition',
+  components: { SearchForm, TableToolbar, DictTag },
   data() {
     return {
+      searchFields: [
+        { prop: 'processName', label: '流程名称', type: 'input' },
+        { prop: 'processType', label: '流程类型', type: 'select', options: PROCESS_TYPE_OPTIONS, placeholder: '请选择' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '请选择' }
+      ],
+      processTypeOptions: PROCESS_TYPE_OPTIONS,
+      statusOptions: STATUS_OPTIONS,
       loading: false,
       definitionList: [],
       title: '',
@@ -193,7 +177,6 @@ export default {
       this.getList()
     },
     resetQuery() {
-      this.resetForm('queryForm')
       this.handleQuery()
     },
     handleAdd() {
