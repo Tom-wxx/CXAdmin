@@ -16,10 +16,7 @@
           {{ instance.currentLevel }}/{{ instance.totalLevel }}
         </el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag v-if="instance.status === 'pending'" type="warning">审批中</el-tag>
-          <el-tag v-else-if="instance.status === 'approved'" type="success">已通过</el-tag>
-          <el-tag v-else-if="instance.status === 'rejected'" type="danger">已驳回</el-tag>
-          <el-tag v-else-if="instance.status === 'cancelled'" type="info">已取消</el-tag>
+          <DictTag :options="instanceStatusOptions" :value="instance.status" />
         </el-descriptions-item>
         <el-descriptions-item label="提交时间">{{ instance.submitTime }}</el-descriptions-item>
         <el-descriptions-item label="完成时间">
@@ -38,9 +35,7 @@
         <el-table-column label="审批人" prop="approverName" />
         <el-table-column label="状态" align="center" width="100">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.status === 'pending'" type="warning">待审批</el-tag>
-            <el-tag v-else-if="scope.row.status === 'approved'" type="success">已通过</el-tag>
-            <el-tag v-else-if="scope.row.status === 'rejected'" type="danger">已驳回</el-tag>
+            <DictTag :options="taskStatusOptions" :value="scope.row.status" />
           </template>
         </el-table-column>
         <el-table-column label="审批意见" prop="approvalComment" show-overflow-tooltip />
@@ -69,11 +64,27 @@
 
 <script>
 import { getProcessDetail } from '@/api/workflow/workflow'
+import DictTag from '@/components/DictTag'
+
+const INSTANCE_STATUS_OPTIONS = [
+  { value: 'pending', label: '审批中', type: 'warning' },
+  { value: 'approved', label: '已通过', type: 'success' },
+  { value: 'rejected', label: '已驳回', type: 'danger' },
+  { value: 'cancelled', label: '已取消', type: 'info' }
+]
+const TASK_STATUS_OPTIONS = [
+  { value: 'pending', label: '待审批', type: 'warning' },
+  { value: 'approved', label: '已通过', type: 'success' },
+  { value: 'rejected', label: '已驳回', type: 'danger' }
+]
 
 export default {
   name: 'ProcessDetail',
+  components: { DictTag },
   data() {
     return {
+      instanceStatusOptions: INSTANCE_STATUS_OPTIONS,
+      taskStatusOptions: TASK_STATUS_OPTIONS,
       loading: false,
       instance: null,
       tasks: [],
