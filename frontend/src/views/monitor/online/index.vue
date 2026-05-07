@@ -1,33 +1,8 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="用户名" prop="username">
-        <el-input
-          v-model="queryParams.username"
-          placeholder="请输入用户名"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="登录地址" prop="ipaddr">
-        <el-input
-          v-model="queryParams.ipaddr"
-          placeholder="请输入登录地址"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm :model="queryParams" :fields="searchFields" @search="handleQuery" @reset="resetQuery" />
 
-    <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
+    <TableToolbar show-refresh @refresh="handleRefresh">
       <el-col :span="1.5">
         <el-button
           type="danger"
@@ -38,18 +13,8 @@
           @click="handleBatchForceLogout"
         >批量强退</el-button>
       </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-refresh"
-          size="mini"
-          @click="handleRefresh"
-        >刷新</el-button>
-      </el-col>
-    </el-row>
+    </TableToolbar>
 
-    <!-- 数据表格 -->
     <el-table
       v-loading="loading"
       :data="onlineList"
@@ -87,7 +52,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <el-pagination
       v-if="total > 0"
       :current-page.sync="queryParams.current"
@@ -104,22 +68,23 @@
 
 <script>
 import { listOnlineUser, forceLogout, batchForceLogout } from '@/api/monitor/online'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
 
 export default {
   name: 'OnlineUser',
+  components: { SearchForm, TableToolbar },
   data() {
     return {
-      // 加载状态
+      searchFields: [
+        { prop: 'username', label: '用户名', type: 'input', placeholder: '请输入用户名' },
+        { prop: 'ipaddr', label: '登录地址', type: 'input', placeholder: '请输入登录地址' }
+      ],
       loading: true,
-      // 选中数组
       ids: [],
-      // 非多个禁用
       multiple: true,
-      // 在线用户列表
       onlineList: [],
-      // 总数
       total: 0,
-      // 查询参数
       queryParams: {
         username: undefined,
         ipaddr: undefined,
@@ -132,7 +97,6 @@ export default {
     this.getList()
   },
   methods: {
-    /** 查询在线用户列表 */
     getList() {
       this.loading = true
       listOnlineUser(this.queryParams).then(response => {
@@ -143,43 +107,31 @@ export default {
         this.loading = false
       })
     },
-    /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.current = 1
       this.getList()
     },
-    /** 重置按钮操作 */
     resetQuery() {
-      this.queryParams = {
-        username: undefined,
-        ipaddr: undefined,
-        current: 1,
-        size: 10
-      }
-      this.handleQuery()
+      this.queryParams.current = 1
+      this.getList()
     },
-    /** 每页条数改变 */
     handleSizeChange(size) {
       this.queryParams.size = size
       this.queryParams.current = 1
       this.getList()
     },
-    /** 当前页改变 */
     handleCurrentChange(current) {
       this.queryParams.current = current
       this.getList()
     },
-    /** 刷新按钮操作 */
     handleRefresh() {
       this.getList()
       this.$message.success('刷新成功')
     },
-    /** 多选框选中数据 */
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.tokenId)
       this.multiple = !selection.length
     },
-    /** 强退按钮操作 */
     handleForceLogout(row) {
       this.$confirm('是否确认强退用户"' + row.username + '"？', '警告', {
         confirmButtonText: '确定',
@@ -192,7 +144,6 @@ export default {
         this.$message.success('强制退出成功')
       })
     },
-    /** 批量强退按钮操作 */
     handleBatchForceLogout() {
       const tokenIds = this.ids
       if (tokenIds.length === 0) {
@@ -210,11 +161,8 @@ export default {
         this.$message.success('批量强制退出成功')
       })
     },
-    /** 时间格式化 */
     parseTime(time) {
-      if (!time) {
-        return ''
-      }
+      if (!time) return ''
       const date = new Date(time)
       const year = date.getFullYear()
       const month = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -227,12 +175,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.app-container {
-  padding: 20px;
-}
-.mb8 {
-  margin-bottom: 8px;
-}
-</style>

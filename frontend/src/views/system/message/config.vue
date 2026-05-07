@@ -1,58 +1,20 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" :inline="true" label-width="80px">
-      <el-form-item label="配置名称" prop="configName">
-        <el-input
-          v-model="queryParams.configName"
-          placeholder="请输入配置名称"
-          clearable
-          size="small"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="消息类型" prop="messageType">
-        <el-select v-model="queryParams.messageType" placeholder="请选择消息类型" clearable size="small">
-          <el-option label="邮件" value="1" />
-          <el-option label="短信" value="2" />
-          <el-option label="站内信" value="3" />
-          <el-option label="微信" value="4" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm :model="queryParams" :fields="searchFields" @search="handleQuery" @reset="resetQuery" />
 
-    <!-- 工具栏 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar show-add @add="handleAdd" />
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="configList">
       <el-table-column label="配置ID" align="center" prop="configId" width="80" />
       <el-table-column label="配置名称" align="center" prop="configName" />
       <el-table-column label="消息类型" align="center" prop="messageType" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.messageType === '1'" type="success">邮件</el-tag>
-          <el-tag v-else-if="scope.row.messageType === '2'" type="warning">短信</el-tag>
-          <el-tag v-else-if="scope.row.messageType === '3'" type="info">站内信</el-tag>
-          <el-tag v-else-if="scope.row.messageType === '4'" type="primary">微信</el-tag>
+          <DictTag :options="messageTypeOptions" :value="scope.row.messageType" />
         </template>
       </el-table-column>
       <el-table-column label="是否默认" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.isDefault === '1'" type="success">是</el-tag>
-          <el-tag v-else type="info">否</el-tag>
+          <DictTag :options="isDefaultOptions" :value="scope.row.isDefault" />
         </template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="80">
@@ -67,12 +29,7 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="250">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-          >修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
           <el-button
             v-if="scope.row.isDefault === '0'"
             size="mini"
@@ -80,23 +37,12 @@
             icon="el-icon-star-off"
             @click="handleSetDefault(scope.row)"
           >设为默认</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-s-promotion"
-            @click="handleTest(scope.row)"
-          >测试</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-          >删除</el-button>
+          <el-button size="mini" type="text" icon="el-icon-s-promotion" @click="handleTest(scope.row)">测试</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <pagination
       v-show="total > 0"
       :total="total"
@@ -105,7 +51,6 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="配置名称" prop="configName">
@@ -120,7 +65,6 @@
           </el-radio-group>
         </el-form-item>
 
-        <!-- 邮件配置 -->
         <template v-if="form.messageType === '1'">
           <el-form-item label="SMTP服务器">
             <el-input v-model="emailConfig.host" placeholder="如: smtp.qq.com" />
@@ -145,7 +89,6 @@
           </el-form-item>
         </template>
 
-        <!-- 短信配置 -->
         <template v-if="form.messageType === '2'">
           <el-form-item label="服务商">
             <el-select v-model="smsConfig.provider" placeholder="请选择短信服务商">
@@ -168,7 +111,6 @@
           </el-form-item>
         </template>
 
-        <!-- 站内信配置 -->
         <template v-if="form.messageType === '3'">
           <el-form-item label="消息有效期">
             <el-input v-model="systemConfig.expireDays" placeholder="天数，0表示永久有效">
@@ -180,7 +122,6 @@
           </el-form-item>
         </template>
 
-        <!-- 微信配置 -->
         <template v-if="form.messageType === '4'">
           <el-form-item label="AppID">
             <el-input v-model="wechatConfig.appId" placeholder="请输入微信AppID" />
@@ -192,6 +133,7 @@
             <el-input v-model="wechatConfig.templateId" placeholder="微信模板消息ID" />
           </el-form-item>
         </template>
+
         <el-form-item label="是否默认" prop="isDefault">
           <el-radio-group v-model="form.isDefault">
             <el-radio label="1">是</el-radio>
@@ -214,8 +156,7 @@
       </div>
     </el-dialog>
 
-    <!-- 测试发送对话框 -->
-    <el-dialog title="测试发送" :visible.sync="testOpen" width="500px" append-to-body >
+    <el-dialog title="测试发送" :visible.sync="testOpen" width="500px" append-to-body>
       <el-form ref="testForm" :model="testForm" label-width="100px">
         <el-form-item label="接收者">
           <el-input v-model="testForm.receiver" placeholder="邮箱或手机号" />
@@ -238,14 +179,32 @@
 <script>
 import { listMessageConfig, getMessageConfig, addMessageConfig, updateMessageConfig, delMessageConfig, changeConfigStatus, setDefaultConfig, testSendMessage } from '@/api/system/messageConfig'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const MESSAGE_TYPE_OPTIONS = [
+  { value: '1', label: '邮件', type: 'success' },
+  { value: '2', label: '短信', type: 'warning' },
+  { value: '3', label: '站内信', type: 'info' },
+  { value: '4', label: '微信', type: '' }
+]
+const IS_DEFAULT_OPTIONS = [
+  { value: '1', label: '是', type: 'success' },
+  { value: '0', label: '否', type: 'info' }
+]
 
 export default {
   name: 'MessageConfig',
-  components: {
-    Pagination
-  },
+  components: { Pagination, SearchForm, TableToolbar, DictTag },
   data() {
     return {
+      searchFields: [
+        { prop: 'configName', label: '配置名称', type: 'input', placeholder: '请输入配置名称' },
+        { prop: 'messageType', label: '消息类型', type: 'select', options: MESSAGE_TYPE_OPTIONS, placeholder: '请选择消息类型' }
+      ],
+      messageTypeOptions: MESSAGE_TYPE_OPTIONS,
+      isDefaultOptions: IS_DEFAULT_OPTIONS,
       loading: true,
       total: 0,
       configList: [],
@@ -261,7 +220,6 @@ export default {
       },
       form: {},
       testForm: {},
-      // 邮件配置
       emailConfig: {
         host: '',
         port: '587',
@@ -271,7 +229,6 @@ export default {
         fromName: '系统通知',
         ssl: true
       },
-      // 短信配置
       smsConfig: {
         provider: 'aliyun',
         accessKeyId: '',
@@ -279,24 +236,18 @@ export default {
         signName: '',
         templateCode: ''
       },
-      // 站内信配置
       systemConfig: {
         expireDays: '30',
         pushEnabled: true
       },
-      // 微信配置
       wechatConfig: {
         appId: '',
         appSecret: '',
         templateId: ''
       },
       rules: {
-        configName: [
-          { required: true, message: '配置名称不能为空', trigger: 'blur' }
-        ],
-        messageType: [
-          { required: true, message: '消息类型不能为空', trigger: 'change' }
-        ]
+        configName: [{ required: true, message: '配置名称不能为空', trigger: 'blur' }],
+        messageType: [{ required: true, message: '消息类型不能为空', trigger: 'change' }]
       }
     }
   },
@@ -312,10 +263,13 @@ export default {
         this.loading = false
       })
     },
-    resetForm(refName) {
-      if (this.$refs[refName]) {
-        this.$refs[refName].resetFields()
-      }
+    handleQuery() {
+      this.queryParams.current = 1
+      this.getList()
+    },
+    resetQuery() {
+      this.queryParams.current = 1
+      this.getList()
     },
     cancel() {
       this.open = false
@@ -331,69 +285,17 @@ export default {
         status: '0',
         remark: null
       }
-      // 重置配置对象
-      this.emailConfig = {
-        host: '',
-        port: '587',
-        from: '',
-        username: '',
-        password: '',
-        fromName: '系统通知',
-        ssl: true
-      }
-      this.smsConfig = {
-        provider: 'aliyun',
-        accessKeyId: '',
-        accessKeySecret: '',
-        signName: '',
-        templateCode: ''
-      }
-      this.systemConfig = {
-        expireDays: '30',
-        pushEnabled: true
-      }
-      this.wechatConfig = {
-        appId: '',
-        appSecret: '',
-        templateId: ''
-      }
-      this.resetForm('form')
+      this.emailConfig = { host: '', port: '587', from: '', username: '', password: '', fromName: '系统通知', ssl: true }
+      this.smsConfig = { provider: 'aliyun', accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '' }
+      this.systemConfig = { expireDays: '30', pushEnabled: true }
+      this.wechatConfig = { appId: '', appSecret: '', templateId: '' }
+      this.$refs['form'] && this.$refs['form'].resetFields()
     },
     handleTypeChange() {
-      // 切换消息类型时只重置配置对象，不重置整个表单
-      this.emailConfig = {
-        host: '',
-        port: '587',
-        from: '',
-        username: '',
-        password: '',
-        fromName: '系统通知',
-        ssl: true
-      }
-      this.smsConfig = {
-        provider: 'aliyun',
-        accessKeyId: '',
-        accessKeySecret: '',
-        signName: '',
-        templateCode: ''
-      }
-      this.systemConfig = {
-        expireDays: '30',
-        pushEnabled: true
-      }
-      this.wechatConfig = {
-        appId: '',
-        appSecret: '',
-        templateId: ''
-      }
-    },
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    resetQuery() {
-      this.resetForm('queryForm')
-      this.handleQuery()
+      this.emailConfig = { host: '', port: '587', from: '', username: '', password: '', fromName: '系统通知', ssl: true }
+      this.smsConfig = { provider: 'aliyun', accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '' }
+      this.systemConfig = { expireDays: '30', pushEnabled: true }
+      this.wechatConfig = { appId: '', appSecret: '', templateId: '' }
     },
     handleAdd() {
       this.reset()
@@ -404,22 +306,14 @@ export default {
       this.reset()
       getMessageConfig(row.configId).then(response => {
         this.form = response.data
-        // 解析配置数据
         if (this.form.configData) {
           try {
             const config = JSON.parse(this.form.configData)
-            if (this.form.messageType === '1') {
-              this.emailConfig = { ...this.emailConfig, ...config }
-            } else if (this.form.messageType === '2') {
-              this.smsConfig = { ...this.smsConfig, ...config }
-            } else if (this.form.messageType === '3') {
-              this.systemConfig = { ...this.systemConfig, ...config }
-            } else if (this.form.messageType === '4') {
-              this.wechatConfig = { ...this.wechatConfig, ...config }
-            }
-          } catch (_) {
-            // 配置数据解析失败，使用默认值
-          }
+            if (this.form.messageType === '1') this.emailConfig = { ...this.emailConfig, ...config }
+            else if (this.form.messageType === '2') this.smsConfig = { ...this.smsConfig, ...config }
+            else if (this.form.messageType === '3') this.systemConfig = { ...this.systemConfig, ...config }
+            else if (this.form.messageType === '4') this.wechatConfig = { ...this.wechatConfig, ...config }
+          } catch (_) {}
         }
         this.open = true
         this.title = '修改消息配置'
@@ -428,29 +322,21 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
-          // 根据消息类型组装配置数据
           let configData = {}
-          if (this.form.messageType === '1') {
-            configData = this.emailConfig
-          } else if (this.form.messageType === '2') {
-            configData = this.smsConfig
-          } else if (this.form.messageType === '3') {
-            configData = this.systemConfig
-          } else if (this.form.messageType === '4') {
-            configData = this.wechatConfig
-          }
-
-          // 转换为JSON字符串
+          if (this.form.messageType === '1') configData = this.emailConfig
+          else if (this.form.messageType === '2') configData = this.smsConfig
+          else if (this.form.messageType === '3') configData = this.systemConfig
+          else if (this.form.messageType === '4') configData = this.wechatConfig
           this.form.configData = JSON.stringify(configData)
 
           if (this.form.configId != null) {
-            updateMessageConfig(this.form).then(response => {
+            updateMessageConfig(this.form).then(() => {
               this.$message.success('修改成功')
               this.open = false
               this.getList()
             })
           } else {
-            addMessageConfig(this.form).then(response => {
+            addMessageConfig(this.form).then(() => {
               this.$message.success('新增成功')
               this.open = false
               this.getList()
@@ -478,10 +364,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        return changeConfigStatus({
-          configId: row.configId,
-          status: row.status
-        })
+        return changeConfigStatus({ configId: row.configId, status: row.status })
       }).then(() => {
         this.$message.success(text + '成功')
       }).catch(() => {
@@ -511,7 +394,7 @@ export default {
       this.testOpen = true
     },
     submitTest() {
-      testSendMessage(this.testForm).then(response => {
+      testSendMessage(this.testForm).then(() => {
         this.$message.success('发送成功')
         this.testOpen = false
       }).catch(() => {

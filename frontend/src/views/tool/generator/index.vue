@@ -1,36 +1,9 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
-      <el-form-item label="表名称" prop="tableName">
-        <el-input
-          v-model="queryParams.tableName"
-          placeholder="请输入表名称"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm :model="queryParams" :fields="searchFields" @search="handleQuery" @reset="resetQuery" />
 
-    <!-- 操作按钮 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-        >新增</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar show-add @add="handleAdd" />
 
-    <!-- 数据表格 -->
     <el-table
       v-loading="loading"
       :data="tableList"
@@ -47,29 +20,13 @@
       <el-table-column label="表注释" align="center" prop="tableComment" show-overflow-tooltip />
       <el-table-column label="操作" align="center" width="300" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-view"
-            @click="handlePreview(scope.row)"
-          >预览</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleEdit(scope.row)"
-          >编辑</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-download"
-            @click="handleGenerate(scope.row)"
-          >生成代码</el-button>
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handlePreview(scope.row)">预览</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button size="mini" type="text" icon="el-icon-download" @click="handleGenerate(scope.row)">生成代码</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <el-pagination
       v-if="total > 0"
       :current-page.sync="queryParams.current"
@@ -82,7 +39,6 @@
       style="margin-top: 15px; text-align: right"
     />
 
-    <!-- 预览对话框 -->
     <el-dialog title="表结构预览" :visible.sync="previewDialogVisible" width="800px" append-to-body>
       <el-descriptions :column="2" border v-if="tableInfo">
         <el-descriptions-item label="表名称">{{ tableInfo.tableName }}</el-descriptions-item>
@@ -118,7 +74,6 @@
       </div>
     </el-dialog>
 
-    <!-- 生成配置对话框 -->
     <el-dialog title="生成配置" :visible.sync="configDialogVisible" width="600px" append-to-body>
       <el-form ref="configForm" :model="configForm" :rules="configRules" label-width="120px">
         <el-form-item label="表名" prop="tableName">
@@ -158,34 +113,30 @@
 <script>
 import { listTable, getTable, generateCode } from '@/api/tool/generator'
 import { listMenu } from '@/api/system/menu'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
 
 export default {
   name: 'Generator',
+  components: { SearchForm, TableToolbar },
   data() {
     return {
-      // 加载状态
+      searchFields: [
+        { prop: 'tableName', label: '表名称', type: 'input', placeholder: '请输入表名称' }
+      ],
       loading: true,
-      // 表数据列表
       tableList: [],
-      // 总数
       total: 0,
-      // 选中的表
       selectedTables: [],
-      // 查询参数
       queryParams: {
         tableName: undefined,
         current: 1,
         size: 10
       },
-      // 预览对话框显示状态
       previewDialogVisible: false,
-      // 表详细信息
       tableInfo: null,
-      // 配置对话框显示状态
       configDialogVisible: false,
-      // 菜单树选项
       menuOptions: [],
-      // 配置表单
       configForm: {
         tableName: '',
         packageName: 'com.admin.system',
@@ -194,20 +145,11 @@ export default {
         tablePrefix: 'sys_',
         parentMenuId: 0
       },
-      // 表单验证规则
       configRules: {
-        tableName: [
-          { required: true, message: '表名不能为空', trigger: 'blur' }
-        ],
-        packageName: [
-          { required: true, message: '包名不能为空', trigger: 'blur' }
-        ],
-        moduleName: [
-          { required: true, message: '模块名不能为空', trigger: 'blur' }
-        ],
-        author: [
-          { required: true, message: '作者不能为空', trigger: 'blur' }
-        ]
+        tableName: [{ required: true, message: '表名不能为空', trigger: 'blur' }],
+        packageName: [{ required: true, message: '包名不能为空', trigger: 'blur' }],
+        moduleName: [{ required: true, message: '模块名不能为空', trigger: 'blur' }],
+        author: [{ required: true, message: '作者不能为空', trigger: 'blur' }]
       }
     }
   },
@@ -216,7 +158,6 @@ export default {
     this.getMenuTree()
   },
   methods: {
-    /** 查询表列表 */
     getList() {
       this.loading = true
       listTable(this.queryParams).then(response => {
@@ -227,86 +168,61 @@ export default {
         this.loading = false
       })
     },
-    /** 获取菜单树 */
     getMenuTree() {
       listMenu().then(response => {
         const menus = response.data || []
         this.menuOptions = [{ menuId: 0, menuName: '主目录', children: this.buildMenuTree(menus) }]
       })
     },
-    /** 构建菜单树 */
     buildMenuTree(menus) {
       const menuMap = {}
       const tree = []
+      menus.forEach(menu => { menuMap[menu.menuId] = { ...menu, children: [] } })
       menus.forEach(menu => {
-        menuMap[menu.menuId] = { ...menu, children: [] }
-      })
-      menus.forEach(menu => {
-        if (menu.parentId === 0) {
-          tree.push(menuMap[menu.menuId])
-        } else if (menuMap[menu.parentId]) {
-          menuMap[menu.parentId].children.push(menuMap[menu.menuId])
-        }
+        if (menu.parentId === 0) tree.push(menuMap[menu.menuId])
+        else if (menuMap[menu.parentId]) menuMap[menu.parentId].children.push(menuMap[menu.menuId])
       })
       return tree
     },
-    /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.current = 1
       this.getList()
     },
-    /** 重置按钮操作 */
     resetQuery() {
-      this.queryParams = {
-        tableName: undefined,
-        current: 1,
-        size: 10
-      }
-      this.handleQuery()
+      this.queryParams.current = 1
+      this.getList()
     },
-    /** 每页条数改变 */
     handleSizeChange(size) {
       this.queryParams.size = size
       this.queryParams.current = 1
       this.getList()
     },
-    /** 当前页改变 */
     handleCurrentChange(current) {
       this.queryParams.current = current
       this.getList()
     },
-    /** 多选框选中数据 */
     handleSelectionChange(selection) {
       this.selectedTables = selection.map(item => item.tableName)
     },
-    /** 预览按钮操作 */
     handlePreview(row) {
-      const tableName = row.tableName
-      getTable(tableName).then(response => {
+      getTable(row.tableName).then(response => {
         this.tableInfo = response.data
         this.previewDialogVisible = true
       }).catch(() => {
         this.$message.error('获取表信息失败')
       })
     },
-    /** 新增按钮操作 - 跳转到新页面 */
     handleAdd() {
       this.$router.push('/tool/generator/edit')
     },
-    /** 编辑按钮操作 - 跳转到编辑页面 */
     handleEdit(row) {
-      this.$router.push({
-        path: '/tool/generator/edit',
-        query: { tableName: row.tableName }
-      })
+      this.$router.push({ path: '/tool/generator/edit', query: { tableName: row.tableName } })
     },
-    /** 生成代码按钮操作 */
     handleGenerate(row) {
       this.configForm.tableName = row.tableName
       this.configForm.moduleName = ''
       this.configDialogVisible = true
     },
-    /** 提交生成 */
     submitGenerate() {
       this.$refs['configForm'].validate(valid => {
         if (valid) {
@@ -318,7 +234,6 @@ export default {
         }
       })
     },
-    /** 下载文件 */
     downloadFile(data, fileName) {
       const blob = new Blob([data], { type: 'application/zip' })
       const url = window.URL.createObjectURL(blob)
@@ -331,12 +246,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.app-container {
-  padding: 20px;
-}
-.mb8 {
-  margin-bottom: 8px;
-}
-</style>

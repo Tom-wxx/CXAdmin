@@ -1,63 +1,9 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
-    <el-form :model="queryParams" ref="queryForm" :inline="true" label-width="80px">
-      <el-form-item label="模板名称" prop="templateName">
-        <el-input
-          v-model="queryParams.templateName"
-          placeholder="请输入模板名称"
-          clearable
-          size="small"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="模板编码" prop="templateCode">
-        <el-input
-          v-model="queryParams.templateCode"
-          placeholder="请输入模板编码"
-          clearable
-          size="small"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="模板状态" clearable size="small">
-          <el-option label="启用" value="1" />
-          <el-option label="停用" value="0" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <SearchForm :model="queryParams" :fields="searchFields" @search="handleQuery" @reset="resetQuery" />
 
-    <!-- 操作按钮 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-          v-hasPermi="['system:notification:template:add']"
-        >新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-delete"
-          size="mini"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['system:notification:template:remove']"
-        >删除</el-button>
-      </el-col>
-    </el-row>
+    <TableToolbar show-add show-delete :multiple="multiple" @add="handleAdd" @delete="handleDelete" />
 
-    <!-- 模板列表 -->
     <el-table v-loading="loading" :data="templateList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="模板编号" align="center" prop="id" width="80" />
@@ -74,9 +20,7 @@
       </el-table-column>
       <el-table-column label="优先级" align="center" prop="priority" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.priority === 'urgent'" type="danger" size="small">紧急</el-tag>
-          <el-tag v-else-if="scope.row.priority === 'important'" type="warning" size="small">重要</el-tag>
-          <el-tag v-else type="info" size="small">普通</el-tag>
+          <DictTag :options="priorityOptions" :value="scope.row.priority || 'normal'" />
         </template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="80">
@@ -114,7 +58,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <pagination
       v-show="total > 0"
       :total="total"
@@ -123,7 +66,6 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="模板编码" prop="templateCode">
@@ -181,29 +123,38 @@ import {
   changeTemplateStatus
 } from '@/api/system/notificationTemplate'
 import Pagination from '@/components/Pagination'
+import SearchForm from '@/components/SearchForm'
+import TableToolbar from '@/components/TableToolbar'
+import DictTag from '@/components/DictTag'
+
+const PRIORITY_OPTIONS = [
+  { value: 'urgent', label: '紧急', type: 'danger' },
+  { value: 'important', label: '重要', type: 'warning' },
+  { value: 'normal', label: '普通', type: 'info' }
+]
+const STATUS_SEARCH_OPTIONS = [
+  { value: '1', label: '启用' },
+  { value: '0', label: '停用' }
+]
 
 export default {
   name: 'NotificationTemplate',
-  components: {
-    Pagination
-  },
+  components: { Pagination, SearchForm, TableToolbar, DictTag },
   data() {
     return {
-      // 遮罩层
+      searchFields: [
+        { prop: 'templateName', label: '模板名称', type: 'input', placeholder: '请输入模板名称' },
+        { prop: 'templateCode', label: '模板编码', type: 'input', placeholder: '请输入模板编码' },
+        { prop: 'status', label: '状态', type: 'select', options: STATUS_SEARCH_OPTIONS, placeholder: '请选择状态' }
+      ],
+      priorityOptions: PRIORITY_OPTIONS,
       loading: true,
-      // 选中数组
       ids: [],
-      // 非多个禁用
       multiple: true,
-      // 总条数
       total: 0,
-      // 模板列表
       templateList: [],
-      // 弹出层标题
       title: '',
-      // 是否显示弹出层
       open: false,
-      // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
@@ -212,25 +163,13 @@ export default {
         type: undefined,
         status: undefined
       },
-      // 表单参数
       form: {},
-      // 表单校验
       rules: {
-        templateCode: [
-          { required: true, message: '模板编码不能为空', trigger: 'blur' }
-        ],
-        templateName: [
-          { required: true, message: '模板名称不能为空', trigger: 'blur' }
-        ],
-        title: [
-          { required: true, message: '标题模板不能为空', trigger: 'blur' }
-        ],
-        content: [
-          { required: true, message: '内容模板不能为空', trigger: 'blur' }
-        ],
-        type: [
-          { required: true, message: '通知类型不能为空', trigger: 'change' }
-        ]
+        templateCode: [{ required: true, message: '模板编码不能为空', trigger: 'blur' }],
+        templateName: [{ required: true, message: '模板名称不能为空', trigger: 'blur' }],
+        title: [{ required: true, message: '标题模板不能为空', trigger: 'blur' }],
+        content: [{ required: true, message: '内容模板不能为空', trigger: 'blur' }],
+        type: [{ required: true, message: '通知类型不能为空', trigger: 'change' }]
       }
     }
   },
@@ -238,7 +177,6 @@ export default {
     this.getList()
   },
   methods: {
-    /** 查询模板列表 */
     getList() {
       this.loading = true
       listTemplate(this.queryParams).then(response => {
@@ -247,12 +185,18 @@ export default {
         this.loading = false
       })
     },
-    // 取消按钮
+    handleQuery() {
+      this.queryParams.pageNum = 1
+      this.getList()
+    },
+    resetQuery() {
+      this.queryParams.pageNum = 1
+      this.getList()
+    },
     cancel() {
       this.open = false
       this.reset()
     },
-    // 表单重置
     reset() {
       this.form = {
         id: undefined,
@@ -265,30 +209,17 @@ export default {
         status: '1',
         remark: undefined
       }
-      this.resetForm('form')
+      this.$refs['form'] && this.$refs['form'].resetFields()
     },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.pageNum = 1
-      this.getList()
-    },
-    /** 重置按钮操作 */
-    resetQuery() {
-      this.resetForm('queryForm')
-      this.handleQuery()
-    },
-    // 多选框选中数据
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.id)
       this.multiple = !selection.length
     },
-    /** 新增按钮操作 */
     handleAdd() {
       this.reset()
       this.open = true
       this.title = '添加通知模板'
     },
-    /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset()
       const id = row.id || this.ids[0]
@@ -298,18 +229,17 @@ export default {
         this.title = '修改通知模板'
       })
     },
-    /** 提交按钮 */
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
           if (this.form.id != undefined) {
-            updateTemplate(this.form).then(response => {
+            updateTemplate(this.form).then(() => {
               this.$message.success('修改成功')
               this.open = false
               this.getList()
             })
           } else {
-            addTemplate(this.form).then(response => {
+            addTemplate(this.form).then(() => {
               this.$message.success('新增成功')
               this.open = false
               this.getList()
@@ -318,7 +248,6 @@ export default {
         }
       })
     },
-    /** 删除按钮操作 */
     handleDelete(row) {
       const ids = row.id ? [row.id] : this.ids
       this.$confirm('是否确认删除选中的模板?', '警告', {
@@ -332,7 +261,6 @@ export default {
         this.getList()
       })
     },
-    /** 状态修改 */
     handleStatusChange(row) {
       let text = row.status === '1' ? '启用' : '停用'
       this.$confirm('确认要"' + text + '""' + row.templateName + '"模板吗?', '警告', {
@@ -346,6 +274,10 @@ export default {
       }).catch(() => {
         row.status = row.status === '0' ? '1' : '0'
       })
+    },
+    parseTime(time) {
+      if (!time) return ''
+      return new Date(time).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
     }
   }
 }
