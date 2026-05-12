@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
@@ -104,6 +106,14 @@ class RegisterServiceTest {
         when(redisUtil.get(SystemConstants.RESET_PWD_KEY + "expired")).thenReturn(null);
         ServiceException ex = assertThrows(ServiceException.class, () -> registerService.resetPassword(dto));
         assertTrue(ex.getMessage().contains("已过期"));
+    }
+
+    @Test
+    void forgotPassword_whenEmailNotFound_doesNothingAndSilent() {
+        when(userMapper.checkEmailUnique("unknown@example.com")).thenReturn(null);
+        assertDoesNotThrow(() -> registerService.forgotPassword("unknown@example.com"));
+        verify(redisUtil, never()).set(anyString(), any(), anyLong(), any());
+        verify(mailService, never()).sendResetPasswordEmail(anyString(), anyString());
     }
 
     @Test

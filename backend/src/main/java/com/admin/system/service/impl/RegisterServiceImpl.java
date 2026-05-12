@@ -10,6 +10,7 @@ import com.admin.system.service.IRegisterService;
 import com.admin.system.utils.MailService;
 import com.admin.system.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegisterServiceImpl implements IRegisterService {
@@ -37,7 +39,6 @@ public class RegisterServiceImpl implements IRegisterService {
         if (!dto.getCode().toLowerCase().equals(captcha.toString())) {
             throw new ServiceException("验证码错误");
         }
-        redisUtil.delete(captchaKey);
 
         if (userMapper.checkUsernameUnique(dto.getUsername()) != null) {
             throw new ServiceException("用户名 '" + dto.getUsername() + "' 已存在");
@@ -54,6 +55,7 @@ public class RegisterServiceImpl implements IRegisterService {
         user.setStatus(SystemConstants.STATUS_NORMAL);
         user.setUserType("00");
         userMapper.insert(user);
+        redisUtil.delete(captchaKey);
     }
 
     @Override
@@ -61,11 +63,17 @@ public class RegisterServiceImpl implements IRegisterService {
         SysUser user = userMapper.checkEmailUnique(email);
         if (user != null) {
             String token = UUID.randomUUID().toString();
-            redisUtil.set(SystemConstants.RESET_PWD_KEY + token,
+            String redisKey = SystemConstants.RESET_PWD_KEY + token;
+            redisUtil.set(redisKey,
                     user.getUserId(),
                     SystemConstants.RESET_PWD_EXPIRATION,
                     TimeUnit.MINUTES);
-            mailService.sendResetPasswordEmail(email, token);
+            try {
+                mailService.sendResetPasswordEmail(email, token);
+            } catch (Exception e) {
+                log.error("发送重置密码邮件失败: {}", email, e);
+                redisUtil.delete(redisKey);
+            }
         }
     }
 
@@ -76,11 +84,14 @@ public class RegisterServiceImpl implements IRegisterService {
         if (userIdObj == null) {
             throw new ServiceException("重置链接已过期或无效，请重新申请");
         }
-        Long userId = Long.parseLong(userIdObj.toString());
+        Long userId = ((Number) userIdObj).longValue();
         SysUser user = new SysUser();
         user.setUserId(userId);
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
-        userMapper.updateById(user);
+        int updated = userMapper.updateById(user);
+        if (updated == 0) {
+            throw new ServiceException("用户不存在或已被删除");
+        }
         redisUtil.delete(SystemConstants.RESET_PWD_KEY + dto.getToken());
     }
 }
