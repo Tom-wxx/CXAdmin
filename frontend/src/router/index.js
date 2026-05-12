@@ -27,6 +27,21 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/register',
+    component: () => import('@/views/login/register'),
+    hidden: true
+  },
+  {
+    path: '/forgot-password',
+    component: () => import('@/views/login/forgot-password'),
+    hidden: true
+  },
+  {
+    path: '/reset-password',
+    component: () => import('@/views/login/reset-password'),
+    hidden: true
+  },
+  {
     path: '/404',
     component: () => import('@/views/error/404'),
     hidden: true

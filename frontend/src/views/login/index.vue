@@ -97,7 +97,8 @@
         </el-form>
 
         <div class="form-footer">
-          <span class="tips">默认账号: admin / admin123</span>
+          <el-link @click="$router.push('/register')">注册账号</el-link>
+          <el-link style="float:right" @click="$router.push('/forgot-password')">忘记密码</el-link>
         </div>
       </div>
     </div>
@@ -371,13 +372,9 @@ $dark-bg: #001529;
   }
 
   .form-footer {
-    text-align: center;
     margin-top: 8px;
-
-    .tips {
-      font-size: 13px;
-      color: #bfbfbf;
-    }
+    overflow: hidden;
+    font-size: 14px;
   }
 }
 
