@@ -112,4 +112,16 @@ public final class SystemConstants {
      * HttpOnly Cookie 名称
      */
     public static final String TOKEN_COOKIE_NAME = "Admin-Token";
+
+    // ==================== 密码重置 ====================
+
+    /**
+     * 密码重置 Redis key 前缀
+     */
+    public static final String RESET_PWD_KEY = "reset:pwd:";
+
+    /**
+     * 密码重置链接有效期（分钟）
+     */
+    public static final int RESET_PWD_EXPIRATION = 30;
 }
