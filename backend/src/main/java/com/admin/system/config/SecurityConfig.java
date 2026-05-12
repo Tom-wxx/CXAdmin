@@ -78,9 +78,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(
                         "/login",
                         "/captcha",
+                        // 注册/找回密码接口（Controller 在后续任务实现）
                         "/register",
                         "/forgot-password",
                         "/reset-password",
+                        // Actuator 端点匹配 servlet path（容器已去除 context-path /api）
                         "/actuator/health",
                         "/actuator/info",
                         "/uploads/**",
