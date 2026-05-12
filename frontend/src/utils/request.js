@@ -1,22 +1,18 @@
 import axios from 'axios'
 import { Message, MessageBox } from 'element-ui'
 import store from '@/store'
-import { getToken } from '@/utils/auth'
 import { HTTP_OK, HTTP_UNAUTHORIZED, HTTP_SERVER_ERROR } from '@/utils/constants'
 
 // 创建axios实例
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API,
-  timeout: 10000
+  timeout: 10000,
+  withCredentials: true
 })
 
 // request拦截器
 service.interceptors.request.use(
   config => {
-    const token = getToken()
-    if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token
-    }
     return config
   },
   error => {

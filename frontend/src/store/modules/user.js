@@ -36,9 +36,9 @@ const actions = {
     const uuid = userInfo.uuid
 
     return new Promise((resolve, reject) => {
-      login({ username, password, code, uuid }).then(res => {
-        setToken(res.data.token)
-        commit('SET_TOKEN', res.data.token)
+      login({ username, password, code, uuid }).then(() => {
+        setToken()
+        commit('SET_TOKEN', '1')
         resolve()
       }).catch(error => {
         reject(error)
