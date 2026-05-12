@@ -168,7 +168,7 @@
         class="upload-container"
         drag
         :action="uploadUrl"
-        :headers="uploadHeaders"
+        :with-credentials="true"
         :on-success="handleUploadSuccess"
         :on-error="handleUploadError"
         :before-upload="beforeUpload"
@@ -272,7 +272,6 @@
 
 <script>
 import { listFile, updateFile, deleteFile, getFileStatistics, getFileUrl, downloadFile } from '@/api/system/file'
-import { getToken } from '@/utils/auth'
 import Pagination from '@/components/Pagination'
 import SearchForm from '@/components/SearchForm'
 import TableToolbar from '@/components/TableToolbar'
@@ -329,7 +328,6 @@ export default {
       // 上传对话框
       uploadDialogVisible: false,
       uploadUrl: process.env.VUE_APP_BASE_API + '/system/file/upload',
-      uploadHeaders: { Authorization: 'Bearer ' + getToken() },
       uploadFileList: [],
       // 编辑对话框
       editDialogVisible: false,
