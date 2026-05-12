@@ -15,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -68,8 +69,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     /**
      * 从请求中获取Token
+     * 优先读取 HttpOnly Cookie（浏览器访问），回退读取 Authorization header（Swagger / API 客户端兼容）
      */
     private String getTokenFromRequest(HttpServletRequest request) {
+        // 优先读取 HttpOnly Cookie（浏览器访问）
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("Admin-Token".equals(cookie.getName())) {
+                    String value = cookie.getValue();
+                    if (StringUtils.hasText(value)) {
+                        return value;
+                    }
+                }
+            }
+        }
+        // 回退读取 Authorization header（Swagger / API 客户端兼容）
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
