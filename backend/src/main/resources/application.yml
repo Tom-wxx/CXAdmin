@@ -110,6 +110,17 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  # 邮件配置
+  mail:
+    host: smtp.qq.com            # SMTP 服务器，如 smtp.qq.com / smtp.163.com
+    port: 587
+    username: your@email.com     # 替换为实际发件邮箱
+    password: your-auth-code     # 替换为邮箱密码或授权码
+    default-encoding: UTF-8
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
 # MyBatis Plus 配置
 mybatis-plus:
   # mapper xml 文件路径
@@ -208,3 +219,7 @@ info:
     name: CXAdmin
     version: 1.0.0
     description: 企业级后台管理系统
+
+# 前端访问地址（重置密码邮件链接使用）
+app:
+  frontend-url: http://localhost:8081
