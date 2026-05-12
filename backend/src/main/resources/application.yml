@@ -188,3 +188,23 @@ logging:
     name: logs/admin-system.log
     max-size: 10MB
     max-history: 30
+
+# Actuator 配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: CXAdmin
+    version: 1.0.0
+    description: 企业级后台管理系统

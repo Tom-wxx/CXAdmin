@@ -78,6 +78,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(
                         "/login",
                         "/captcha",
+                        "/register",
+                        "/forgot-password",
+                        "/reset-password",
+                        "/actuator/health",
+                        "/actuator/info",
                         "/uploads/**",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
