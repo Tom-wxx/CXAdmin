@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String TOKEN_COOKIE_NAME = "Admin-Token";
+
     private final JwtProperties jwtProperties;
     private final RedisUtil redisUtil;
 
@@ -72,11 +74,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * 优先读取 HttpOnly Cookie（浏览器访问），回退读取 Authorization header（Swagger / API 客户端兼容）
      */
     private String getTokenFromRequest(HttpServletRequest request) {
-        // 优先读取 HttpOnly Cookie（浏览器访问）
+        // 优先读取 Cookie（HttpOnly 由 LoginController 的 Set-Cookie 设置，SameSite=Lax 防 CSRF）
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if ("Admin-Token".equals(cookie.getName())) {
+                if (TOKEN_COOKIE_NAME.equals(cookie.getName())) {
                     String value = cookie.getValue();
                     if (StringUtils.hasText(value)) {
                         return value;
