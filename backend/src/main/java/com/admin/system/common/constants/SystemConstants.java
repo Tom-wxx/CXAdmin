@@ -105,4 +105,11 @@ public final class SystemConstants {
      * 令牌刷新阈值（毫秒），20分钟
      */
     public static final long TOKEN_REFRESH_THRESHOLD = 20 * 60 * 1000L;
+
+    // ==================== Cookie ====================
+
+    /**
+     * HttpOnly Cookie 名称
+     */
+    public static final String TOKEN_COOKIE_NAME = "Admin-Token";
 }

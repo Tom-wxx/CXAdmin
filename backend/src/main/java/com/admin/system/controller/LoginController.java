@@ -1,6 +1,7 @@
 package com.admin.system.controller;
 
 import com.admin.system.common.Result;
+import com.admin.system.common.constants.SystemConstants;
 import com.admin.system.config.JwtProperties;
 import com.admin.system.dto.LoginDTO;
 import com.admin.system.service.ILoginService;
@@ -29,7 +30,7 @@ public class LoginController {
         Map<String, Object> result = loginService.login(loginDTO);
         String token = (String) result.remove("token");
         // Build the Set-Cookie header manually to include SameSite=Lax (CSRF mitigation)
-        String cookieHeader = "Admin-Token=" + token
+        String cookieHeader = SystemConstants.TOKEN_COOKIE_NAME + "=" + token
                 + "; Path=/"
                 + "; HttpOnly"
                 + "; Max-Age=" + (jwtProperties.getExpireTime() * 60)
@@ -42,7 +43,7 @@ public class LoginController {
     @PostMapping("/logout")
     public Result<Void> logout(HttpServletResponse response) {
         loginService.logout();
-        response.addHeader("Set-Cookie", "Admin-Token=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax");
+        response.addHeader("Set-Cookie", SystemConstants.TOKEN_COOKIE_NAME + "=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax");
         return Result.success("退出成功");
     }
 

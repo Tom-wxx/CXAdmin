@@ -31,8 +31,6 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String TOKEN_COOKIE_NAME = "Admin-Token";
-
     private final JwtProperties jwtProperties;
     private final RedisUtil redisUtil;
 
@@ -78,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if (TOKEN_COOKIE_NAME.equals(cookie.getName())) {
+                if (SystemConstants.TOKEN_COOKIE_NAME.equals(cookie.getName())) {
                     String value = cookie.getValue();
                     if (StringUtils.hasText(value)) {
                         return value;
