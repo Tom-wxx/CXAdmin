@@ -92,7 +92,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         "/v2/api-docs",
                         "/v3/api-docs",
                         "/webjars/**",
-                        "/druid/**"
+                        "/druid/**",
+                        // SSO 公开端点
+                        "/sso/providers",
+                        "/sso/authorize/**",
+                        "/sso/callback/**"
                 ).permitAll()
                 // 静态资源，可匿名访问
                 .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "/**/*.js", "/profile/**").permitAll()
