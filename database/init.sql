@@ -1409,3 +1409,65 @@ SELECT job_id, job_name, job_group, invoke_target, cron_expression, status, rema
 FROM sys_job
 ORDER BY job_id DESC
 LIMIT 6;
+
+-- ============================================================
+-- Section 12: SSO 单点登录
+-- ============================================================
+
+-- 12.1 SSO 身份认证源
+DROP TABLE IF EXISTS `sys_sso_provider`;
+CREATE TABLE `sys_sso_provider` (
+  `id`                 bigint NOT NULL AUTO_INCREMENT,
+  `code`               varchar(50)  NOT NULL COMMENT '标识（URL 用）',
+  `name`               varchar(50)  NOT NULL COMMENT '展示名',
+  `type`               varchar(20)  NOT NULL DEFAULT 'OAUTH2_GENERIC' COMMENT '策略类型',
+  `icon`               varchar(100) DEFAULT NULL COMMENT '图标 class',
+  `client_id`          varchar(255) NOT NULL,
+  `client_secret`      varchar(500) NOT NULL COMMENT 'AES-GCM(IV||cipher) Base64',
+  `authorization_uri`  varchar(500) NOT NULL,
+  `token_uri`          varchar(500) NOT NULL,
+  `userinfo_uri`       varchar(500) NOT NULL,
+  `scope`              varchar(200) DEFAULT NULL,
+  `user_field_mapping` varchar(1000) DEFAULT NULL COMMENT '字段映射 JSON',
+  `default_role_id`    bigint DEFAULT NULL COMMENT '自动注册默认角色',
+  `default_dept_id`    bigint DEFAULT NULL COMMENT '自动注册默认部门',
+  `enabled`            tinyint(1) NOT NULL DEFAULT 1,
+  `order_num`          int NOT NULL DEFAULT 0,
+  `create_by`          varchar(64) DEFAULT NULL,
+  `create_time`        datetime DEFAULT NULL,
+  `update_by`          varchar(64) DEFAULT NULL,
+  `update_time`        datetime DEFAULT NULL,
+  `deleted`            tinyint(1) NOT NULL DEFAULT 0,
+  `remark`             varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='SSO 身份认证源';
+
+-- 12.2 用户外部身份绑定
+DROP TABLE IF EXISTS `sys_user_sso_binding`;
+CREATE TABLE `sys_user_sso_binding` (
+  `id`                bigint NOT NULL AUTO_INCREMENT,
+  `user_id`           bigint NOT NULL,
+  `provider_id`       bigint NOT NULL,
+  `external_user_id`  varchar(100) NOT NULL,
+  `external_username` varchar(100) DEFAULT NULL,
+  `email`             varchar(100) DEFAULT NULL,
+  `bind_time`         datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_provider_external` (`provider_id`,`external_user_id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户与外部 IdP 身份绑定';
+
+-- 12.3 菜单：系统管理 → 身份认证源（menu_id=120 起）
+INSERT INTO `sys_menu` (`menu_id`,`menu_name`,`parent_id`,`order_num`,`path`,`component`,`is_frame`,`is_cache`,`menu_type`,`visible`,`status`,`perms`,`icon`,`remark`)
+VALUES
+ (120,'身份认证源',1,7,'sso','system/sso/index',1,0,'C','0','0','system:sso:list','connection','SSO 身份认证源管理'),
+ (121,'认证源查询',120,1,'','',1,0,'F','0','0','system:sso:query','#',''),
+ (122,'认证源新增',120,2,'','',1,0,'F','0','0','system:sso:add','#',''),
+ (123,'认证源修改',120,3,'','',1,0,'F','0','0','system:sso:edit','#',''),
+ (124,'认证源删除',120,4,'','',1,0,'F','0','0','system:sso:remove','#',''),
+ (125,'认证源测试',120,5,'','',1,0,'F','0','0','system:sso:test','#','');
+
+-- 12.4 把 120-125 这 6 个菜单绑给 admin 角色（role_id=1）
+INSERT INTO `sys_role_menu` (`role_id`,`menu_id`) VALUES
+ (1,120),(1,121),(1,122),(1,123),(1,124),(1,125);
