@@ -42,6 +42,11 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/sso/callback',
+    component: () => import('@/views/sso/callback'),
+    hidden: true
+  },
+  {
     path: '/404',
     component: () => import('@/views/error/404'),
     hidden: true

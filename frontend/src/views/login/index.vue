@@ -100,6 +100,22 @@
           <el-link @click="$router.push('/register')">注册账号</el-link>
           <el-link style="float:right" @click="$router.push('/forgot-password')">忘记密码</el-link>
         </div>
+
+        <div v-if="providers.length" class="sso-section">
+          <div class="sso-divider"><span>第三方登录</span></div>
+          <div class="sso-buttons">
+            <el-button
+              v-for="p in providers"
+              :key="p.code"
+              class="sso-btn"
+              plain
+              @click="ssoLogin(p.code)"
+            >
+              <i v-if="p.icon" :class="['sso-icon', p.icon]"></i>
+              {{ p.name }}
+            </el-button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -107,6 +123,7 @@
 
 <script>
 import { getCaptcha } from '@/api/login'
+import { listEnabledProviders } from '@/api/system/sso'
 
 export default {
   name: 'Login',
@@ -128,7 +145,8 @@ export default {
       loading: false,
       redirect: undefined,
       codeUrl: '',
-      captchaEnabled: true
+      captchaEnabled: true,
+      providers: []
     }
   },
   watch: {
@@ -141,6 +159,7 @@ export default {
   },
   created() {
     this.getCode()
+    listEnabledProviders().then(res => { this.providers = res.data || [] })
   },
   methods: {
     checkCapslock(e) {
@@ -178,6 +197,10 @@ export default {
           })
         }
       })
+    },
+    ssoLogin(code) {
+      // 走 SP 后端跳 IdP
+      window.location.href = process.env.VUE_APP_BASE_API + '/sso/authorize/' + code
     }
   }
 }
@@ -375,6 +398,25 @@ $dark-bg: #001529;
     margin-top: 8px;
     overflow: hidden;
     font-size: 14px;
+  }
+
+  .sso-section {
+    margin-top: 24px;
+  }
+  .sso-divider {
+    position: relative; text-align: center; color: #8c8c8c; font-size: 12px;
+    margin-bottom: 16px;
+    &::before, &::after {
+      content: ''; position: absolute; top: 50%; width: 35%; height: 1px; background: #e8e8e8;
+    }
+    &::before { left: 0; }
+    &::after  { right: 0; }
+    span { background: #fff; padding: 0 12px; position: relative; z-index: 1; }
+  }
+  .sso-buttons {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    .sso-btn { flex: 1; min-width: 100px; }
+    .sso-icon { margin-right: 6px; }
   }
 }
 
