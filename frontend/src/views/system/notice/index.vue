@@ -65,7 +65,7 @@
     />
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="700px" append-to-body>
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="820px" append-to-body :close-on-click-modal="false">
       <el-form ref="noticeForm" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="公告标题" prop="noticeTitle">
           <el-input v-model="form.noticeTitle" placeholder="请输入公告标题" maxlength="50" />
@@ -83,7 +83,11 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="公告内容" prop="noticeContent">
-          <el-input v-model="form.noticeContent" type="textarea" :rows="6" placeholder="请输入公告内容" />
+          <quill-editor
+            v-model="form.noticeContent"
+            :options="editorOptions"
+            class="notice-editor"
+          />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
@@ -96,7 +100,7 @@
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog title="公告详情" :visible.sync="viewDialogVisible" width="700px" append-to-body>
+    <el-dialog title="公告详情" :visible.sync="viewDialogVisible" width="820px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="公告标题">{{ viewForm.noticeTitle }}</el-descriptions-item>
         <el-descriptions-item label="公告类型">
@@ -108,7 +112,9 @@
         <el-descriptions-item label="创建者">{{ viewForm.createBy }}</el-descriptions-item>
         <el-descriptions-item label="创建时间" :span="2">{{ parseTime(viewForm.createTime) }}</el-descriptions-item>
         <el-descriptions-item label="公告内容" :span="2">
-          <div style="white-space: pre-wrap;">{{ viewForm.noticeContent }}</div>
+          <div class="ql-snow notice-view-wrapper">
+            <div class="ql-editor notice-view-content" v-html="viewForm.noticeContent || '无内容'"></div>
+          </div>
         </el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{ viewForm.remark }}</el-descriptions-item>
       </el-descriptions>
@@ -125,6 +131,8 @@ import Pagination from '@/components/Pagination'
 import SearchForm from '@/components/SearchForm'
 import TableToolbar from '@/components/TableToolbar'
 import DictTag from '@/components/DictTag'
+import { quillEditor } from 'vue-quill-editor'
+import 'quill/dist/quill.snow.css'
 
 const NOTICE_TYPE_OPTIONS = [
   { value: '1', label: '通知', type: 'success' },
@@ -141,7 +149,8 @@ export default {
     Pagination,
     SearchForm,
     TableToolbar,
-    DictTag
+    DictTag,
+    quillEditor
   },
   data() {
     return {
@@ -177,6 +186,23 @@ export default {
       form: {},
       // 查看详情数据
       viewForm: {},
+      // 富文本编辑器配置
+      editorOptions: {
+        theme: 'snow',
+        placeholder: '请输入公告内容',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ header: 1 }, { header: 2 }],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ color: [] }, { background: [] }],
+            [{ align: [] }],
+            ['blockquote', 'code-block'],
+            ['link'],
+            ['clean']
+          ]
+        }
+      },
       // 表单校验规则
       rules: {
         noticeTitle: [
@@ -187,7 +213,19 @@ export default {
           { required: true, message: '公告类型不能为空', trigger: 'change' }
         ],
         noticeContent: [
-          { required: true, message: '公告内容不能为空', trigger: 'blur' }
+          {
+            required: true,
+            trigger: 'change',
+            // 剥离 HTML 标签后判空，避免 quill 空状态 "<p><br></p>" 通过校验
+            validator: (rule, value, callback) => {
+              const plain = (value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim()
+              if (!plain) {
+                callback(new Error('公告内容不能为空'))
+              } else {
+                callback()
+              }
+            }
+          }
         ]
       }
     }
@@ -323,5 +361,23 @@ export default {
 }
 .mb8 {
   margin-bottom: 8px;
+}
+/* Quill 编辑器内部高度（不加 scoped 影响，因为是动态生成的子元素，用 ::v-deep 穿透） */
+.notice-editor ::v-deep .ql-container {
+  min-height: 240px;
+  font-size: 14px;
+}
+.notice-editor ::v-deep .ql-editor {
+  min-height: 240px;
+}
+/* 查看详情：使用 ql-snow + ql-editor 的样式（颜色/对齐/列表等回显） */
+.notice-view-wrapper {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background: #fafafa;
+}
+.notice-view-content {
+  min-height: 80px;
+  padding: 12px;
 }
 </style>
