@@ -24,7 +24,7 @@ module.exports = {
   publicPath: '/',
   outputDir: 'dist',
   assetsDir: 'static',
-  lintOnSave: process.env.NODE_ENV === 'development',
+  lintOnSave: process.env.NODE_ENV === 'development' ? 'warning' : false,
   productionSourceMap: false,
   devServer: {
     host: '0.0.0.0', // 监听所有网络接口

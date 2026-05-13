@@ -1,7 +1,11 @@
 package com.admin.system.config;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.web.servlet.handler.AbstractHandlerMethodMapping;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -10,10 +14,13 @@ import springfox.documentation.service.*;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.spring.web.plugins.WebMvcRequestHandlerProvider;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Swagger配置
@@ -66,4 +73,40 @@ public class SwaggerConfig {
         return Collections.singletonList(new SecurityReference("Authorization", authorizationScopes));
     }
 
+    // springfox 3.0 + Spring Boot 2.6+ 兼容性修复：过滤掉 Actuator 等使用 PathPatternParser 的 HandlerMapping，
+    // 否则 documentationPluginsBootstrapper 启动时会因 PatternsRequestCondition 为 null 抛 NPE。
+    @Bean
+    public static BeanPostProcessor springfoxHandlerProviderBeanPostProcessor() {
+        return new BeanPostProcessor() {
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+                if (bean instanceof WebMvcRequestHandlerProvider) {
+                    customizeSpringfoxHandlerMappings(getHandlerMappings(bean));
+                }
+                return bean;
+            }
+
+            private <T extends AbstractHandlerMethodMapping<?>> void customizeSpringfoxHandlerMappings(List<T> mappings) {
+                List<T> copy = mappings.stream()
+                        .filter(mapping -> mapping.getPatternParser() == null)
+                        .collect(Collectors.toList());
+                mappings.clear();
+                mappings.addAll(copy);
+            }
+
+            @SuppressWarnings("unchecked")
+            private List<AbstractHandlerMethodMapping<?>> getHandlerMappings(Object bean) {
+                try {
+                    Field field = ReflectionUtils.findField(bean.getClass(), "handlerMappings");
+                    if (field == null) {
+                        return Collections.emptyList();
+                    }
+                    field.setAccessible(true);
+                    return (List<AbstractHandlerMethodMapping<?>>) field.get(bean);
+                } catch (IllegalAccessException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+        };
+    }
 }
