@@ -36,3 +36,11 @@ frontend/nul
 # 临时文件
 *.tmp
 *.bak
+
+# 测试/截图临时产物
+/.playwright-mcp/
+captcha-*.png
+*-debug.png
+
+# 计划文档（不入库）
+SSO_PLAN.md
