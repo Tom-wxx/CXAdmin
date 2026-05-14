@@ -622,15 +622,16 @@ export default {
   // 左侧用户卡片
   .user-card {
     background: white;
-    border-radius: 20px;
+    border-radius: 16px;
     padding: 30px 20px;
-    box-shadow: 0 2px 20px rgba(102, 126, 234, 0.1);
-    transition: all 0.3s ease;
+    border: 1px solid #eef0f3;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     margin-bottom: 20px;
 
     &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
     }
 
     .avatar-section {
@@ -640,39 +641,67 @@ export default {
         position: relative;
         display: inline-block;
         margin-bottom: 16px;
+        cursor: pointer;
+
+        /* 头像外层柔光环：hover 时放大 + 浮现 */
+        &::after {
+          content: '';
+          position: absolute;
+          inset: -8px;
+          border-radius: 50%;
+          background: radial-gradient(circle at center, rgba(19, 194, 194, 0.25), transparent 70%);
+          opacity: 0;
+          transition: opacity 0.3s ease, transform 0.4s ease;
+          pointer-events: none;
+        }
+        &:hover::after { opacity: 1; transform: scale(1.15); }
 
         .user-avatar,
         .avatar-placeholder {
           width: 100px;
           height: 100px;
           border-radius: 50%;
+          position: relative;
+          z-index: 1;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        &:hover .user-avatar,
+        &:hover .avatar-placeholder {
+          transform: scale(1.04);
         }
 
         .user-avatar {
-          border: 4px solid #f0f2f5;
+          border: 4px solid #fff;
           object-fit: cover;
+          box-shadow: 0 4px 12px rgba(19, 194, 194, 0.15);
         }
 
         .avatar-placeholder {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%);
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
           font-size: 48px;
-          border: 4px solid #f0f2f5;
+          border: 4px solid #fff;
+          box-shadow: 0 4px 12px rgba(19, 194, 194, 0.25);
+          animation: avatar-pulse 4s ease-in-out infinite;
         }
 
         .upload-btn {
           position: absolute;
           bottom: 0;
           right: -5px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border: 3px solid white;
-          transition: all 0.3s ease;
+          z-index: 2;
+          background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%) !important;
+          border: 3px solid white !important;
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+          box-shadow: 0 2px 8px rgba(19, 194, 194, 0.4);
 
           &:hover {
-            transform: scale(1.1);
+            transform: scale(1.15) rotate(8deg);
+            box-shadow: 0 4px 16px rgba(19, 194, 194, 0.55);
           }
         }
       }
@@ -983,5 +1012,11 @@ export default {
       margin-bottom: 16px;
     }
   }
+}
+
+/* 头像呼吸动画（仅占位符状态显示） */
+@keyframes avatar-pulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(19, 194, 194, 0.25); }
+  50%      { box-shadow: 0 4px 24px rgba(19, 194, 194, 0.45); }
 }
 </style>

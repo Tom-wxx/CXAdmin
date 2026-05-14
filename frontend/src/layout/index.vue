@@ -342,7 +342,6 @@ $navbar-height: 48px;
     ::v-deep .el-menu-item.is-active {
       background-color: $primary !important;
       color: #fff !important;
-      border-right: 3px solid #fff;
     }
 
     ::v-deep .el-menu-item i,

@@ -1,6 +1,11 @@
 <template>
   <div class="login-container">
     <div class="login-left">
+      <!-- 漂浮装饰光斑 -->
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+
       <div class="brand-area">
         <div class="brand-icon">
           <i class="el-icon-s-platform"></i>
@@ -220,13 +225,47 @@ $dark-bg: #001529;
 
 .login-left {
   flex: 1;
-  background: $dark-bg;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 60px;
+  overflow: hidden;
+  background: linear-gradient(125deg, #001529 0%, #003a47 30%, #08979c 70%, #0f7474 100%);
+  background-size: 220% 220%;
+  animation: bg-shift 18s ease-in-out infinite;
+
+  /* 漂浮光斑 */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(50px);
+    opacity: 0.55;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .orb-1 {
+    width: 380px; height: 380px;
+    background: radial-gradient(circle at center, #13c2c2, transparent 70%);
+    top: -120px; left: -120px;
+    animation: orb-float-1 14s ease-in-out infinite;
+  }
+  .orb-2 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle at center, #5b6ef0, transparent 70%);
+    bottom: -100px; right: -80px;
+    animation: orb-float-2 16s ease-in-out infinite;
+  }
+  .orb-3 {
+    width: 200px; height: 200px;
+    background: radial-gradient(circle at center, #722ed1, transparent 70%);
+    top: 50%; left: 50%;
+    animation: orb-float-3 20s ease-in-out infinite;
+  }
 
   .brand-area {
+    position: relative;
+    z-index: 1;
     max-width: 400px;
     color: #fff;
   }
@@ -240,6 +279,8 @@ $dark-bg: #001529;
     align-items: center;
     justify-content: center;
     margin-bottom: 32px;
+    box-shadow: 0 8px 24px rgba(19, 194, 194, 0.4);
+    animation: brand-pulse 3s ease-in-out infinite;
 
     i {
       font-size: 32px;
@@ -415,9 +456,40 @@ $dark-bg: #001529;
   }
   .sso-buttons {
     display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-    .sso-btn { flex: 1; min-width: 100px; }
+    .sso-btn {
+      flex: 1; min-width: 100px;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.2s ease;
+      &:hover {
+        transform: translateY(-2px);
+        border-color: $primary;
+        color: $primary;
+        box-shadow: 0 6px 16px rgba(19, 194, 194, 0.18);
+      }
+    }
     .sso-icon { margin-right: 6px; }
   }
+}
+
+/* ===== 动效关键帧 ===== */
+@keyframes bg-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes orb-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(60px, 80px) scale(1.15); }
+}
+@keyframes orb-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-50px, -60px) scale(1.1); }
+}
+@keyframes orb-float-3 {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-30%, -70%) scale(1.2); }
+}
+@keyframes brand-pulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(19, 194, 194, 0.4); transform: scale(1); }
+  50%      { box-shadow: 0 8px 36px rgba(19, 194, 194, 0.65); transform: scale(1.03); }
 }
 
 @media screen and (max-width: 960px) {

@@ -217,3 +217,76 @@ $elev-2: 0 8px 24px rgba(15, 23, 42, 0.08);
   border-color: $accent !important;
   background-color: $accent !important;
 }
+
+/* =====================================================================
+   顶部 Navbar 微交互（批次 B）
+   ===================================================================== */
+
+.navbar {
+  /* 用细微阴影替代死板的下边框 */
+  border-bottom: none !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 0 0 1px $card-border;
+  transition: box-shadow 0.25s ease;
+
+  .left-menu i,
+  .right-menu .theme-btn {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease, background 0.2s ease !important;
+
+    &:hover {
+      transform: rotate(15deg);
+    }
+  }
+
+  .right-menu .avatar-container .avatar-wrapper {
+    padding: 4px 8px 4px 4px;
+    border-radius: 20px;
+    transition: background 0.25s ease, box-shadow 0.25s ease;
+
+    .user-avatar {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    &:hover {
+      background: rgba(19, 194, 194, 0.08);
+      .user-avatar {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 3px rgba(19, 194, 194, 0.18);
+      }
+    }
+  }
+
+}
+
+/* dropdown menu 整体圆角 + 阴影 */
+.el-dropdown-menu {
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+  border-color: $card-border !important;
+  padding: 6px !important;
+
+  .el-dropdown-menu__item {
+    border-radius: 6px;
+    margin: 2px 0;
+    transition: background 0.2s ease, padding-left 0.2s ease;
+
+    &:hover {
+      background: rgba(19, 194, 194, 0.08) !important;
+      color: $accent !important;
+      padding-left: 24px;
+    }
+  }
+}
+
+/* Tab 切换平滑（profile 等用到 el-tabs） */
+.el-tabs {
+  .el-tabs__item {
+    transition: color 0.2s ease, transform 0.2s ease !important;
+    &:hover { color: $accent !important; }
+  }
+  .el-tabs__active-bar {
+    background-color: $accent !important;
+    height: 3px !important;
+    border-radius: 2px;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+}
