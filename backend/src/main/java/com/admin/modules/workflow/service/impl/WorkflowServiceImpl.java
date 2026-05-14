@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * ¹¤×÷Á÷·şÎñÊµÏÖ
+ * å·¥ä½œæµæœåŠ¡å®ç°
  *
  * @author Admin
  */
@@ -45,16 +45,16 @@ public class WorkflowServiceImpl implements IWorkflowService {
     @Override
     @Transactional
     public Long startProcess(ProcessInstance processInstance) {
-        // 1. »ñÈ¡Á÷³Ì¶¨Òå
+        // 1. è·å–æµç¨‹å®šä¹‰
         ProcessDefinition processDef = processDefinitionMapper.selectById(processInstance.getProcessDefId());
         if (processDef == null) {
-            throw new RuntimeException("Á÷³Ì¶¨Òå²»´æÔÚ");
+            throw new RuntimeException("æµç¨‹å®šä¹‰ä¸å­˜åœ¨");
         }
         if (!isDefinitionActive(processDef)) {
-            throw new RuntimeException("Á÷³Ì¶¨ÒåÎ´·¢²¼»òÒÑÍ£ÓÃ");
+            throw new RuntimeException("æµç¨‹å®šä¹‰æœªå‘å¸ƒæˆ–å·²åœç”¨");
         }
 
-        // 2. Éú³ÉÊµÀı±àºÅ
+        // 2. ç”Ÿæˆå®ä¾‹ç¼–å·
         String instanceNo = generateInstanceNo(processDef.getProcessType());
         processInstance.setInstanceNo(instanceNo);
         processInstance.setProcessKey(processDef.getProcessKey());
@@ -64,15 +64,15 @@ public class WorkflowServiceImpl implements IWorkflowService {
         processInstance.setStatus(STATUS_PENDING);
         processInstance.setSubmitTime(new Date());
 
-        // 3. ±£´æÁ÷³ÌÊµÀı
+        // 3. ä¿å­˜æµç¨‹å®ä¾‹
         processInstanceMapper.insert(processInstance);
 
-        // 4. ´´½¨µÚÒ»¼¶ÉóÅúÈÎÎñ
+        // 4. åˆ›å»ºç¬¬ä¸€çº§å®¡æ‰¹ä»»åŠ¡
         createApprovalTasks(processInstance.getId(), processDef, 1);
 
-        // 5. ¼ÇÂ¼ÀúÊ·
+        // 5. è®°å½•å†å²
         saveHistory(processInstance.getId(), null, "submit", processInstance.getSubmitterId(),
-                processInstance.getSubmitterName(), "·¢ÆğÉêÇë");
+                processInstance.getSubmitterName(), "å‘èµ·ç”³è¯·");
 
         return processInstance.getId();
     }
@@ -82,18 +82,18 @@ public class WorkflowServiceImpl implements IWorkflowService {
     public boolean approve(Long taskId, String comment, Long userId) {
         Task task = taskMapper.selectById(taskId);
         if (task == null || !task.getApproverId().equals(userId)) {
-            throw new RuntimeException("ÈÎÎñ²»´æÔÚ»òÎŞÈ¨ÏŞ");
+            throw new RuntimeException("ä»»åŠ¡ä¸å­˜åœ¨æˆ–æ— æƒé™");
         }
         if (!STATUS_PENDING.equalsIgnoreCase(task.getStatus())) {
-            throw new RuntimeException("ÈÎÎñÒÑ´¦Àí");
+            throw new RuntimeException("ä»»åŠ¡å·²å¤„ç†");
         }
 
         ProcessInstance instance = processInstanceMapper.selectById(task.getProcessInstanceId());
         if (instance == null) {
-            throw new RuntimeException("Á÷³Ì²»´æÔÚ");
+            throw new RuntimeException("æµç¨‹ä¸å­˜åœ¨");
         }
         if (!STATUS_PENDING.equalsIgnoreCase(instance.getStatus())) {
-            throw new RuntimeException("Á÷³ÌÒÑ½áÊø»ò²»¿É²Ù×÷");
+            throw new RuntimeException("æµç¨‹å·²ç»“æŸæˆ–ä¸å¯æ“ä½œ");
         }
 
         task.setStatus(STATUS_APPROVED);
@@ -124,18 +124,18 @@ public class WorkflowServiceImpl implements IWorkflowService {
     public boolean reject(Long taskId, String comment, Long userId) {
         Task task = taskMapper.selectById(taskId);
         if (task == null || !task.getApproverId().equals(userId)) {
-            throw new RuntimeException("ÈÎÎñ²»´æÔÚ»òÎŞÈ¨ÏŞ");
+            throw new RuntimeException("ä»»åŠ¡ä¸å­˜åœ¨æˆ–æ— æƒé™");
         }
         if (!STATUS_PENDING.equalsIgnoreCase(task.getStatus())) {
-            throw new RuntimeException("ÈÎÎñÒÑ´¦Àí");
+            throw new RuntimeException("ä»»åŠ¡å·²å¤„ç†");
         }
 
         ProcessInstance instance = processInstanceMapper.selectById(task.getProcessInstanceId());
         if (instance == null) {
-            throw new RuntimeException("Á÷³Ì²»´æÔÚ");
+            throw new RuntimeException("æµç¨‹ä¸å­˜åœ¨");
         }
         if (!STATUS_PENDING.equalsIgnoreCase(instance.getStatus())) {
-            throw new RuntimeException("Á÷³ÌÒÑ½áÊø»ò²»¿É²Ù×÷");
+            throw new RuntimeException("æµç¨‹å·²ç»“æŸæˆ–ä¸å¯æ“ä½œ");
         }
 
         task.setStatus(STATUS_REJECTED);
@@ -166,10 +166,10 @@ public class WorkflowServiceImpl implements IWorkflowService {
     public boolean cancel(Long instanceId, Long userId) {
         ProcessInstance instance = processInstanceMapper.selectById(instanceId);
         if (instance == null || !instance.getSubmitterId().equals(userId)) {
-            throw new RuntimeException("Á÷³Ì²»´æÔÚ»òÎŞÈ¨ÏŞ");
+            throw new RuntimeException("æµç¨‹ä¸å­˜åœ¨æˆ–æ— æƒé™");
         }
         if (!STATUS_PENDING.equalsIgnoreCase(instance.getStatus())) {
-            throw new RuntimeException("Á÷³ÌÒÑ½áÊø»ò²»¿É²Ù×÷");
+            throw new RuntimeException("æµç¨‹å·²ç»“æŸæˆ–ä¸å¯æ“ä½œ");
         }
 
         instance.setStatus(STATUS_CANCELLED);
@@ -185,7 +185,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             taskMapper.updateById(task);
         }
 
-        saveHistory(instanceId, null, "cancel", userId, instance.getSubmitterName(), "È¡ÏûÉêÇë");
+        saveHistory(instanceId, null, "cancel", userId, instance.getSubmitterName(), "å–æ¶ˆç”³è¯·");
 
         return true;
     }
@@ -222,7 +222,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
         ProcessInstance instance = processInstanceMapper.selectById(instanceId);
         if (instance == null) {
-            throw new RuntimeException("Á÷³Ì²»´æÔÚ");
+            throw new RuntimeException("æµç¨‹ä¸å­˜åœ¨");
         }
         result.put("instance", instance);
 
@@ -246,7 +246,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         for (SysUser approver : approvers) {
             Task task = new Task();
             task.setProcessInstanceId(instanceId);
-            task.setTaskName(processDef.getProcessName() + "-µÚ" + level + "¼¶ÉóÅú");
+            task.setTaskName(processDef.getProcessName() + "-ç¬¬" + level + "çº§å®¡æ‰¹");
             task.setTaskLevel(level);
             task.setApproverId(approver.getUserId());
             task.setApproverName(StringUtils.defaultIfBlank(approver.getNickname(), approver.getUsername()));
@@ -307,7 +307,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
                     .filter(user -> !"1".equals(user.getStatus()))
                     .collect(Collectors.toList());
             if (users.isEmpty()) {
-                throw new RuntimeException("Á÷³ÌÎ´ÅäÖÃÓĞĞ§ÉóÅúÈË");
+                throw new RuntimeException("æµç¨‹æœªé…ç½®æœ‰æ•ˆå®¡æ‰¹äºº");
             }
             return users;
         }
@@ -315,16 +315,16 @@ public class WorkflowServiceImpl implements IWorkflowService {
         if ("role".equalsIgnoreCase(approverType)) {
             List<Long> roleIds = parseIds(processDef.getApproverRoles());
             if (roleIds.isEmpty()) {
-                throw new RuntimeException("Á÷³ÌÎ´ÅäÖÃÉóÅú½ÇÉ«");
+                throw new RuntimeException("æµç¨‹æœªé…ç½®å®¡æ‰¹è§’è‰²");
             }
             List<SysUser> users = userMapper.selectUsersByRoleIds(roleIds);
             if (users == null || users.isEmpty()) {
-                throw new RuntimeException("ÉóÅú½ÇÉ«ÏÂÔİÎŞ¿ÉÓÃÓÃ»§");
+                throw new RuntimeException("å®¡æ‰¹è§’è‰²ä¸‹æš‚æ— å¯ç”¨ç”¨æˆ·");
             }
             return users;
         }
 
-        throw new RuntimeException("²»Ö§³ÖµÄÉóÅúÈËÀàĞÍ");
+        throw new RuntimeException("ä¸æ”¯æŒçš„å®¡æ‰¹äººç±»å‹");
     }
 
 }
