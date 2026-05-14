@@ -169,7 +169,7 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
                         + "; SameSite=Lax");
         // 2) 非 HttpOnly 的会话标记，前端路由守卫 getToken() 用
         response.addHeader("Set-Cookie",
-                "Admin-Session=1"
+                SystemConstants.SESSION_COOKIE_NAME + "=1"
                         + "; Path=/"
                         + "; Max-Age=" + maxAgeSec
                         + "; SameSite=Lax");

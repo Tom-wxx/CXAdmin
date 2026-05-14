@@ -109,9 +109,14 @@ public final class SystemConstants {
     // ==================== Cookie ====================
 
     /**
-     * HttpOnly Cookie 名称
+     * HttpOnly Cookie 名称（存 JWT，后端鉴权用）
      */
     public static final String TOKEN_COOKIE_NAME = "Admin-Token";
+
+    /**
+     * 非 HttpOnly Cookie 名称（前端路由守卫 getToken() 读这个判断"已登录"）
+     */
+    public static final String SESSION_COOKIE_NAME = "Admin-Session";
 
     // ==================== 密码重置 ====================
 

@@ -43,7 +43,10 @@ public class LoginController {
     @PostMapping("/logout")
     public Result<Void> logout(HttpServletResponse response) {
         loginService.logout();
+        // 清 HttpOnly JWT cookie
         response.addHeader("Set-Cookie", SystemConstants.TOKEN_COOKIE_NAME + "=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax");
+        // 清前端路由守卫读的会话标记 cookie（SSO 登录走的也是它）
+        response.addHeader("Set-Cookie", SystemConstants.SESSION_COOKIE_NAME + "=; Path=/; Max-Age=0; SameSite=Lax");
         return Result.success("退出成功");
     }
 
