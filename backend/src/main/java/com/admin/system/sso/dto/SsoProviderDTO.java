@@ -16,6 +16,8 @@ public class SsoProviderDTO {
     @NotBlank private String authorizationUri;
     @NotBlank private String tokenUri;
     @NotBlank private String userinfoUri;
+    /** 可选：userinfo 不带邮箱时的兜底端点（GitHub: /user/emails） */
+    private String emailsUri;
     private String scope;
     private String userFieldMapping;
     private Long defaultRoleId;

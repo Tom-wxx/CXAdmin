@@ -1427,6 +1427,7 @@ CREATE TABLE `sys_sso_provider` (
   `authorization_uri`  varchar(500) NOT NULL,
   `token_uri`          varchar(500) NOT NULL,
   `userinfo_uri`       varchar(500) NOT NULL,
+  `emails_uri`         varchar(500) DEFAULT NULL COMMENT '可选：userinfo 不返回邮箱时调用此端点（GitHub: /user/emails）',
   `scope`              varchar(200) DEFAULT NULL,
   `user_field_mapping` varchar(1000) DEFAULT NULL COMMENT '字段映射 JSON',
   `default_role_id`    bigint DEFAULT NULL COMMENT '自动注册默认角色',

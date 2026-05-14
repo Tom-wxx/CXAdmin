@@ -26,6 +26,8 @@ public class SysSsoProvider extends BaseEntity {
     private String authorizationUri;
     private String tokenUri;
     private String userinfoUri;
+    /** 可选：当 userinfo 不返回邮箱时调用，期望返回 [{email, primary, verified}] 数组。例如 GitHub: https://api.github.com/user/emails */
+    private String emailsUri;
     private String scope;
     private String userFieldMapping;
     private Long defaultRoleId;

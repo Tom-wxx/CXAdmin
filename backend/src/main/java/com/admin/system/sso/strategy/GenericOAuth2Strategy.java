@@ -66,7 +66,49 @@ public class GenericOAuth2Strategy implements SsoStrategy {
     public SsoUserInfo exchangeAndFetchUser(SysSsoProvider p, String code, String redirectUri) {
         String accessToken = exchangeCode(p, code, redirectUri);
         JsonNode userJson = fetchUserinfo(p, accessToken);
-        return mapUser(p, userJson);
+        SsoUserInfo info = mapUser(p, userJson);
+        // userinfo 拿不到邮箱时，若配了 emailsUri 则兜底取一次（GitHub 主邮箱默认不公开）
+        if ((info.getEmail() == null || info.getEmail().isEmpty())
+                && p.getEmailsUri() != null && !p.getEmailsUri().isEmpty()) {
+            String email = fetchPrimaryEmail(p.getEmailsUri(), accessToken);
+            if (email != null) info.setEmail(email);
+        }
+        return info;
+    }
+
+    /** 调 emailsUri，期望返回 [{email, primary, verified}] 数组。按 primary+verified > primary > verified > 首项 选 */
+    private String fetchPrimaryEmail(String url, String accessToken) {
+        try {
+            HttpHeaders h = new HttpHeaders();
+            h.setBearerAuth(accessToken);
+            h.setAccept(java.util.Collections.singletonList(MediaType.APPLICATION_JSON));
+            ResponseEntity<String> resp = http.exchange(url, HttpMethod.GET, new HttpEntity<>(h), String.class);
+            if (!resp.getStatusCode().is2xxSuccessful()) {
+                log.warn("emailsUri {} returned {}", url, resp.getStatusCode());
+                return null;
+            }
+            JsonNode arr = mapper.readTree(resp.getBody());
+            if (!arr.isArray() || arr.size() == 0) return null;
+            return pickEmail(arr, true, true)
+                    .orElse(pickEmail(arr, true, false)
+                    .orElse(pickEmail(arr, false, true)
+                    .orElse(arr.get(0).path("email").asText(null))));
+        } catch (Exception e) {
+            log.warn("Fetch email list from {} failed: {}", url, e.getMessage());
+            return null;
+        }
+    }
+
+    private java.util.Optional<String> pickEmail(JsonNode arr, boolean requirePrimary, boolean requireVerified) {
+        for (JsonNode n : arr) {
+            boolean primaryOk = !requirePrimary || n.path("primary").asBoolean(false);
+            boolean verifiedOk = !requireVerified || n.path("verified").asBoolean(false);
+            if (primaryOk && verifiedOk) {
+                String e = n.path("email").asText(null);
+                if (e != null && !e.isEmpty()) return java.util.Optional.of(e);
+            }
+        }
+        return java.util.Optional.empty();
     }
 
     private String exchangeCode(SysSsoProvider p, String code, String redirectUri) {
