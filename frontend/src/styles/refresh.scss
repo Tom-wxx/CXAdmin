@@ -1,0 +1,219 @@
+// =====================================================================
+// 视觉刷新（demo）：清新风 + 微动效
+// 仅做"加法"式覆盖，不破坏现有 Element UI 样式
+// =====================================================================
+
+$accent: #13c2c2;       // 主品牌色（保留）
+$accent-2: #5b6ef0;     // 副品牌色：靛蓝
+$page-bg: #f6f8fa;      // 页面浅灰底
+$card-border: #eef0f3;
+$elev-1: 0 1px 3px rgba(15, 23, 42, 0.04);
+$elev-2: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+/* 页面背景：从纯白偏冷灰，留白更舒服 */
+.app-main {
+  background: $page-bg;
+}
+
+/* 全局卡片化 polish：所有看起来像卡片的容器，圆角 + 阴影 + hover 浮起 */
+.dashboard-fresh,
+.app-container {
+  .fresh-card,
+  .stat-card-fresh,
+  .bento-card {
+    background: #fff;
+    border: 1px solid $card-border;
+    border-radius: 12px;
+    box-shadow: $elev-1;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+
+    &.hoverable:hover {
+      box-shadow: $elev-2;
+      transform: translateY(-2px);
+    }
+  }
+}
+
+/* 侧边栏 active 项左侧强调条 */
+.el-menu .el-menu-item.is-active,
+.el-menu .el-submenu.is-active > .el-submenu__title {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    background: $accent;
+    border-radius: 0 2px 2px 0;
+    transition: all 0.25s ease;
+  }
+}
+
+/* 菜单项 hover 平滑 */
+.el-menu-item,
+.el-submenu__title {
+  transition: background 0.25s ease, padding-left 0.25s ease !important;
+}
+
+.el-menu-item:hover {
+  padding-left: 22px !important;
+}
+
+/* 入场动画：fade + 上移 8px，stagger delay 由 inline style 控制 */
+@keyframes fresh-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fresh-anim {
+  animation: fresh-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 通用按钮 hover 上浮 */
+.el-button.el-button--primary {
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+
+  &:hover:not(.is-disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(19, 194, 194, 0.25);
+  }
+}
+
+/* Skeleton 占位骨架（loading 时用） */
+@keyframes fresh-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.fresh-skeleton {
+  background: linear-gradient(90deg, #eef0f3 0%, #f8fafc 50%, #eef0f3 100%);
+  background-size: 200% 100%;
+  animation: fresh-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* =====================================================================
+   通用列表 / 表单页（批次 A 模板，全站覆盖）
+   ===================================================================== */
+
+/* 页面外层容器：浅灰底 + 间距 */
+.app-container {
+  padding: 20px;
+  background: $page-bg;
+  min-height: calc(100vh - 56px);
+}
+
+/* 搜索表单卡片 */
+.app-container .search-form {
+  background: #fff;
+  border: 1px solid $card-border;
+  border-radius: 12px;
+  padding: 18px 20px 4px;
+  box-shadow: $elev-1;
+  margin-bottom: 16px;
+
+  .el-form-item {
+    margin-bottom: 14px;
+  }
+}
+
+/* 工具栏 */
+.app-container .table-toolbar {
+  background: #fff;
+  border: 1px solid $card-border;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  padding: 14px 16px 8px;
+  margin: 0 !important;
+  box-shadow: $elev-1;
+}
+
+/* 数据表格：表格紧跟工具栏，共用顶部圆角 */
+.app-container > .el-table,
+.app-container .table-toolbar + .el-table {
+  border-radius: 0 0 12px 12px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  overflow: hidden;
+  box-shadow: $elev-1;
+
+  /* 行 hover 高亮（青色淡背景） */
+  & tbody tr:hover > td {
+    background-color: rgba(19, 194, 194, 0.04) !important;
+  }
+
+  /* 表头去边界感 */
+  & th.el-table__cell {
+    background: #fafbfc !important;
+    color: #1f2329;
+    font-weight: 600;
+    border-bottom: 1px solid $card-border;
+  }
+}
+
+/* 当 toolbar 没有时，表格独立成卡 */
+.app-container > .el-table:first-child {
+  border-radius: 12px;
+}
+
+/* 分页：浮在表格下方，留白 */
+.app-container .pagination-container,
+.app-container > .el-pagination {
+  background: #fff;
+  border: 1px solid $card-border;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 12px 16px;
+  margin-top: -1px;
+  box-shadow: $elev-1;
+}
+
+/* 弹窗：圆角 + 阴影 + 平滑出现 */
+.el-dialog {
+  border-radius: 14px !important;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.18) !important;
+  overflow: hidden;
+
+  .el-dialog__header {
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid #f0f2f5;
+  }
+  .el-dialog__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2329;
+  }
+  .el-dialog__body { padding: 20px 24px; }
+  .el-dialog__footer { padding: 12px 24px 18px; }
+}
+
+/* 输入框 / 选择器：聚焦时品牌色边框 + 柔光 */
+.el-input__inner,
+.el-textarea__inner {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  &:focus {
+    border-color: $accent !important;
+    box-shadow: 0 0 0 3px rgba(19, 194, 194, 0.12) !important;
+  }
+}
+
+/* 表格里"操作"列的 text 按钮去掉默认 padding 阻塞，加 hover 下划线 */
+.el-table .el-button.el-button--text {
+  padding: 4px 6px;
+  transition: color 0.2s ease;
+  &:hover { text-decoration: underline; }
+}
+
+/* Tag 平滑 hover */
+.el-tag {
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+/* Switch active 颜色统一品牌色（如未单独配置） */
+.el-switch.is-checked .el-switch__core {
+  border-color: $accent !important;
+  background-color: $accent !important;
+}
