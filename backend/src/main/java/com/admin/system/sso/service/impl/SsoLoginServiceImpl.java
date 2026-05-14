@@ -7,6 +7,7 @@ import com.admin.system.mapper.SysUserMapper;
 import com.admin.system.security.LoginUser;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.sso.config.SsoProperties;
+import com.admin.system.sso.dto.SsoStateData;
 import com.admin.system.sso.dto.SsoUserInfo;
 import com.admin.system.sso.entity.SysSsoProvider;
 import com.admin.system.sso.entity.SysUserSsoBinding;
@@ -15,6 +16,7 @@ import com.admin.system.sso.service.ISsoLoginService;
 import com.admin.system.sso.service.ISysSsoProviderService;
 import com.admin.system.sso.strategy.SsoStrategy;
 import com.admin.system.sso.strategy.SsoStrategyFactory;
+import com.admin.system.sso.vo.SsoBindingVO;
 import com.admin.system.utils.JwtUtil;
 import com.admin.system.utils.RedisUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -25,9 +27,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -51,24 +55,37 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
 
     @Override
     public String buildAuthorizationUrl(String code) {
+        return buildAuthorizationUrlInternal(code, SsoStateData.login(code));
+    }
+
+    @Override
+    public String buildBindAuthorizationUrl(String code, Long userId) {
+        if (userId == null) throw new RuntimeException("绑定 SSO 需要登录态");
+        return buildAuthorizationUrlInternal(code, SsoStateData.bind(code, userId));
+    }
+
+    private String buildAuthorizationUrlInternal(String code, SsoStateData stateData) {
         SysSsoProvider provider = requireEnabled(code);
         SsoStrategy strategy = strategyFactory.get(provider.getType());
 
         String state = UUID.randomUUID().toString().replace("-", "");
-        redisUtil.set(STATE_KEY + state, code, STATE_TTL_MIN, TimeUnit.MINUTES);
+        redisUtil.set(STATE_KEY + state, stateData, STATE_TTL_MIN, TimeUnit.MINUTES);
 
-        String redirectUri = callbackUri(code);
-        return strategy.buildAuthorizationUrl(provider, state, redirectUri);
+        return strategy.buildAuthorizationUrl(provider, state, callbackUri(code));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String handleCallback(String code, String authCode, String state, HttpServletResponse response) {
-        // 1. state 校验（一次性消费）
+        // 1. state 校验（一次性消费）+ 取出 mode
         String redisKey = STATE_KEY + state;
-        Object cachedCode = redisUtil.get(redisKey);
-        if (cachedCode == null || !code.equals(cachedCode.toString())) {
+        Object cached = redisUtil.get(redisKey);
+        if (!(cached instanceof SsoStateData)) {
             throw new RuntimeException("Invalid or expired SSO state");
+        }
+        SsoStateData stateData = (SsoStateData) cached;
+        if (!code.equals(stateData.getCode())) {
+            throw new RuntimeException("SSO state code mismatch");
         }
         redisUtil.delete(redisKey);
 
@@ -78,13 +95,70 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
         // 2. 换 token + 拉 userinfo
         SsoUserInfo info = strategy.exchangeAndFetchUser(provider, authCode, callbackUri(code));
 
-        // 3. 找/建用户
+        // 3. 分支：登录 vs 绑定
+        if (SsoStateData.MODE_BIND.equals(stateData.getMode())) {
+            return handleBindCallback(provider, info, stateData.getUserId());
+        }
         SysUser user = resolveUser(provider, info);
-
-        // 4. 签 JWT，写 Redis，Set-Cookie
         issueJwtAndCookie(user, response);
-
         return ssoProperties.getFrontBaseUrl() + "/index";
+    }
+
+    /** 已登录用户绑定流程：禁止 IdP 账号已被他人占用；冪等允许重复绑定同一个 external_user。 */
+    private String handleBindCallback(SysSsoProvider provider, SsoUserInfo info, Long userId) {
+        SysUserSsoBinding existing = bindingMapper.selectOne(
+                new LambdaQueryWrapper<SysUserSsoBinding>()
+                        .eq(SysUserSsoBinding::getProviderId, provider.getId())
+                        .eq(SysUserSsoBinding::getExternalUserId, info.getExternalUserId()));
+        if (existing != null && !existing.getUserId().equals(userId)) {
+            throw new RuntimeException("该 " + provider.getName() + " 账号已绑定其它用户");
+        }
+        if (existing == null) {
+            createBinding(userId, provider.getId(), info);
+        } else {
+            // 同一用户重复绑定：刷新 username/email/bindTime
+            existing.setExternalUsername(info.getUsername());
+            existing.setEmail(info.getEmail());
+            existing.setBindTime(new Date());
+            bindingMapper.updateById(existing);
+        }
+        return ssoProperties.getFrontBaseUrl() + "/profile?tab=bindings&bind=ok";
+    }
+
+    @Override
+    public List<SsoBindingVO> listMyBindings(Long userId) {
+        if (userId == null) return Collections.emptyList();
+        List<SysUserSsoBinding> rows = bindingMapper.selectList(
+                new LambdaQueryWrapper<SysUserSsoBinding>()
+                        .eq(SysUserSsoBinding::getUserId, userId)
+                        .orderByDesc(SysUserSsoBinding::getBindTime));
+        if (rows.isEmpty()) return Collections.emptyList();
+        List<SsoBindingVO> result = new ArrayList<>(rows.size());
+        for (SysUserSsoBinding b : rows) {
+            SysSsoProvider p = providerService.getById(b.getProviderId());
+            SsoBindingVO vo = new SsoBindingVO();
+            vo.setId(b.getId());
+            vo.setProviderId(b.getProviderId());
+            vo.setExternalUserId(b.getExternalUserId());
+            vo.setExternalUsername(b.getExternalUsername());
+            vo.setEmail(b.getEmail());
+            vo.setBindTime(b.getBindTime());
+            if (p != null) {
+                vo.setProviderCode(p.getCode());
+                vo.setProviderName(p.getName());
+                vo.setProviderIcon(p.getIcon());
+            }
+            result.add(vo);
+        }
+        return result;
+    }
+
+    @Override
+    public void unbind(Long bindingId, Long userId) {
+        SysUserSsoBinding b = bindingMapper.selectById(bindingId);
+        if (b == null) throw new RuntimeException("绑定记录不存在");
+        if (!b.getUserId().equals(userId)) throw new RuntimeException("不能解除他人的绑定");
+        bindingMapper.deleteById(bindingId);
     }
 
     private SysUser resolveUser(SysSsoProvider provider, SsoUserInfo info) {

@@ -302,6 +302,54 @@
                   </div>
                 </div>
               </el-tab-pane>
+
+              <!-- 账号绑定 -->
+              <el-tab-pane name="bindings">
+                <span slot="label">
+                  <i class="el-icon-link"></i> 账号绑定
+                </span>
+
+                <div class="tab-content" v-loading="bindingsLoading">
+                  <h4 style="margin-top:0">已绑定的第三方账号</h4>
+                  <div v-if="bindings.length === 0" class="binding-empty">
+                    <i class="el-icon-warning-outline" style="font-size:24px; color:#909399"></i>
+                    <p>暂未绑定任何第三方账号</p>
+                  </div>
+                  <div v-else class="binding-list">
+                    <div v-for="b in bindings" :key="b.id" class="binding-item">
+                      <div class="binding-info">
+                        <i :class="['binding-icon', b.providerIcon || 'el-icon-link']"></i>
+                        <div>
+                          <div class="binding-title">{{ b.providerName }}</div>
+                          <div class="binding-desc">
+                            {{ b.externalUsername || b.externalUserId }}
+                            <span v-if="b.email"> · {{ b.email }}</span>
+                            <span class="binding-time"> · 绑定于 {{ b.bindTime }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <el-button size="small" type="danger" plain @click="handleUnbind(b)">解绑</el-button>
+                    </div>
+                  </div>
+
+                  <h4 style="margin-top:32px">可绑定的第三方账号</h4>
+                  <div v-if="unboundProviders.length === 0" class="binding-empty">
+                    <p>没有可绑定的 IdP（已全部绑定，或系统未启用任何 IdP）</p>
+                  </div>
+                  <div v-else class="binding-list">
+                    <div v-for="p in unboundProviders" :key="p.code" class="binding-item">
+                      <div class="binding-info">
+                        <i :class="['binding-icon', p.icon || 'el-icon-link']"></i>
+                        <div>
+                          <div class="binding-title">{{ p.name }}</div>
+                          <div class="binding-desc">点击右侧按钮跳转到 {{ p.name }} 授权</div>
+                        </div>
+                      </div>
+                      <el-button size="small" type="primary" plain @click="handleStartBind(p.code)">立即绑定</el-button>
+                    </div>
+                  </div>
+                </div>
+              </el-tab-pane>
             </el-tabs>
           </div>
         </el-col>
@@ -312,6 +360,7 @@
 
 <script>
 import { uploadAvatar } from '@/api/login'
+import { listMyBindings, unbindBinding, startBind, listEnabledProviders } from '@/api/system/sso'
 
 export default {
   name: 'Profile',
@@ -320,6 +369,9 @@ export default {
       loading: false,
       uploadingAvatar: false,
       activeTab: 'userinfo',
+      bindings: [],
+      enabledProviders: [],
+      bindingsLoading: false,
       user: {
         username: '',
         nickname: '',
@@ -370,8 +422,16 @@ export default {
       }
     }
   },
+  computed: {
+    unboundProviders() {
+      const boundCodes = new Set(this.bindings.map(b => b.providerCode))
+      return this.enabledProviders.filter(p => !boundCodes.has(p.code))
+    }
+  },
   created() {
     this.loadUserInfo()
+    this.loadBindings()
+    this.handleBindReturn()
   },
   methods: {
     // 获取头像完整URL（兼容新旧格式）
@@ -412,6 +472,44 @@ export default {
         }
         this.loading = false
       }, 300)
+    },
+    loadBindings() {
+      this.bindingsLoading = true
+      Promise.all([listMyBindings(), listEnabledProviders()])
+        .then(([bindRes, providerRes]) => {
+          this.bindings = bindRes.data || []
+          this.enabledProviders = providerRes.data || []
+        })
+        .finally(() => { this.bindingsLoading = false })
+    },
+    handleStartBind(code) {
+      startBind(code).then(res => {
+        if (res && res.data) {
+          window.location.href = res.data
+        } else {
+          this.$message.error('发起绑定失败')
+        }
+      })
+    },
+    handleUnbind(b) {
+      this.$confirm(`确认解除与 ${b.providerName}（${b.externalUsername || b.externalUserId}）的绑定？`, '解绑确认', {
+        confirmButtonText: '解绑', cancelButtonText: '取消', type: 'warning'
+      }).then(() => unbindBinding(b.id))
+        .then(() => {
+          this.$message.success('已解绑')
+          this.loadBindings()
+        }).catch(() => {})
+    },
+    handleBindReturn() {
+      const { tab, bind } = this.$route.query || {}
+      if (tab === 'bindings') {
+        this.activeTab = 'bindings'
+        if (bind === 'ok') {
+          this.$message.success('绑定成功')
+          // 清掉 query，避免刷新页面再次提示
+          this.$router.replace({ path: this.$route.path })
+        }
+      }
     },
     handleSave() {
       this.$refs.userForm.validate((valid) => {
@@ -826,6 +924,44 @@ export default {
           border-radius: 8px;
         }
       }
+    }
+
+    // 第三方账号绑定列表（沿用 security-item 视觉风格）
+    .binding-list {
+      .binding-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px;
+        border-radius: 12px;
+        background: #f5f7fa;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+
+        &:hover { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+        .binding-info {
+          display: flex;
+          align-items: center;
+
+          .binding-icon {
+            width: 48px; height: 48px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: #606266;
+            background: white; border-radius: 12px; margin-right: 16px;
+          }
+
+          .binding-title { font-size: 16px; font-weight: 600; color: #303133; margin-bottom: 4px; }
+          .binding-desc  { font-size: 13px; color: #909399; }
+          .binding-time  { color: #c0c4cc; }
+        }
+      }
+    }
+    .binding-empty {
+      text-align: center;
+      color: #909399;
+      padding: 32px 0;
+      p { margin: 8px 0 0; }
     }
   }
 }
