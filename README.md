@@ -36,6 +36,7 @@
 - **消息中心** - 站内消息与通知模板
 - **缓存监控** - Redis 缓存状态监控
 - **数据统计** - 系统数据可视化统计
+- **单点登录 (SSO)** - 通用 OAuth2 / OIDC 适配器：动态配置 IdP（GitHub / Google 等），首次登录自动注册并绑定，已登录用户可从个人中心管理第三方账号绑定。client_secret AES-GCM 加密入库
 
 ## 快速开始
 
@@ -53,8 +54,8 @@
 -- 创建数据库
 CREATE DATABASE admin_system DEFAULT CHARACTER SET utf8mb4;
 
--- 导入数据
-mysql -u root -p admin_system < database/initData.sql
+-- 导入数据（单文件聚合所有表 + 种子数据，按依赖顺序执行）
+mysql -u root -p admin_system < database/init.sql
 ```
 
 ### 2. 启动后端
@@ -80,6 +81,9 @@ npm run dev
 
 - 账号：`admin`
 - 密码：`admin123`
+
+> 登录页底部「第三方登录」按钮支持通过已配置的 IdP 进行 SSO 登录。
+> 管理 IdP 配置：登录后进入 **系统管理 → 身份认证源**。
 
 ## 项目结构
 
@@ -132,6 +136,28 @@ spring:
     port: 6379
     password:        # 默认无密码
 ```
+
+### 单点登录（SSO）配置
+
+```yaml
+admin:
+  sso:
+    # AES-256 主密钥（32 字节 Base64），用于加密 IdP 的 client_secret 入库
+    # 生产环境必须通过环境变量 ADMIN_SSO_CRYPTO_KEY 覆盖，不要使用 yml 默认值
+    crypto-key: ${ADMIN_SSO_CRYPTO_KEY:<your-32-byte-base64-key>}
+    # IdP 回调地址（dev 走前端 8081，cookie 才会落在前端 origin）
+    callback-base-url: http://localhost:8081/api
+    # 前端基础地址：SSO 登录成功后跳 {front}/index
+    front-base-url: http://localhost:8081
+    # 出站代理（境内访问 github.com 等 IdP 时可走本地 Clash / v2rayN）
+    proxy:
+      host: ${ADMIN_SSO_PROXY_HOST:127.0.0.1}
+      port: ${ADMIN_SSO_PROXY_PORT:7890}
+```
+
+IdP（GitHub / Google 等）的 Client ID / Secret、授权 / Token / UserInfo 端点、字段映射等参数**不写在 yml**，全部在管理后台 **系统管理 → 身份认证源** 动态配置，无需重启即生效。
+
+GitHub OAuth App 的 Authorization callback URL 填：`http://localhost:8081/api/sso/callback/github`。
 
 ## API 文档
 
