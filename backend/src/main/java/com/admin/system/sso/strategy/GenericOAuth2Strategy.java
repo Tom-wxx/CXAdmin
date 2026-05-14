@@ -1,31 +1,52 @@
 package com.admin.system.sso.strategy;
 
+import com.admin.system.sso.config.SsoProperties;
 import com.admin.system.sso.dto.SsoUserInfo;
 import com.admin.system.sso.entity.SysSsoProvider;
 import com.admin.system.sso.util.SsoCryptoUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.Map;
 import java.util.HashMap;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class GenericOAuth2Strategy implements SsoStrategy {
     private static final String TYPE = "OAUTH2_GENERIC";
 
     private final SsoCryptoUtil crypto;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final RestTemplate http = new RestTemplate();
+    private final RestTemplate http;
+
+    public GenericOAuth2Strategy(SsoCryptoUtil crypto, SsoProperties ssoProperties) {
+        this.crypto = crypto;
+        this.http = buildRestTemplate(ssoProperties);
+    }
+
+    private static RestTemplate buildRestTemplate(SsoProperties props) {
+        SsoProperties.Proxy proxyCfg = props.getProxy();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10_000);
+        factory.setReadTimeout(15_000);
+        if (proxyCfg != null && proxyCfg.getHost() != null && !proxyCfg.getHost().isEmpty()
+                && proxyCfg.getPort() != null) {
+            factory.setProxy(new Proxy(Proxy.Type.HTTP,
+                    new InetSocketAddress(proxyCfg.getHost(), proxyCfg.getPort())));
+            log.info("SSO RestTemplate using HTTP proxy {}:{}", proxyCfg.getHost(), proxyCfg.getPort());
+        }
+        return new RestTemplate(factory);
+    }
 
     @Override
     public String supports() { return TYPE; }
@@ -38,7 +59,7 @@ public class GenericOAuth2Strategy implements SsoStrategy {
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("scope", p.getScope() == null ? "" : p.getScope())
                 .queryParam("state", state)
-                .build(true).toUriString();
+                .encode().toUriString();
     }
 
     @Override

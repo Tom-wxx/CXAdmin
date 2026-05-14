@@ -229,5 +229,11 @@ admin:
   sso:
     # AES-256 主密钥（32 字节），Base64 编码。生产请放环境变量 ADMIN_SSO_CRYPTO_KEY
     crypto-key: ${ADMIN_SSO_CRYPTO_KEY:q1bzST8qQgcOxwv9f6l/vGVODv5NrlauMkDMr762jUQ=}
-    # 回调基础地址（前端域名）。生产由前端域名 + nginx 反代
-    callback-base-url: http://localhost:8081
+    # IdP 回调地址：dev 走前端 8081（让 vue dev server 代理回后端），cookie 才会落在前端 origin
+    callback-base-url: http://localhost:8081/api
+    # 前端基础地址：SSO 登录成功后跳 {front}/index
+    front-base-url: http://localhost:8081
+    # 出站代理（访问 IdP 网络时使用）。host 留空 = 直连。生产部署请清空。
+    proxy:
+      host: ${ADMIN_SSO_PROXY_HOST:127.0.0.1}
+      port: ${ADMIN_SSO_PROXY_PORT:7890}

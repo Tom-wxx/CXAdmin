@@ -84,7 +84,7 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
         // 4. 签 JWT，写 Redis，Set-Cookie
         issueJwtAndCookie(user, response);
 
-        return ssoProperties.getCallbackBaseUrl() + "/index";
+        return ssoProperties.getFrontBaseUrl() + "/index";
     }
 
     private SysUser resolveUser(SysSsoProvider provider, SsoUserInfo info) {
@@ -159,12 +159,20 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
         redisUtil.set(SystemConstants.LOGIN_TOKEN_KEY + token,
                 loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
 
-        String cookieHeader = SystemConstants.TOKEN_COOKIE_NAME + "=" + token
-                + "; Path=/"
-                + "; HttpOnly"
-                + "; Max-Age=" + (jwtProperties.getExpireTime() * 60)
-                + "; SameSite=Lax";
-        response.addHeader("Set-Cookie", cookieHeader);
+        int maxAgeSec = (int) (jwtProperties.getExpireTime() * 60);
+        // 1) HttpOnly JWT，后端 JwtAuthenticationFilter 用
+        response.addHeader("Set-Cookie",
+                SystemConstants.TOKEN_COOKIE_NAME + "=" + token
+                        + "; Path=/"
+                        + "; HttpOnly"
+                        + "; Max-Age=" + maxAgeSec
+                        + "; SameSite=Lax");
+        // 2) 非 HttpOnly 的会话标记，前端路由守卫 getToken() 用
+        response.addHeader("Set-Cookie",
+                "Admin-Session=1"
+                        + "; Path=/"
+                        + "; Max-Age=" + maxAgeSec
+                        + "; SameSite=Lax");
     }
 
     private SysSsoProvider requireEnabled(String code) {

@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @author Admin
  */
 @SpringBootApplication
-@MapperScan("com.admin.system.mapper")
+@MapperScan({"com.admin.system.mapper", "com.admin.system.sso.mapper"})
 @EnableScheduling
 public class AdminSystemApplication {
 
