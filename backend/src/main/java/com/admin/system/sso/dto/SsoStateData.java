@@ -26,12 +26,14 @@ public class SsoStateData implements Serializable {
     private String mode;
     /** 仅 mode=bind 时有值：发起绑定的当前登录用户 ID */
     private Long userId;
+    /** PKCE code_verifier（明文随机串），仅 provider.enablePkce=1 时填 */
+    private String codeVerifier;
 
     public static SsoStateData login(String code) {
-        return new SsoStateData(code, MODE_LOGIN, null);
+        return new SsoStateData(code, MODE_LOGIN, null, null);
     }
 
     public static SsoStateData bind(String code, Long userId) {
-        return new SsoStateData(code, MODE_BIND, userId);
+        return new SsoStateData(code, MODE_BIND, userId, null);
     }
 }

@@ -19,6 +19,8 @@ public class SsoProviderDTO {
     /** 可选：userinfo 不带邮箱时的兜底端点（GitHub: /user/emails） */
     private String emailsUri;
     private String scope;
+    /** 启用 PKCE（S256） */
+    private Integer enablePkce;
     private String userFieldMapping;
     private Long defaultRoleId;
     private Long defaultDeptId;

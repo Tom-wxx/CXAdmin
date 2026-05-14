@@ -62,6 +62,12 @@
             placeholder="可选：userinfo 不返回 email 时调用，GitHub 填 https://api.github.com/user/emails"
           />
         </el-form-item>
+        <el-form-item label="PKCE (S256)">
+          <el-switch v-model="form.enablePkce" :active-value="1" :inactive-value="0" />
+          <span class="pkce-hint">
+            授权码增强保护（RFC 7636）。Google / Microsoft 支持；GitHub OAuth Apps 不支持，请保持关闭。
+          </span>
+        </el-form-item>
         <el-form-item label="Scope">
           <el-select
             v-model="scopeList"
@@ -213,7 +219,7 @@ export default {
       return { id: null, code: '', name: '', type: 'OAUTH2_GENERIC', icon: '',
                clientId: '', clientSecret: '',
                authorizationUri: '', tokenUri: '', userinfoUri: '', emailsUri: '',
-               scope: '', userFieldMapping: '',
+               scope: '', enablePkce: 0, userFieldMapping: '',
                defaultRoleId: null, defaultDeptId: null,
                enabled: 1, orderNum: 0, remark: '' }
     },
@@ -315,4 +321,5 @@ export default {
 <style scoped>
 .mapping-desc { margin-left: 8px; color: #606266; font-size: 12px; }
 .mapping-hint { margin-top: 6px; color: #909399; font-size: 12px; }
+.pkce-hint { margin-left: 12px; color: #909399; font-size: 12px; }
 </style>

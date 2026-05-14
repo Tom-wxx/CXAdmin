@@ -29,6 +29,8 @@ public class SysSsoProvider extends BaseEntity {
     /** 可选：当 userinfo 不返回邮箱时调用，期望返回 [{email, primary, verified}] 数组。例如 GitHub: https://api.github.com/user/emails */
     private String emailsUri;
     private String scope;
+    /** 是否启用 PKCE（S256）。仅 OAuth2 / OIDC 有效；部分 IdP（如 GitHub OAuth Apps）不支持需保持 0 */
+    private Integer enablePkce;
     private String userFieldMapping;
     private Long defaultRoleId;
     private Long defaultDeptId;

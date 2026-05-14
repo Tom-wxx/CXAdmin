@@ -52,19 +52,23 @@ public class GenericOAuth2Strategy implements SsoStrategy {
     public String supports() { return TYPE; }
 
     @Override
-    public String buildAuthorizationUrl(SysSsoProvider p, String state, String redirectUri) {
-        return UriComponentsBuilder.fromUriString(p.getAuthorizationUri())
+    public String buildAuthorizationUrl(SysSsoProvider p, String state, String redirectUri, String codeChallenge) {
+        UriComponentsBuilder b = UriComponentsBuilder.fromUriString(p.getAuthorizationUri())
                 .queryParam("response_type", "code")
                 .queryParam("client_id", p.getClientId())
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("scope", p.getScope() == null ? "" : p.getScope())
-                .queryParam("state", state)
-                .encode().toUriString();
+                .queryParam("state", state);
+        if (codeChallenge != null && !codeChallenge.isEmpty()) {
+            b.queryParam("code_challenge", codeChallenge)
+             .queryParam("code_challenge_method", "S256");
+        }
+        return b.encode().toUriString();
     }
 
     @Override
-    public SsoUserInfo exchangeAndFetchUser(SysSsoProvider p, String code, String redirectUri) {
-        String accessToken = exchangeCode(p, code, redirectUri);
+    public SsoUserInfo exchangeAndFetchUser(SysSsoProvider p, String code, String redirectUri, String codeVerifier) {
+        String accessToken = exchangeCode(p, code, redirectUri, codeVerifier);
         JsonNode userJson = fetchUserinfo(p, accessToken);
         SsoUserInfo info = mapUser(p, userJson);
         // userinfo 拿不到邮箱时，若配了 emailsUri 则兜底取一次（GitHub 主邮箱默认不公开）
@@ -111,7 +115,7 @@ public class GenericOAuth2Strategy implements SsoStrategy {
         return java.util.Optional.empty();
     }
 
-    private String exchangeCode(SysSsoProvider p, String code, String redirectUri) {
+    private String exchangeCode(SysSsoProvider p, String code, String redirectUri, String codeVerifier) {
         HttpHeaders h = new HttpHeaders();
         h.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         h.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);  // GitHub 默认返回 form，加 Accept 强制 JSON
@@ -122,6 +126,9 @@ public class GenericOAuth2Strategy implements SsoStrategy {
         form.add("redirect_uri", redirectUri);
         form.add("client_id", p.getClientId());
         form.add("client_secret", crypto.decrypt(p.getClientSecret()));
+        if (codeVerifier != null && !codeVerifier.isEmpty()) {
+            form.add("code_verifier", codeVerifier);
+        }
 
         ResponseEntity<String> resp = http.exchange(
                 p.getTokenUri(), HttpMethod.POST, new HttpEntity<>(form, h), String.class);

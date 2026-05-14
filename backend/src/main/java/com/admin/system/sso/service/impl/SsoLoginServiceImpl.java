@@ -12,10 +12,12 @@ import com.admin.system.sso.dto.SsoUserInfo;
 import com.admin.system.sso.entity.SysSsoProvider;
 import com.admin.system.sso.entity.SysUserSsoBinding;
 import com.admin.system.sso.mapper.SysUserSsoBindingMapper;
+import com.admin.system.sso.service.ISsoAuditLogService;
 import com.admin.system.sso.service.ISsoLoginService;
 import com.admin.system.sso.service.ISysSsoProviderService;
 import com.admin.system.sso.strategy.SsoStrategy;
 import com.admin.system.sso.strategy.SsoStrategyFactory;
+import com.admin.system.sso.util.PkceUtil;
 import com.admin.system.sso.vo.SsoBindingVO;
 import com.admin.system.utils.JwtUtil;
 import com.admin.system.utils.RedisUtil;
@@ -52,6 +54,7 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
     private final ISysMenuService menuService;
     private final PasswordEncoder passwordEncoder;
     private final JwtProperties jwtProperties;
+    private final ISsoAuditLogService auditLog;
 
     @Override
     public String buildAuthorizationUrl(String code) {
@@ -65,43 +68,67 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
     }
 
     private String buildAuthorizationUrlInternal(String code, SsoStateData stateData) {
-        SysSsoProvider provider = requireEnabled(code);
+        SysSsoProvider provider;
+        try {
+            provider = requireEnabled(code);
+        } catch (RuntimeException e) {
+            auditLog.recordAuthorizeFail(code, e.getMessage());
+            throw e;
+        }
         SsoStrategy strategy = strategyFactory.get(provider.getType());
 
         String state = UUID.randomUUID().toString().replace("-", "");
+        String codeChallenge = null;
+        if (provider.getEnablePkce() != null && provider.getEnablePkce() == 1) {
+            String verifier = PkceUtil.generateCodeVerifier();
+            codeChallenge = PkceUtil.s256Challenge(verifier);
+            stateData.setCodeVerifier(verifier);  // 回调时取出送到 token 端点
+        }
         redisUtil.set(STATE_KEY + state, stateData, STATE_TTL_MIN, TimeUnit.MINUTES);
 
-        return strategy.buildAuthorizationUrl(provider, state, callbackUri(code));
+        String url = strategy.buildAuthorizationUrl(provider, state, callbackUri(code), codeChallenge);
+        auditLog.recordAuthorize(provider.getId(), code, stateData.getMode(), stateData.getUserId());
+        return url;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String handleCallback(String code, String authCode, String state, HttpServletResponse response) {
-        // 1. state 校验（一次性消费）+ 取出 mode
-        String redisKey = STATE_KEY + state;
-        Object cached = redisUtil.get(redisKey);
-        if (!(cached instanceof SsoStateData)) {
-            throw new RuntimeException("Invalid or expired SSO state");
-        }
-        SsoStateData stateData = (SsoStateData) cached;
-        if (!code.equals(stateData.getCode())) {
-            throw new RuntimeException("SSO state code mismatch");
-        }
-        redisUtil.delete(redisKey);
+        String mode = null;
+        try {
+            // 1. state 校验（一次性消费）+ 取出 mode
+            String redisKey = STATE_KEY + state;
+            Object cached = redisUtil.get(redisKey);
+            if (!(cached instanceof SsoStateData)) {
+                throw new RuntimeException("Invalid or expired SSO state");
+            }
+            SsoStateData stateData = (SsoStateData) cached;
+            mode = stateData.getMode();
+            if (!code.equals(stateData.getCode())) {
+                throw new RuntimeException("SSO state code mismatch");
+            }
+            redisUtil.delete(redisKey);
 
-        SysSsoProvider provider = requireEnabled(code);
-        SsoStrategy strategy = strategyFactory.get(provider.getType());
+            SysSsoProvider provider = requireEnabled(code);
+            SsoStrategy strategy = strategyFactory.get(provider.getType());
 
-        // 2. 换 token + 拉 userinfo
-        SsoUserInfo info = strategy.exchangeAndFetchUser(provider, authCode, callbackUri(code));
+            // 2. 换 token + 拉 userinfo（PKCE verifier 从 state 取，未启用则为 null）
+            SsoUserInfo info = strategy.exchangeAndFetchUser(provider, authCode, callbackUri(code), stateData.getCodeVerifier());
 
-        // 3. 分支：登录 vs 绑定
-        if (SsoStateData.MODE_BIND.equals(stateData.getMode())) {
-            return handleBindCallback(provider, info, stateData.getUserId());
+            // 3. 分支：登录 vs 绑定
+            if (SsoStateData.MODE_BIND.equals(stateData.getMode())) {
+                String redirect = handleBindCallback(provider, info, stateData.getUserId());
+                auditLog.recordCallback(provider.getId(), code, SsoStateData.MODE_BIND, stateData.getUserId(), info.getExternalUserId());
+                return redirect;
+            }
+            SysUser user = resolveUser(provider, info);
+            issueJwtAndCookie(user, response);
+            auditLog.recordCallback(provider.getId(), code, SsoStateData.MODE_LOGIN, user.getUserId(), info.getExternalUserId());
+            return ssoProperties.getFrontBaseUrl() + "/index";
+        } catch (RuntimeException e) {
+            auditLog.recordCallbackFail(code, mode, e.getMessage());
+            throw e;
         }
-        SysUser user = resolveUser(provider, info);
-        issueJwtAndCookie(user, response);
-        return ssoProperties.getFrontBaseUrl() + "/index";
     }
 
     /** 已登录用户绑定流程：禁止 IdP 账号已被他人占用；冪等允许重复绑定同一个 external_user。 */
@@ -156,9 +183,18 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
     @Override
     public void unbind(Long bindingId, Long userId) {
         SysUserSsoBinding b = bindingMapper.selectById(bindingId);
-        if (b == null) throw new RuntimeException("绑定记录不存在");
-        if (!b.getUserId().equals(userId)) throw new RuntimeException("不能解除他人的绑定");
+        if (b == null) {
+            auditLog.recordUnbind(null, null, userId, null, false, "绑定记录不存在: " + bindingId);
+            throw new RuntimeException("绑定记录不存在");
+        }
+        if (!b.getUserId().equals(userId)) {
+            SysSsoProvider p = providerService.getById(b.getProviderId());
+            auditLog.recordUnbind(b.getProviderId(), p != null ? p.getCode() : null, userId, b.getExternalUserId(), false, "不能解除他人的绑定");
+            throw new RuntimeException("不能解除他人的绑定");
+        }
         bindingMapper.deleteById(bindingId);
+        SysSsoProvider p = providerService.getById(b.getProviderId());
+        auditLog.recordUnbind(b.getProviderId(), p != null ? p.getCode() : null, userId, b.getExternalUserId(), true, null);
     }
 
     private SysUser resolveUser(SysSsoProvider provider, SsoUserInfo info) {

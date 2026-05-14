@@ -33,3 +33,8 @@ export function unbindBinding(id) {
 export function startBind(code) {
   return request({ url: '/sso/bind/' + code, method: 'get' })
 }
+
+// 审计日志
+export function listSsoLogs(query) {
+  return request({ url: '/system/sso/log/list', method: 'get', params: query })
+}

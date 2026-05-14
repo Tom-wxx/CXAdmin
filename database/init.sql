@@ -1058,6 +1058,7 @@ CREATE TABLE `sys_sso_provider` (
   `userinfo_uri`       varchar(500) NOT NULL,
   `emails_uri`         varchar(500) DEFAULT NULL COMMENT '可选：userinfo 不返回邮箱时调用此端点（GitHub: /user/emails）',
   `scope`              varchar(200) DEFAULT NULL,
+  `enable_pkce`        tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否启用 PKCE（S256），仅 OAuth2/OIDC 有效',
   `user_field_mapping` varchar(1000) DEFAULT NULL COMMENT '字段映射 JSON',
   `default_role_id`    bigint DEFAULT NULL COMMENT '自动注册默认角色',
   `default_dept_id`    bigint DEFAULT NULL COMMENT '自动注册默认部门',
@@ -1098,6 +1099,33 @@ VALUES
  (124,'认证源删除',120,4,'','',1,0,'F','0','0','system:sso:remove','#',''),
  (125,'认证源测试',120,5,'','',1,0,'F','0','0','system:sso:test','#','');
 
--- 12.4 把 120-125 这 6 个菜单绑给 admin 角色（role_id=1）
+-- 12.4 SSO 审计日志表
+DROP TABLE IF EXISTS `sys_sso_login_log`;
+CREATE TABLE `sys_sso_login_log` (
+  `id`               bigint NOT NULL AUTO_INCREMENT,
+  `provider_id`      bigint DEFAULT NULL COMMENT 'IdP ID（provider 被删除时可为 NULL）',
+  `provider_code`    varchar(50) DEFAULT NULL COMMENT 'IdP code（冗余）',
+  `user_id`          bigint DEFAULT NULL COMMENT '匹配/创建到的本地用户 ID',
+  `external_user_id` varchar(100) DEFAULT NULL COMMENT 'IdP 返回的外部用户 ID',
+  `action`           varchar(20) NOT NULL COMMENT 'authorize/callback/bind/unbind',
+  `mode`             varchar(20) DEFAULT NULL COMMENT 'login/bind（仅 callback 时有值）',
+  `status`           varchar(20) NOT NULL COMMENT 'success/fail',
+  `ip`               varchar(64) DEFAULT NULL,
+  `user_agent`       varchar(500) DEFAULT NULL,
+  `error_message`    varchar(500) DEFAULT NULL,
+  `create_time`      datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_provider`    (`provider_id`),
+  KEY `idx_user`        (`user_id`),
+  KEY `idx_create_time` (`create_time`),
+  KEY `idx_status`      (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='SSO 审计日志';
+
+-- 12.5 SSO 审计日志菜单
+INSERT INTO `sys_menu` (`menu_id`,`menu_name`,`parent_id`,`order_num`,`path`,`component`,`is_frame`,`is_cache`,`menu_type`,`visible`,`status`,`perms`,`icon`,`remark`)
+VALUES
+ (126,'SSO 日志',120,6,'sso/log','system/sso/log/index',1,0,'C','0','0','system:sso:log:list','log','SSO 登录审计日志');
+
+-- 12.6 把 120-126 这 7 个菜单绑给 admin 角色（role_id=1）
 INSERT INTO `sys_role_menu` (`role_id`,`menu_id`) VALUES
- (1,120),(1,121),(1,122),(1,123),(1,124),(1,125);
+ (1,120),(1,121),(1,122),(1,123),(1,124),(1,125),(1,126);
