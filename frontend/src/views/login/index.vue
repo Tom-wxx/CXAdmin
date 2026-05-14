@@ -12,20 +12,6 @@
         </div>
         <h1 class="brand-title">CXAdmin</h1>
         <p class="brand-desc">简洁高效的企业级后台管理系统</p>
-        <div class="brand-features">
-          <div class="feature-item">
-            <i class="el-icon-check"></i>
-            <span>RBAC 权限控制</span>
-          </div>
-          <div class="feature-item">
-            <i class="el-icon-check"></i>
-            <span>动态路由菜单</span>
-          </div>
-          <div class="feature-item">
-            <i class="el-icon-check"></i>
-            <span>系统运行监控</span>
-          </div>
-        </div>
       </div>
     </div>
     <div class="login-right">
@@ -298,31 +284,8 @@ $dark-bg: #001529;
   .brand-desc {
     font-size: 16px;
     color: rgba(255, 255, 255, 0.65);
-    margin: 0 0 48px;
+    margin: 0;
     line-height: 1.6;
-  }
-
-  .brand-features {
-    .feature-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 16px;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.85);
-
-      i {
-        width: 20px;
-        height: 20px;
-        background: rgba(19, 194, 194, 0.2);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 12px;
-        font-size: 12px;
-        color: $primary;
-      }
-    }
   }
 }
 
