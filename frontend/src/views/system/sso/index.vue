@@ -38,19 +38,95 @@
         </el-form-item>
         <el-form-item label="图标"><el-input v-model="form.icon" placeholder="例如 el-icon-platform-eleme" /></el-form-item>
         <el-form-item label="client_id" prop="clientId"><el-input v-model="form.clientId" /></el-form-item>
-        <el-form-item :label="form.id ? 'client_secret（留空不变更）' : 'client_secret'">
-          <el-input v-model="form.clientSecret" type="password" show-password />
+        <el-form-item label="client_secret">
+          <div v-if="form.id" style="display:flex; gap:8px">
+            <el-input
+              v-model="form.clientSecret"
+              type="password"
+              show-password
+              :disabled="!editingSecret"
+              :placeholder="editingSecret ? '输入新的 client_secret，保存后覆盖' : '已存在，点击右侧『修改』可重置'"
+              style="flex:1"
+            />
+            <el-button v-if="!editingSecret" @click="editingSecret = true">修改</el-button>
+            <el-button v-else @click="editingSecret = false; form.clientSecret = ''">取消</el-button>
+          </div>
+          <el-input v-else v-model="form.clientSecret" type="password" show-password />
         </el-form-item>
         <el-form-item label="授权端点" prop="authorizationUri"><el-input v-model="form.authorizationUri" /></el-form-item>
         <el-form-item label="Token 端点" prop="tokenUri"><el-input v-model="form.tokenUri" /></el-form-item>
         <el-form-item label="UserInfo 端点" prop="userinfoUri"><el-input v-model="form.userinfoUri" /></el-form-item>
-        <el-form-item label="Scope"><el-input v-model="form.scope" placeholder="空格分隔，如 read:user user:email" /></el-form-item>
-        <el-form-item label="字段映射 JSON">
-          <el-input v-model="form.userFieldMapping" type="textarea" :rows="3"
-            placeholder='{"id":"id","username":"login","nickname":"name","email":"email","avatar":"avatar_url"}' />
+        <el-form-item label="邮箱兜底端点">
+          <el-input
+            v-model="form.emailsUri"
+            placeholder="可选：userinfo 不返回 email 时调用，GitHub 填 https://api.github.com/user/emails"
+          />
         </el-form-item>
-        <el-form-item label="默认角色 ID"><el-input-number v-model="form.defaultRoleId" :min="1" /></el-form-item>
-        <el-form-item label="默认部门 ID"><el-input-number v-model="form.defaultDeptId" :min="1" /></el-form-item>
+        <el-form-item label="Scope">
+          <el-select
+            v-model="scopeList"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择或输入 scope，回车添加自定义"
+            style="width:100%"
+            @change="onScopeChange"
+          >
+            <el-option-group
+              v-for="grp in scopePresets"
+              :key="grp.label"
+              :label="grp.label"
+            >
+              <el-option
+                v-for="opt in grp.options"
+                :key="opt"
+                :label="opt"
+                :value="opt"
+              />
+            </el-option-group>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="字段映射">
+          <el-table :data="mappingRows" size="mini" border style="width:100%">
+            <el-table-column label="标准字段" width="180">
+              <template slot-scope="s">
+                <el-tag size="mini" :type="s.row.required ? 'danger' : ''">{{ s.row.key }}</el-tag>
+                <span class="mapping-desc">{{ s.row.desc }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="IdP 响应中的字段名">
+              <template slot-scope="s">
+                <el-input v-model="s.row.value" :placeholder="s.row.placeholder" size="mini" clearable />
+              </template>
+            </el-table-column>
+          </el-table>
+          <div class="mapping-hint">
+            红色 <el-tag size="mini" type="danger">id</el-tag> 为必填项；其它字段留空则跳过该属性同步。
+          </div>
+        </el-form-item>
+        <el-form-item label="默认角色">
+          <el-select v-model="form.defaultRoleId" placeholder="新用户首次登录的默认角色" clearable style="width:100%">
+            <el-option
+              v-for="r in roleOptions"
+              :key="r.roleId"
+              :label="r.roleName"
+              :value="r.roleId"
+            >
+              <span style="float:left">{{ r.roleName }}</span>
+              <span style="float:right; color:#8492a6; font-size:12px">{{ r.roleKey }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="默认部门">
+          <treeselect
+            v-model="form.defaultDeptId"
+            :options="deptOptions"
+            :normalizer="deptNormalizer"
+            :show-count="true"
+            placeholder="新用户首次登录的默认部门"
+          />
+        </el-form-item>
         <el-form-item label="启用"><el-switch v-model="form.enabled" :active-value="1" :inactive-value="0" /></el-form-item>
         <el-form-item label="排序"><el-input-number v-model="form.orderNum" :min="0" /></el-form-item>
         <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" /></el-form-item>
@@ -65,13 +141,25 @@
 
 <script>
 import { listProviders, getProvider, addProvider, updateProvider, delProvider } from '@/api/system/sso'
+import { listAllRole } from '@/api/system/role'
+import { treeSelect } from '@/api/system/dept'
+import Treeselect from '@riophae/vue-treeselect'
+import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import Pagination from '@/components/Pagination'
 import SearchForm from '@/components/SearchForm'
 import TableToolbar from '@/components/TableToolbar'
 
+const MAPPING_KEYS = [
+  { key: 'id',       desc: 'IdP 唯一用户 ID', placeholder: 'GitHub: id / Google: sub', required: true },
+  { key: 'username', desc: '账号名',           placeholder: 'GitHub: login / Google: email', required: false },
+  { key: 'nickname', desc: '昵称',             placeholder: 'GitHub: name / Google: name',  required: false },
+  { key: 'email',    desc: '邮箱',             placeholder: 'email',                          required: false },
+  { key: 'avatar',   desc: '头像 URL',         placeholder: 'GitHub: avatar_url / Google: picture', required: false }
+]
+
 export default {
   name: 'Sso',
-  components: { Pagination, SearchForm, TableToolbar },
+  components: { Treeselect, Pagination, SearchForm, TableToolbar },
   data() {
     return {
       searchFields: [
@@ -82,6 +170,28 @@ export default {
       queryParams: { current: 1, size: 10 },
       dialogTitle: '', dialogVisible: false,
       form: this.emptyForm(),
+      editingSecret: false,
+      scopeList: [],
+      mappingRows: this.emptyMappingRows(),
+      roleOptions: [],
+      deptOptions: [],
+      scopePresets: [
+        {
+          label: 'OIDC 通用',
+          options: ['openid', 'profile', 'email']
+        },
+        {
+          label: 'GitHub',
+          options: ['read:user', 'user:email', 'repo', 'read:org']
+        },
+        {
+          label: 'Google',
+          options: [
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://www.googleapis.com/auth/userinfo.profile'
+          ]
+        }
+      ],
       rules: {
         code: [{ required: true, message: '标识不能为空', trigger: 'blur' }],
         name: [{ required: true, message: '名称不能为空', trigger: 'blur' }],
@@ -93,15 +203,61 @@ export default {
       }
     }
   },
-  created() { this.getList() },
+  created() {
+    this.getList()
+    this.loadRoleOptions()
+    this.loadDeptOptions()
+  },
   methods: {
     emptyForm() {
       return { id: null, code: '', name: '', type: 'OAUTH2_GENERIC', icon: '',
                clientId: '', clientSecret: '',
-               authorizationUri: '', tokenUri: '', userinfoUri: '',
+               authorizationUri: '', tokenUri: '', userinfoUri: '', emailsUri: '',
                scope: '', userFieldMapping: '',
                defaultRoleId: null, defaultDeptId: null,
                enabled: 1, orderNum: 0, remark: '' }
+    },
+    emptyMappingRows() {
+      return MAPPING_KEYS.map(k => ({ ...k, value: '' }))
+    },
+    loadRoleOptions() {
+      listAllRole().then(res => { this.roleOptions = (res.data || []).filter(r => r.status === '0' || r.status === 0) })
+    },
+    loadDeptOptions() {
+      treeSelect().then(res => { this.deptOptions = res.data || [] })
+    },
+    deptNormalizer(node) {
+      if (node.children && !node.children.length) delete node.children
+      return { id: node.deptId, label: node.deptName, children: node.children }
+    },
+    onScopeChange(val) {
+      this.form.scope = (val || []).join(' ')
+    },
+    /** form.scope 字符串 → scopeList 数组 */
+    syncScopeFromForm() {
+      this.scopeList = (this.form.scope || '').split(/\s+/).filter(Boolean)
+    },
+    /** form.userFieldMapping JSON → mappingRows */
+    syncMappingFromForm() {
+      const rows = this.emptyMappingRows()
+      if (this.form.userFieldMapping) {
+        try {
+          const obj = JSON.parse(this.form.userFieldMapping)
+          rows.forEach(r => { if (obj[r.key] != null) r.value = String(obj[r.key]) })
+        } catch (e) {
+          this.$message.warning('原字段映射 JSON 解析失败，已重置为空')
+        }
+      }
+      this.mappingRows = rows
+    },
+    /** mappingRows → form.userFieldMapping JSON */
+    buildMappingJson() {
+      const obj = {}
+      this.mappingRows.forEach(r => {
+        const v = (r.value || '').trim()
+        if (v) obj[r.key] = v
+      })
+      return Object.keys(obj).length ? JSON.stringify(obj) : ''
     },
     getList() {
       this.loading = true
@@ -113,6 +269,9 @@ export default {
     resetQuery() { this.queryParams = { current: 1, size: 10 }; this.handleQuery() },
     handleAdd() {
       this.form = this.emptyForm()
+      this.editingSecret = true
+      this.scopeList = []
+      this.mappingRows = this.emptyMappingRows()
       this.dialogTitle = '新增身份认证源'
       this.dialogVisible = true
       this.$nextTick(() => { if (this.$refs.form) this.$refs.form.clearValidate() })
@@ -120,6 +279,9 @@ export default {
     handleEdit(row) {
       getProvider(row.id).then(res => {
         this.form = { ...this.emptyForm(), ...res.data, clientSecret: '' }
+        this.editingSecret = false
+        this.syncScopeFromForm()
+        this.syncMappingFromForm()
         this.dialogTitle = '修改身份认证源'
         this.dialogVisible = true
       })
@@ -127,6 +289,12 @@ export default {
     submitForm() {
       this.$refs.form.validate(valid => {
         if (!valid) return
+        const idRow = this.mappingRows.find(r => r.key === 'id')
+        if (!idRow.value || !idRow.value.trim()) {
+          this.$message.error('字段映射中的 id 为必填项')
+          return
+        }
+        this.form.userFieldMapping = this.buildMappingJson()
         const op = this.form.id ? updateProvider : addProvider
         op(this.form).then(() => {
           this.$message.success(this.form.id ? '修改成功' : '新增成功')
@@ -143,3 +311,8 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.mapping-desc { margin-left: 8px; color: #606266; font-size: 12px; }
+.mapping-hint { margin-top: 6px; color: #909399; font-size: 12px; }
+</style>
