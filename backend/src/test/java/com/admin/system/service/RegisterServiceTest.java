@@ -90,7 +90,7 @@ class RegisterServiceTest {
         when(userMapper.insert(any(SysUser.class))).thenReturn(1);
 
         assertDoesNotThrow(() -> registerService.register(dto));
-        verify(userMapper).insert(argThat(u ->
+        verify(userMapper).insert(argThat((SysUser u) ->
             "newuser".equals(u.getUsername()) &&
             "Nick".equals(u.getNickname()) &&
             "new@example.com".equals(u.getEmail()) &&
@@ -126,7 +126,7 @@ class RegisterServiceTest {
         when(userMapper.updateById(any(SysUser.class))).thenReturn(1);
 
         assertDoesNotThrow(() -> registerService.resetPassword(dto));
-        verify(userMapper).updateById(argThat(u ->
+        verify(userMapper).updateById(argThat((SysUser u) ->
             u.getUserId().equals(42L) && "encoded-new".equals(u.getPassword())
         ));
         verify(redisUtil).delete(SystemConstants.RESET_PWD_KEY + "valid-token");

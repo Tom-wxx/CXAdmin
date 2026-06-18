@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 import java.util.Date;
 import java.util.List;
 

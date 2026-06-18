@@ -318,7 +318,7 @@ class SysRoleServiceImplTest {
 
         assertDoesNotThrow(() -> roleService.updateRoleStatus(1L, "1"));
 
-        verify(roleMapper).updateById(argThat(role -> {
+        verify(roleMapper).updateById(argThat((SysRole role) -> {
             assertEquals(1L, role.getRoleId());
             assertEquals("1", role.getStatus());
             return true;

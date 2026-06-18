@@ -7,16 +7,16 @@ import com.admin.system.entity.SysPost;
 import com.admin.system.service.ISysPostService;
 import com.admin.system.utils.PageUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.admin.system.utils.ExcelUtil;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.List;
  *
  * @author Admin
  */
-@Api(tags = "岗位管理")
+@Tag(name = "岗位管理")
 @RestController
 @RequestMapping("/system/post")
 @RequiredArgsConstructor
@@ -37,7 +37,7 @@ public class SysPostController {
     /**
      * 获取岗位列表
      */
-    @ApiOperation("获取岗位列表")
+    @Operation(summary = "获取岗位列表")
     @PreAuthorize("@ss.hasPermi('system:post:list')")
     @GetMapping("/list")
     public Result<List<SysPost>> list(SysPost post) {
@@ -48,14 +48,14 @@ public class SysPostController {
     /**
      * 分页查询岗位列表
      */
-    @ApiOperation("分页查询岗位列表")
+    @Operation(summary = "分页查询岗位列表")
     @PreAuthorize("@ss.hasPermi('system:post:list')")
     @GetMapping("/page")
     public PageResult<SysPost> page(
             PageQuery pageQuery,
-            @ApiParam("岗位编码") @RequestParam(required = false) String postCode,
-            @ApiParam("岗位名称") @RequestParam(required = false) String postName,
-            @ApiParam("状态") @RequestParam(required = false) String status) {
+            @Parameter(description = "岗位编码") @RequestParam(required = false) String postCode,
+            @Parameter(description = "岗位名称") @RequestParam(required = false) String postName,
+            @Parameter(description = "状态") @RequestParam(required = false) String status) {
 
         Page<SysPost> page = pageQuery.build();
         Page<SysPost> result = postService.selectPostPage(page, postCode, postName, status);
@@ -65,10 +65,10 @@ public class SysPostController {
     /**
      * 根据岗位编号获取详细信息
      */
-    @ApiOperation("查询岗位详情")
+    @Operation(summary = "查询岗位详情")
     @PreAuthorize("@ss.hasPermi('system:post:query')")
     @GetMapping("/{postId}")
-    public Result<SysPost> getInfo(@ApiParam("岗位ID") @PathVariable Long postId) {
+    public Result<SysPost> getInfo(@Parameter(description = "岗位ID") @PathVariable Long postId) {
         SysPost post = postService.selectPostById(postId);
         return Result.success(post);
     }
@@ -76,7 +76,7 @@ public class SysPostController {
     /**
      * 新增岗位
      */
-    @ApiOperation("新增岗位")
+    @Operation(summary = "新增岗位")
     @PreAuthorize("@ss.hasPermi('system:post:add')")
     @PostMapping
     public Result<Void> add(@Validated @RequestBody SysPost post) {
@@ -87,7 +87,7 @@ public class SysPostController {
     /**
      * 修改岗位
      */
-    @ApiOperation("修改岗位")
+    @Operation(summary = "修改岗位")
     @PreAuthorize("@ss.hasPermi('system:post:edit')")
     @PutMapping
     public Result<Void> edit(@Validated @RequestBody SysPost post) {
@@ -98,10 +98,10 @@ public class SysPostController {
     /**
      * 删除岗位
      */
-    @ApiOperation("删除岗位")
+    @Operation(summary = "删除岗位")
     @PreAuthorize("@ss.hasPermi('system:post:remove')")
     @DeleteMapping("/{postIds}")
-    public Result<Void> remove(@ApiParam("岗位ID数组") @PathVariable Long[] postIds) {
+    public Result<Void> remove(@Parameter(description = "岗位ID数组") @PathVariable Long[] postIds) {
         postService.deletePostByIds(postIds);
         return Result.success("删除岗位成功");
     }
@@ -109,7 +109,7 @@ public class SysPostController {
     /**
      * 校验岗位名称是否唯一
      */
-    @ApiOperation("校验岗位名称是否唯一")
+    @Operation(summary = "校验岗位名称是否唯一")
     @GetMapping("/checkPostNameUnique")
     public Result<Boolean> checkPostNameUnique(@RequestParam String postName,
                                                 @RequestParam(required = false) Long postId) {
@@ -123,7 +123,7 @@ public class SysPostController {
     /**
      * 校验岗位编码是否唯一
      */
-    @ApiOperation("校验岗位编码是否唯一")
+    @Operation(summary = "校验岗位编码是否唯一")
     @GetMapping("/checkPostCodeUnique")
     public Result<Boolean> checkPostCodeUnique(@RequestParam String postCode,
                                                 @RequestParam(required = false) Long postId) {
@@ -137,13 +137,13 @@ public class SysPostController {
     /**
      * 导出岗位数据
      */
-    @ApiOperation("导出岗位数据")
+    @Operation(summary = "导出岗位数据")
     @PreAuthorize("@ss.hasPermi('system:post:export')")
     @PostMapping("/export")
     public void export(HttpServletResponse response,
-                       @ApiParam("岗位编码") @RequestParam(required = false) String postCode,
-                       @ApiParam("岗位名称") @RequestParam(required = false) String postName,
-                       @ApiParam("状态") @RequestParam(required = false) String status) throws IOException {
+                       @Parameter(description = "岗位编码") @RequestParam(required = false) String postCode,
+                       @Parameter(description = "岗位名称") @RequestParam(required = false) String postName,
+                       @Parameter(description = "状态") @RequestParam(required = false) String status) throws IOException {
         SysPost queryPost = new SysPost();
         queryPost.setPostCode(postCode);
         queryPost.setPostName(postName);

@@ -2,15 +2,17 @@ package com.admin.system.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JWT工具类
+ * JWT工具类（jjwt 0.12.x API）
  *
  * @author Admin
  */
@@ -18,11 +20,19 @@ import java.util.Map;
 public class JwtUtil {
 
     /**
+     * 由密钥字符串构建 HMAC-SHA 密钥。
+     * 注意：jjwt 0.12 要求密钥长度满足算法强度（HS512 需 ≥64 字节），否则抛 WeakKeyException。
+     * 算法由密钥长度自动推断（64 字节密钥 → HS512）。
+     */
+    private static SecretKey buildKey(String secret) {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
      * 生成Token
      */
     public static String generateToken(String subject, String secret, long expireTime) {
-        Map<String, Object> claims = new HashMap<>();
-        return generateToken(subject, claims, secret, expireTime);
+        return generateToken(subject, new HashMap<>(), secret, expireTime);
     }
 
     /**
@@ -33,11 +43,11 @@ public class JwtUtil {
         Date expiryDate = new Date(now.getTime() + expireTime * 60 * 1000);
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .claims(claims)
+                .subject(subject)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(buildKey(secret))
                 .compact();
     }
 
@@ -58,9 +68,10 @@ public class JwtUtil {
      */
     public static Claims parseToken(String token, String secret) {
         return Jwts.parser()
-                .setSigningKey(secret)
-                .parseClaimsJws(token)
-                .getBody();
+                .verifyWith(buildKey(secret))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     /**

@@ -2,8 +2,8 @@ package com.admin.system.controller;
 
 import com.admin.system.common.Result;
 import com.admin.system.service.IServerMonitorService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +17,7 @@ import java.util.Map;
  *
  * @author Admin
  */
-@Api(tags = "服务器监控")
+@Tag(name = "服务器监控")
 @RestController
 @RequestMapping("/monitor/server")
 @RequiredArgsConstructor
@@ -28,7 +28,7 @@ public class ServerMonitorController {
     /**
      * 获取服务器监控信息
      */
-    @ApiOperation("获取服务器监控信息")
+    @Operation(summary = "获取服务器监控信息")
     @PreAuthorize("@ss.hasPermi('monitor:server:list')")
     @GetMapping
     public Result<Map<String, Object>> getServerInfo() {

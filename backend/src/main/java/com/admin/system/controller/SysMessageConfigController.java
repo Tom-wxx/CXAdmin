@@ -11,9 +11,9 @@ import com.admin.system.utils.PageUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @author Admin
  */
-@Api(tags = "消息配置管理")
+@Tag(name = "消息配置管理")
 @RestController
 @RequestMapping("/system/message/config")
 @RequiredArgsConstructor
@@ -40,14 +40,14 @@ public class SysMessageConfigController {
     /**
      * 分页查询消息配置列表
      */
-    @ApiOperation("分页查询消息配置列表")
+    @Operation(summary = "分页查询消息配置列表")
     @PreAuthorize("@ss.hasPermi('system:message:config:list')")
     @GetMapping("/list")
     public PageResult<SysMessageConfig> list(
             PageQuery pageQuery,
-            @ApiParam("配置名称") @RequestParam(required = false) String configName,
-            @ApiParam("消息类型") @RequestParam(required = false) String messageType,
-            @ApiParam("状态") @RequestParam(required = false) String status) {
+            @Parameter(description = "配置名称") @RequestParam(required = false) String configName,
+            @Parameter(description = "消息类型") @RequestParam(required = false) String messageType,
+            @Parameter(description = "状态") @RequestParam(required = false) String status) {
 
         Page<SysMessageConfig> page = pageQuery.build();
 
@@ -67,10 +67,10 @@ public class SysMessageConfigController {
     /**
      * 根据配置ID查询详细信息
      */
-    @ApiOperation("查询消息配置详情")
+    @Operation(summary = "查询消息配置详情")
     @PreAuthorize("@ss.hasPermi('system:message:config:query')")
     @GetMapping("/{configId}")
-    public Result<SysMessageConfig> getInfo(@ApiParam("配置ID") @PathVariable Long configId) {
+    public Result<SysMessageConfig> getInfo(@Parameter(description = "配置ID") @PathVariable Long configId) {
         SysMessageConfig config = messageConfigService.getById(configId);
         return Result.success(config);
     }
@@ -79,7 +79,7 @@ public class SysMessageConfigController {
      * 新增消息配置
      */
     @Log(title = "消息配置管理", businessType = Log.BusinessType.INSERT)
-    @ApiOperation("新增消息配置")
+    @Operation(summary = "新增消息配置")
     @PreAuthorize("@ss.hasPermi('system:message:config:add')")
     @PostMapping
     public Result<Void> add(@Validated @RequestBody SysMessageConfig config) {
@@ -96,7 +96,7 @@ public class SysMessageConfigController {
      * 修改消息配置
      */
     @Log(title = "消息配置管理", businessType = Log.BusinessType.UPDATE)
-    @ApiOperation("修改消息配置")
+    @Operation(summary = "修改消息配置")
     @PreAuthorize("@ss.hasPermi('system:message:config:edit')")
     @PutMapping
     public Result<Void> edit(@Validated @RequestBody SysMessageConfig config) {
@@ -113,10 +113,10 @@ public class SysMessageConfigController {
      * 删除消息配置
      */
     @Log(title = "消息配置管理", businessType = Log.BusinessType.DELETE)
-    @ApiOperation("删除消息配置")
+    @Operation(summary = "删除消息配置")
     @PreAuthorize("@ss.hasPermi('system:message:config:remove')")
     @DeleteMapping("/{configIds}")
-    public Result<Void> remove(@ApiParam("配置ID数组") @PathVariable Long[] configIds) {
+    public Result<Void> remove(@Parameter(description = "配置ID数组") @PathVariable Long[] configIds) {
         List<Long> idList = Arrays.asList(configIds);
         boolean success = messageConfigService.removeByIds(idList);
         return success ? Result.success() : Result.fail();
@@ -126,7 +126,7 @@ public class SysMessageConfigController {
      * 修改消息配置状态
      */
     @Log(title = "消息配置管理", businessType = Log.BusinessType.UPDATE)
-    @ApiOperation("修改消息配置状态")
+    @Operation(summary = "修改消息配置状态")
     @PreAuthorize("@ss.hasPermi('system:message:config:edit')")
     @PutMapping("/changeStatus")
     public Result<Void> changeStatus(@RequestBody SysMessageConfig config) {
@@ -141,10 +141,10 @@ public class SysMessageConfigController {
      * 设置为默认配置
      */
     @Log(title = "消息配置管理", businessType = Log.BusinessType.UPDATE)
-    @ApiOperation("设置为默认配置")
+    @Operation(summary = "设置为默认配置")
     @PreAuthorize("@ss.hasPermi('system:message:config:edit')")
     @PutMapping("/setDefault/{configId}")
-    public Result<Void> setDefault(@ApiParam("配置ID") @PathVariable Long configId) {
+    public Result<Void> setDefault(@Parameter(description = "配置ID") @PathVariable Long configId) {
         SysMessageConfig config = messageConfigService.getById(configId);
         if (config == null) {
             return Result.fail("配置不存在");
@@ -165,7 +165,7 @@ public class SysMessageConfigController {
      * 测试发送
      */
     @Log(title = "消息配置管理", businessType = Log.BusinessType.OTHER)
-    @ApiOperation("测试发送消息")
+    @Operation(summary = "测试发送消息")
     @PreAuthorize("@ss.hasPermi('system:message:config:test')")
     @PostMapping("/test")
     public Result<Void> testSend(@RequestBody Map<String, Object> params) {

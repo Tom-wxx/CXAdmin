@@ -1,24 +1,18 @@
 package com.admin.system.config;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
- * Redis配置
+ * Redis配置（Spring Boot 4 / Spring Data Redis 4 + Jackson 3）
  *
  * @author Admin
  */
 @Configuration
-@EnableCaching
 public class RedisConfig {
 
     @Bean
@@ -26,25 +20,19 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
 
-        // 使用Jackson2JsonRedisSerializer来序列化和反序列化redis的value值
-        Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(Object.class);
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        mapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL);
-        jackson2JsonRedisSerializer.setObjectMapper(mapper);
-
-        // 使用StringRedisSerializer来序列化和反序列化redis的key值
+        // Jackson 3 通用序列化器：开启默认类型信息（写入 @class），可正确还原 LoginUser 等具体类型。
+        // enableUnsafeDefaultTyping() 等价于旧实现的 LaissezFaireSubTypeValidator + NON_FINAL。
+        GenericJacksonJsonRedisSerializer jacksonSerializer = GenericJacksonJsonRedisSerializer.builder()
+                .enableUnsafeDefaultTyping()
+                .build();
+        // key 采用 String 序列化
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
-        // key采用String的序列化方式
         template.setKeySerializer(stringRedisSerializer);
-        // hash的key也采用String的序列化方式
         template.setHashKeySerializer(stringRedisSerializer);
-        // value序列化方式采用jackson
-        template.setValueSerializer(jackson2JsonRedisSerializer);
-        // hash的value序列化方式采用jackson
-        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+        // value 采用 jackson 序列化
+        template.setValueSerializer(jacksonSerializer);
+        template.setHashValueSerializer(jacksonSerializer);
 
         template.afterPropertiesSet();
         return template;

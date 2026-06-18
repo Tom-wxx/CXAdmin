@@ -2,7 +2,7 @@ package com.admin.system.sso.service;
 
 import com.admin.system.sso.vo.SsoBindingVO;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface ISsoLoginService {

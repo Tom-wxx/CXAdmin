@@ -5,18 +5,18 @@ import com.admin.system.common.constants.SystemConstants;
 import com.admin.system.config.JwtProperties;
 import com.admin.system.dto.LoginDTO;
 import com.admin.system.service.ILoginService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import java.util.Map;
 
-@Api(tags = "登录管理")
+@Tag(name = "登录管理")
 @RestController
 @RequiredArgsConstructor
 public class LoginController {
@@ -24,7 +24,7 @@ public class LoginController {
     private final ILoginService loginService;
     private final JwtProperties jwtProperties;
 
-    @ApiOperation("用户登录")
+    @Operation(summary = "用户登录")
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletResponse response) {
         Map<String, Object> result = loginService.login(loginDTO);
@@ -39,7 +39,7 @@ public class LoginController {
         return Result.success(result);
     }
 
-    @ApiOperation("退出登录")
+    @Operation(summary = "退出登录")
     @PostMapping("/logout")
     public Result<Void> logout(HttpServletResponse response) {
         loginService.logout();
@@ -50,28 +50,28 @@ public class LoginController {
         return Result.success("退出成功");
     }
 
-    @ApiOperation("获取验证码")
+    @Operation(summary = "获取验证码")
     @GetMapping("/captcha")
     public Result<Map<String, Object>> getCaptcha() {
         return Result.success(loginService.getCaptcha());
     }
 
-    @ApiOperation("获取用户信息")
+    @Operation(summary = "获取用户信息")
     @GetMapping("/getInfo")
     public Result<Map<String, Object>> getInfo() {
         return Result.success(loginService.getInfo());
     }
 
-    @ApiOperation("获取路由信息")
+    @Operation(summary = "获取路由信息")
     @GetMapping("/getRouters")
     public Result<Map<String, Object>> getRouters() {
         return Result.success(loginService.getRouters());
     }
 
-    @ApiOperation("上传头像")
+    @Operation(summary = "上传头像")
     @PostMapping("/profile/avatar")
     public Result<Map<String, Object>> uploadAvatar(
-            @ApiParam("头像文件") @RequestParam("file") MultipartFile file) {
+            @Parameter(description = "头像文件") @RequestParam("file") MultipartFile file) {
         try {
             return Result.success("头像上传成功", loginService.uploadAvatar(file));
         } catch (Exception e) {

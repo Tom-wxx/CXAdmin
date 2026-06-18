@@ -6,15 +6,15 @@ import com.admin.system.sso.dto.SsoProviderDTO;
 import com.admin.system.sso.entity.SysSsoProvider;
 import com.admin.system.sso.service.ISysSsoProviderService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
-@Api(tags = "SSO 身份认证源")
+@Tag(name = "SSO 身份认证源")
 @RestController
 @RequestMapping("/system/sso")
 @RequiredArgsConstructor
@@ -22,7 +22,7 @@ public class SysSsoProviderController {
 
     private final ISysSsoProviderService providerService;
 
-    @ApiOperation("分页列表")
+    @Operation(summary = "分页列表")
     @GetMapping("/list")
     @PreAuthorize("@ss.hasPermi('system:sso:list')")
     public PageResult<SysSsoProvider> list(
@@ -36,7 +36,7 @@ public class SysSsoProviderController {
         return new PageResult<>(page.getRecords(), page.getTotal());
     }
 
-    @ApiOperation("详情")
+    @Operation(summary = "详情")
     @GetMapping("/{id}")
     @PreAuthorize("@ss.hasPermi('system:sso:query')")
     public Result<SysSsoProvider> get(@PathVariable Long id) {
@@ -45,7 +45,7 @@ public class SysSsoProviderController {
         return Result.success(p);
     }
 
-    @ApiOperation("新增")
+    @Operation(summary = "新增")
     @PostMapping
     @PreAuthorize("@ss.hasPermi('system:sso:add')")
     public Result<Void> add(@Valid @RequestBody SsoProviderDTO dto) {
@@ -53,7 +53,7 @@ public class SysSsoProviderController {
         return Result.success();
     }
 
-    @ApiOperation("修改")
+    @Operation(summary = "修改")
     @PutMapping
     @PreAuthorize("@ss.hasPermi('system:sso:edit')")
     public Result<Void> update(@Valid @RequestBody SsoProviderDTO dto) {
@@ -61,7 +61,7 @@ public class SysSsoProviderController {
         return Result.success();
     }
 
-    @ApiOperation("删除")
+    @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     @PreAuthorize("@ss.hasPermi('system:sso:remove')")
     public Result<Void> remove(@PathVariable Long id) {

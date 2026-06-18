@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Enterprise admin system: Spring Boot 2.7.18 backend + Vue 2.6.14 frontend, with RBAC, JWT-in-Redis authentication, Quartz scheduling, and OAuth2/OIDC single sign-on.
+Enterprise admin system: Spring Boot 4.1.0 backend + Vue 3 frontend, with RBAC, JWT-in-Redis authentication, Quartz scheduling, and OAuth2/OIDC single sign-on.
 
 > **`AGENTS.md` is aspirational, not authoritative.** It describes a multi-module Maven layout (`admin-common` / `admin-framework` / ...) that does not exist — `backend/pom.xml` is a single-module jar (`com.admin:admin-system:1.0.0`).
 
 ## Tech Stack
 
-- **Backend:** Java 17, Spring Boot 2.7.18, Spring Security + JWT, MyBatis Plus 3.5.3.1, MySQL 8, Redis, Druid, Quartz, Swagger 3, Kaptcha
-- **Frontend:** Vue 2.6.14, Element UI 2.15.13, Vue Router 3 (dynamic routes), Vuex 3, Axios
+- **Backend:** Java 17, Spring Boot 4.1.0 (Spring Framework 7 / Spring Security 7, Jakarta EE 11, Jackson 3), JWT (jjwt 0.12), MyBatis Plus 3.5.15, MySQL 8, Redis, Druid 1.2.28, Quartz, springdoc-openapi (OpenAPI 3.1), custom captcha (`CaptchaUtil`, `java.awt`)
+- **Frontend:** Vue 3.5 (Options API), Element Plus 2.14, Vue Router 4 (dynamic routes), Vuex 4, Axios; built with @vue/cli 5 (webpack). Element Plus icons are SVG components globally registered in `main.js`; legacy DB-stored menu icon names are resolved to Element Plus components by `utils/iconMap.js` via the global `<menu-icon>` component (`components/MenuIcon`).
 
 ## Common Commands
 
@@ -53,7 +53,7 @@ com.admin.system/
 ├── config/                       # SecurityConfig, JwtProperties, RedisConfig, MyBatisPlusConfig,
 │                                 # SwaggerConfig, CorsConfig, PermissionService (the @ss bean)
 ├── security/                     # JwtAuthenticationFilter, LoginUser, UserDetailsServiceImpl, SecurityUtils
-├── controller/ service/ mapper/  # standard layered CRUD
+├── controller/ service/ mapper/  # standard layered CRUD (service/message/ = MessageProvider strategy)
 ├── entity/ dto/ vo/              # MyBatis Plus entities (@TableName), request DTOs, response VOs
 ├── quartz/ + task/               # AbstractQuartzJob + concurrency markers; concrete task beans
 ├── monitor/                      # server/cache/online-user monitoring (Oshi)
@@ -75,7 +75,8 @@ com.admin.system/
 **Permission checks:**
 - Backend: `@PreAuthorize("@ss.hasPermi('system:user:add')")` on controller methods (`@ss` = `PermissionService` bean in `config/`).
 - Frontend: `v-hasPermi="['system:user:add']"` directive; routes are generated dynamically from the user's menu tree returned by `getRouters`.
-- Whitelisted endpoints (no auth): `/login`, `/captcha`, Swagger, and `/sso/providers` + `/sso/authorize/**` + `/sso/callback/**`.
+- Whitelisted endpoints (no auth, see `SecurityConfig`): `/login`, `/captcha`, `/register`, `/forgot-password`, `/reset-password`, `/uploads/**`, `/actuator/health|info`, Swagger/Druid, and `/sso/providers` + `/sso/authorize/**` + `/sso/callback/**`.
+- Self-service account flow: `RegisterController` + `/forgot-password` → `/reset-password`. Reset emails are sent via `MailService` and link back to `app.frontend-url` (in `application.yml`); SMTP creds live under `spring.mail`.
 
 ## SSO Module (OAuth2 / OIDC)
 
@@ -91,11 +92,23 @@ The system is a Service Provider that delegates auth to externally configured Id
 - **Frontend:** `views/sso/callback.vue` exchanges code+state with the backend then drops the JWT into the cookie. The login page fetches `/sso/providers` to render IdP buttons.
 - **Design source-of-truth:** `SSO_PLAN.md` at the repo root.
 
+## Messaging & Notifications
+
+Two related-but-distinct subsystems (don't conflate them):
+
+- **Outbound messages (`sys_message*`).** Multi-channel send pipeline with its own **strategy pattern**: `MessageProvider` interface in `service/message/`, concrete `EmailMessageProvider` / `SmsMessageProvider` in `service/message/impl/`. `MessageSendServiceImpl` dispatches by channel type (`1`=email `2`=sms `3`=in-site `4`=wechat). Channel credentials are DB-driven via `sys_message_config`; every send is recorded in `sys_message_log`. Add a channel = new `MessageProvider` impl, no edits to existing ones.
+- **In-app notifications (`sys_notification` + `sys_notification_template`).** Templated user-facing notices rendered from `sys_notification_template`. Surfaced by `SysNotificationController` / `SysNotificationTemplateController`.
+
+## File Upload
+
+- `SysFileController` + `SysFileServiceImpl`; metadata in `sys_file`. Storage is local disk, configured under `file.upload.*` in `application.yml` (`path: D:/uploads`, served at `/uploads/**` — that prefix is in the security whitelist). `file.upload.allowed-types` gates extensions.
+
 ## Database Conventions
 
 - `database/init.sql` is the single consolidated init script (11 `-- Section:` headers — schema, RBAC seed, dictionaries, configs, scheduled jobs, notifications, SSO, etc.). Earlier `initData.sql` / `add_*.sql` files have been removed.
 - Core RBAC tables: `sys_user`, `sys_role`, `sys_menu` (tree), `sys_dept` (tree), `sys_post`, plus join tables `sys_user_role` / `sys_role_menu` / `sys_role_dept` (`sys_role_dept` = data-scope filter, not a permission).
 - Operational tables: `sys_dict_type`/`sys_dict_data`, `sys_config`, `sys_oper_log`, `sys_login_log`, `sys_notice`, `sys_job`/`sys_job_log`.
+- Feature-module tables: `sys_file`(+`_category`/`_statistics`), `sys_message`(+`_config`/`_log`), `sys_notification`(+`_template`), and the SSO trio `sys_sso_provider`/`sys_user_sso_binding`/`sys_sso_login_log`.
 - All entities extend `BaseEntity` (`createBy`, `createTime`, `updateBy`, `updateTime`, `deleted`). `deleted=0` active, `deleted=1` logically removed — every query goes through MyBatis Plus's logical-delete handling automatically.
 - PK strategy: `IdType.AUTO`. Mapper XMLs live in `backend/src/main/resources/mapper/`.
 
@@ -129,8 +142,14 @@ The cleanest reference is an existing module (e.g. `system/user` end-to-end). Th
 
 ## Important Quirks
 
-- **`jjwt 0.9.1` + JDK 17.** jjwt 0.9.1 references `javax.xml.bind.DatatypeConverter`, which was removed in Java 11. The pom keeps `jaxb-api 2.3.1` as a runtime shim — **do not delete it**. Upgrading jjwt to 0.11.x requires rewriting `JwtUtil` (parser API + `signWith` signature changed).
+- **`jjwt 0.12.6` (api/impl/jackson split).** `JwtUtil` uses the 0.12 builder/parser API (`Jwts.builder().claims()…signWith(key)` / `Jwts.parser().verifyWith(key).build().parseSignedClaims()`). HS512 requires a **≥64-byte** `jwt.secret` — shorter keys throw `WeakKeyException` at runtime. The old `jaxb-api 2.3.1` shim is gone (it was only needed for jjwt 0.9.x on JDK 17).
+- **Spring Boot 4 starter renames:** `spring-boot-starter-web` → `-webmvc`, `spring-boot-starter-aop` → `-aspectj` (old names dropped from the BOM).
+- **MyBatis Plus 3.5.9+ split:** `PaginationInnerInterceptor` and other JSqlParser-based inner interceptors live in a separate `mybatis-plus-jsqlparser` dependency — it must be declared alongside `mybatis-plus-spring-boot4-starter`, or `MyBatisPlusConfig` won't compile.
+- **Redis Jackson 3 serializer (mandatory typing):** `RedisConfig` uses `GenericJacksonJsonRedisSerializer.builder().enableUnsafeDefaultTyping().build()`. `enableUnsafeDefaultTyping()` is **required** — without it the `@class` type info isn't written and `LoginUser` deserializes back as a `LinkedHashMap`, breaking auth with a cast error (login works but every authed request 403s).
+- **Druid on Boot 4:** uses the official `druid-spring-boot-4-starter` (the plain `druid-spring-boot-starter` is Boot 2 only; `-3-starter` references `org.springframework.boot.autoconfigure.jdbc.DataSourceProperties`, which moved to `org.springframework.boot.jdbc.autoconfigure` in Boot 4).
+- **Jackson 3:** databind is `tools.jackson.databind.*` (annotations stay `com.fasterxml.jackson.annotation.*`). `spring.jackson.serialization.write-dates-as-timestamps` is gone (moved out of `SerializationFeature`; Jackson 3 defaults to ISO strings). `spring.jackson.date-format`/`time-zone` still apply.
 - **CORS:** dev relies on `vue.config.js` proxy (`/api` → `localhost:8080`); prod uses `CorsConfig` on the backend. CSRF is disabled (stateless JWT).
+- **SSO outbound proxy is ON by default.** `admin.sso.proxy` in `application.yml` defaults to `127.0.0.1:7890` — without a local proxy running, all outbound IdP calls (token/userinfo) silently fail. **Clear `proxy.host` for prod** (and for any dev box without a proxy).
 - **Logging:** colorized console + file `backend/logs/admin-system.log`; SQL logging is on via MyBatis Plus.
 - **`.env.development`** sets `VUE_APP_BASE_API=/api` (proxied); production env file must point at the real backend URL.
 
@@ -144,7 +163,7 @@ The cleanest reference is an existing module (e.g. `system/user` end-to-end). Th
 
 ## Testing
 
-- `backend/src/test/java/com/admin/` exists but is **empty** — no tests currently. JUnit 5 + Spring Boot Test is on the pom; mirror production package paths when adding tests, and prioritize smoke tests around the security layer when modifying auth.
+- `backend/src/test/java/com/admin/` has a JUnit 5 + Mockito unit-test suite (~155 tests) covering the security layer (`JwtUtil`, `JwtAuthenticationFilter`, `SecurityUtils`, `LoginUser`), `LoginServiceImpl`, `RegisterServiceTest`, `SysUserServiceImplTest`, `SysRoleServiceImplTest`, `PermissionServiceTest`. These are **plain unit tests** (no `@SpringBootTest`, no DB/Redis) — run anywhere. Mirror production package paths when adding tests.
 - No frontend test automation — UI changes need manual smoke (login, list page search/sort/pagination, form validation, logout).
 
 ## User Instructions (from global config)

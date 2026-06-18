@@ -3,9 +3,9 @@ package com.admin.system.controller;
 import com.admin.system.common.Result;
 import com.admin.system.entity.SysDept;
 import com.admin.system.service.ISysDeptService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author Admin
  */
-@Api(tags = "部门管理")
+@Tag(name = "部门管理")
 @RestController
 @RequestMapping("/system/dept")
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class SysDeptController {
     /**
      * 获取部门列表
      */
-    @ApiOperation("获取部门列表")
+    @Operation(summary = "获取部门列表")
     @PreAuthorize("@ss.hasPermi('system:dept:list')")
     @GetMapping("/list")
     public Result<List<SysDept>> list(SysDept dept) {
@@ -40,7 +40,7 @@ public class SysDeptController {
     /**
      * 查询部门列表（树形结构）
      */
-    @ApiOperation("查询部门树形列表")
+    @Operation(summary = "查询部门树形列表")
     @PreAuthorize("@ss.hasPermi('system:dept:list')")
     @GetMapping("/treeList")
     public Result<List<SysDept>> treeList(SysDept dept) {
@@ -51,10 +51,10 @@ public class SysDeptController {
     /**
      * 根据部门编号获取详细信息
      */
-    @ApiOperation("查询部门详情")
+    @Operation(summary = "查询部门详情")
     @PreAuthorize("@ss.hasPermi('system:dept:query')")
     @GetMapping("/{deptId}")
-    public Result<SysDept> getInfo(@ApiParam("部门ID") @PathVariable Long deptId) {
+    public Result<SysDept> getInfo(@Parameter(description = "部门ID") @PathVariable Long deptId) {
         SysDept dept = deptService.selectDeptById(deptId);
         return Result.success(dept);
     }
@@ -62,7 +62,7 @@ public class SysDeptController {
     /**
      * 新增部门
      */
-    @ApiOperation("新增部门")
+    @Operation(summary = "新增部门")
     @PreAuthorize("@ss.hasPermi('system:dept:add')")
     @PostMapping
     public Result<Void> add(@Validated @RequestBody SysDept dept) {
@@ -73,7 +73,7 @@ public class SysDeptController {
     /**
      * 修改部门
      */
-    @ApiOperation("修改部门")
+    @Operation(summary = "修改部门")
     @PreAuthorize("@ss.hasPermi('system:dept:edit')")
     @PutMapping
     public Result<Void> edit(@Validated @RequestBody SysDept dept) {
@@ -84,10 +84,10 @@ public class SysDeptController {
     /**
      * 删除部门
      */
-    @ApiOperation("删除部门")
+    @Operation(summary = "删除部门")
     @PreAuthorize("@ss.hasPermi('system:dept:remove')")
     @DeleteMapping("/{deptId}")
-    public Result<Void> remove(@ApiParam("部门ID") @PathVariable Long deptId) {
+    public Result<Void> remove(@Parameter(description = "部门ID") @PathVariable Long deptId) {
         deptService.deleteDeptById(deptId);
         return Result.success("删除部门成功");
     }
@@ -95,7 +95,7 @@ public class SysDeptController {
     /**
      * 查询部门下拉树列表
      */
-    @ApiOperation("查询部门下拉树列表")
+    @Operation(summary = "查询部门下拉树列表")
     @GetMapping("/treeSelect")
     public Result<List<SysDept>> treeSelect(SysDept dept) {
         List<SysDept> depts = deptService.selectDeptList(dept);

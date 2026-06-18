@@ -90,7 +90,7 @@ class SysUserServiceImplTest {
 
         assertDoesNotThrow(() -> userService.insertUser(userDTO));
 
-        verify(userMapper).insert(argThat(user -> {
+        verify(userMapper).insert(argThat((SysUser user) -> {
             assertEquals("newuser", user.getUsername());
             assertEquals("13800138001", user.getPhonenumber());
             assertEquals("0", user.getSex());
@@ -158,7 +158,7 @@ class SysUserServiceImplTest {
 
         assertDoesNotThrow(() -> userService.insertUser(userDTO));
 
-        verify(userMapper).insert(argThat(user -> {
+        verify(userMapper).insert(argThat((SysUser user) -> {
             assertNotNull(user.getPassword());
             assertTrue(user.getPassword().startsWith("$2a$"));
             return true;
@@ -198,7 +198,7 @@ class SysUserServiceImplTest {
 
         assertDoesNotThrow(() -> userService.updateUser(userDTO));
 
-        verify(userMapper).updateById(argThat(user -> {
+        verify(userMapper).updateById(argThat((SysUser user) -> {
             assertNull(user.getPassword(), "Password should be null during update");
             return true;
         }));
@@ -323,7 +323,7 @@ class SysUserServiceImplTest {
 
         assertDoesNotThrow(() -> userService.resetPassword(1L, "newPass123"));
 
-        verify(userMapper).updateById(argThat(user -> {
+        verify(userMapper).updateById(argThat((SysUser user) -> {
             assertEquals(1L, user.getUserId());
             assertNotNull(user.getPassword());
             assertTrue(user.getPassword().startsWith("$2a$"));
@@ -367,7 +367,7 @@ class SysUserServiceImplTest {
 
         assertDoesNotThrow(() -> userService.updateUserStatus(1L, "1"));
 
-        verify(userMapper).updateById(argThat(user -> {
+        verify(userMapper).updateById(argThat((SysUser user) -> {
             assertEquals(1L, user.getUserId());
             assertEquals("1", user.getStatus());
             return true;

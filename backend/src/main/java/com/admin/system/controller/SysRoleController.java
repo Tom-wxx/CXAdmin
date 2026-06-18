@@ -9,9 +9,9 @@ import com.admin.system.service.ISysRoleService;
 import com.admin.system.utils.PageUtils;
 import com.admin.system.vo.RoleVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.admin.system.utils.ExcelUtil;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author Admin
  */
-@Api(tags = "角色管理")
+@Tag(name = "角色管理")
 @RestController
 @RequestMapping("/system/role")
 @RequiredArgsConstructor
@@ -39,14 +39,14 @@ public class SysRoleController {
     /**
      * 分页查询角色列表
      */
-    @ApiOperation("分页查询角色列表")
+    @Operation(summary = "分页查询角色列表")
     @PreAuthorize("@ss.hasPermi('system:role:list')")
     @GetMapping("/list")
     public PageResult<RoleVO> list(
             PageQuery pageQuery,
-            @ApiParam("角色名称") @RequestParam(required = false) String roleName,
-            @ApiParam("权限字符") @RequestParam(required = false) String roleKey,
-            @ApiParam("状态") @RequestParam(required = false) String status) {
+            @Parameter(description = "角色名称") @RequestParam(required = false) String roleName,
+            @Parameter(description = "权限字符") @RequestParam(required = false) String roleKey,
+            @Parameter(description = "状态") @RequestParam(required = false) String status) {
 
         Page<SysRole> page = pageQuery.build();
         Page<RoleVO> result = roleService.selectRolePage(page, roleName, roleKey, status);
@@ -56,7 +56,7 @@ public class SysRoleController {
     /**
      * 查询所有角色列表
      */
-    @ApiOperation("查询所有角色列表")
+    @Operation(summary = "查询所有角色列表")
     @PreAuthorize("@ss.hasPermi('system:role:query')")
     @GetMapping("/listAll")
     public Result<List<RoleVO>> listAll() {
@@ -67,10 +67,10 @@ public class SysRoleController {
     /**
      * 根据角色ID查询详细信息
      */
-    @ApiOperation("查询角色详情")
+    @Operation(summary = "查询角色详情")
     @PreAuthorize("@ss.hasPermi('system:role:query')")
     @GetMapping("/{roleId}")
-    public Result<RoleVO> getInfo(@ApiParam("角色ID") @PathVariable Long roleId) {
+    public Result<RoleVO> getInfo(@Parameter(description = "角色ID") @PathVariable Long roleId) {
         RoleVO roleVO = roleService.selectRoleById(roleId);
         return Result.success(roleVO);
     }
@@ -78,10 +78,10 @@ public class SysRoleController {
     /**
      * 查询角色已分配的菜单ID列表
      */
-    @ApiOperation("查询角色已分配的菜单ID列表")
+    @Operation(summary = "查询角色已分配的菜单ID列表")
     @PreAuthorize("@ss.hasPermi('system:role:query')")
     @GetMapping("/menuIds/{roleId}")
-    public Result<List<Long>> getMenuIds(@ApiParam("角色ID") @PathVariable Long roleId) {
+    public Result<List<Long>> getMenuIds(@Parameter(description = "角色ID") @PathVariable Long roleId) {
         List<Long> menuIds = roleService.selectMenuIdsByRoleId(roleId);
         return Result.success(menuIds);
     }
@@ -89,7 +89,7 @@ public class SysRoleController {
     /**
      * 新增角色
      */
-    @ApiOperation("新增角色")
+    @Operation(summary = "新增角色")
     @PreAuthorize("@ss.hasPermi('system:role:add')")
     @PostMapping
     public Result<Void> add(@Validated @RequestBody RoleDTO roleDTO) {
@@ -100,7 +100,7 @@ public class SysRoleController {
     /**
      * 修改角色
      */
-    @ApiOperation("修改角色")
+    @Operation(summary = "修改角色")
     @PreAuthorize("@ss.hasPermi('system:role:edit')")
     @PutMapping
     public Result<Void> edit(@Validated @RequestBody RoleDTO roleDTO) {
@@ -111,10 +111,10 @@ public class SysRoleController {
     /**
      * 删除角色
      */
-    @ApiOperation("删除角色")
+    @Operation(summary = "删除角色")
     @PreAuthorize("@ss.hasPermi('system:role:remove')")
     @DeleteMapping("/{roleIds}")
-    public Result<Void> remove(@ApiParam("角色ID数组") @PathVariable Long[] roleIds) {
+    public Result<Void> remove(@Parameter(description = "角色ID数组") @PathVariable Long[] roleIds) {
         roleService.deleteRoleByIds(roleIds);
         return Result.success("删除角色成功");
     }
@@ -122,12 +122,12 @@ public class SysRoleController {
     /**
      * 修改角色状态
      */
-    @ApiOperation("修改角色状态")
+    @Operation(summary = "修改角色状态")
     @PreAuthorize("@ss.hasPermi('system:role:edit')")
     @PutMapping("/changeStatus")
     public Result<Void> changeStatus(
-            @ApiParam("角色ID") @RequestParam Long roleId,
-            @ApiParam("状态") @RequestParam String status) {
+            @Parameter(description = "角色ID") @RequestParam Long roleId,
+            @Parameter(description = "状态") @RequestParam String status) {
         roleService.updateRoleStatus(roleId, status);
         return Result.success("修改状态成功");
     }
@@ -135,11 +135,11 @@ public class SysRoleController {
     /**
      * 校验角色名称是否唯一
      */
-    @ApiOperation("校验角色名称是否唯一")
+    @Operation(summary = "校验角色名称是否唯一")
     @GetMapping("/checkRoleNameUnique")
     public Result<Boolean> checkRoleNameUnique(
-            @ApiParam("角色名称") @RequestParam String roleName,
-            @ApiParam("角色ID") @RequestParam(required = false) Long roleId) {
+            @Parameter(description = "角色名称") @RequestParam String roleName,
+            @Parameter(description = "角色ID") @RequestParam(required = false) Long roleId) {
         boolean unique = roleService.checkRoleNameUnique(roleName, roleId);
         return Result.success(unique);
     }
@@ -147,11 +147,11 @@ public class SysRoleController {
     /**
      * 校验角色权限是否唯一
      */
-    @ApiOperation("校验角色权限是否唯一")
+    @Operation(summary = "校验角色权限是否唯一")
     @GetMapping("/checkRoleKeyUnique")
     public Result<Boolean> checkRoleKeyUnique(
-            @ApiParam("权限字符") @RequestParam String roleKey,
-            @ApiParam("角色ID") @RequestParam(required = false) Long roleId) {
+            @Parameter(description = "权限字符") @RequestParam String roleKey,
+            @Parameter(description = "角色ID") @RequestParam(required = false) Long roleId) {
         boolean unique = roleService.checkRoleKeyUnique(roleKey, roleId);
         return Result.success(unique);
     }
@@ -159,12 +159,12 @@ public class SysRoleController {
     /**
      * 保存角色菜单权限
      */
-    @ApiOperation("保存角色菜单权限")
+    @Operation(summary = "保存角色菜单权限")
     @PreAuthorize("@ss.hasPermi('system:role:edit')")
     @PutMapping("/saveRoleMenus")
     public Result<Void> saveRoleMenus(
-            @ApiParam("角色ID") @RequestParam Long roleId,
-            @ApiParam("菜单ID数组") @RequestParam(required = false) Long[] menuIds) {
+            @Parameter(description = "角色ID") @RequestParam Long roleId,
+            @Parameter(description = "菜单ID数组") @RequestParam(required = false) Long[] menuIds) {
         roleService.saveRoleMenus(roleId, menuIds);
         return Result.success("分配权限成功");
     }
@@ -172,13 +172,13 @@ public class SysRoleController {
     /**
      * 导出角色数据
      */
-    @ApiOperation("导出角色数据")
+    @Operation(summary = "导出角色数据")
     @PreAuthorize("@ss.hasPermi('system:role:export')")
     @PostMapping("/export")
     public void export(HttpServletResponse response,
-                       @ApiParam("角色名称") @RequestParam(required = false) String roleName,
-                       @ApiParam("权限字符") @RequestParam(required = false) String roleKey,
-                       @ApiParam("状态") @RequestParam(required = false) String status) throws IOException {
+                       @Parameter(description = "角色名称") @RequestParam(required = false) String roleName,
+                       @Parameter(description = "权限字符") @RequestParam(required = false) String roleKey,
+                       @Parameter(description = "状态") @RequestParam(required = false) String status) throws IOException {
         List<RoleVO> list = roleService.selectRoleListForExport(roleName, roleKey, status);
         String[] headers = {"角色ID", "角色名称", "权限字符", "显示顺序", "状态", "创建时间"};
         String[] fields = {"roleId", "roleName", "roleKey", "roleSort", "status", "createTime"};

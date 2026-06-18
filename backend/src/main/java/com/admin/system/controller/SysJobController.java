@@ -8,9 +8,9 @@ import com.admin.system.service.ISysJobService;
 import com.admin.system.utils.PageUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.quartz.SchedulerException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
  *
  * @author Admin
  */
-@Api(tags = "定时任务管理")
+@Tag(name = "定时任务管理")
 @RestController
 @RequestMapping("/monitor/job")
 @RequiredArgsConstructor
@@ -33,14 +33,14 @@ public class SysJobController {
     /**
      * 分页查询定时任务列表
      */
-    @ApiOperation("分页查询定时任务列表")
+    @Operation(summary = "分页查询定时任务列表")
     @PreAuthorize("@ss.hasPermi('monitor:job:list')")
     @GetMapping("/list")
     public PageResult<SysJob> list(
             PageQuery pageQuery,
-            @ApiParam("任务名称") @RequestParam(required = false) String jobName,
-            @ApiParam("任务组名") @RequestParam(required = false) String jobGroup,
-            @ApiParam("任务状态") @RequestParam(required = false) String status) {
+            @Parameter(description = "任务名称") @RequestParam(required = false) String jobName,
+            @Parameter(description = "任务组名") @RequestParam(required = false) String jobGroup,
+            @Parameter(description = "任务状态") @RequestParam(required = false) String status) {
 
         Page<SysJob> page = pageQuery.build();
         LambdaQueryWrapper<SysJob> queryWrapper = new LambdaQueryWrapper<>();
@@ -56,10 +56,10 @@ public class SysJobController {
     /**
      * 根据任务ID查询详细信息
      */
-    @ApiOperation("查询定时任务详情")
+    @Operation(summary = "查询定时任务详情")
     @PreAuthorize("@ss.hasPermi('monitor:job:query')")
     @GetMapping("/{jobId}")
-    public Result<SysJob> getInfo(@ApiParam("任务ID") @PathVariable Long jobId) {
+    public Result<SysJob> getInfo(@Parameter(description = "任务ID") @PathVariable Long jobId) {
         SysJob job = jobService.getById(jobId);
         return Result.success(job);
     }
@@ -67,7 +67,7 @@ public class SysJobController {
     /**
      * 新增定时任务
      */
-    @ApiOperation("新增定时任务")
+    @Operation(summary = "新增定时任务")
     @PreAuthorize("@ss.hasPermi('monitor:job:add')")
     @PostMapping
     public Result<Void> add(@Validated @RequestBody SysJob job) throws SchedulerException {
@@ -78,7 +78,7 @@ public class SysJobController {
     /**
      * 修改定时任务
      */
-    @ApiOperation("修改定时任务")
+    @Operation(summary = "修改定时任务")
     @PreAuthorize("@ss.hasPermi('monitor:job:edit')")
     @PutMapping
     public Result<Void> edit(@Validated @RequestBody SysJob job) throws SchedulerException {
@@ -89,10 +89,10 @@ public class SysJobController {
     /**
      * 删除定时任务
      */
-    @ApiOperation("删除定时任务")
+    @Operation(summary = "删除定时任务")
     @PreAuthorize("@ss.hasPermi('monitor:job:remove')")
     @DeleteMapping("/{jobIds}")
-    public Result<Void> remove(@ApiParam("任务ID数组") @PathVariable Long[] jobIds) throws SchedulerException {
+    public Result<Void> remove(@Parameter(description = "任务ID数组") @PathVariable Long[] jobIds) throws SchedulerException {
         jobService.deleteJobByIds(jobIds);
         return Result.success("删除定时任务成功");
     }
@@ -100,7 +100,7 @@ public class SysJobController {
     /**
      * 修改任务状态
      */
-    @ApiOperation("修改任务状态")
+    @Operation(summary = "修改任务状态")
     @PreAuthorize("@ss.hasPermi('monitor:job:changeStatus')")
     @PutMapping("/changeStatus")
     public Result<Void> changeStatus(@RequestBody SysJob job) throws SchedulerException {
@@ -111,7 +111,7 @@ public class SysJobController {
     /**
      * 立即运行任务
      */
-    @ApiOperation("立即运行任务")
+    @Operation(summary = "立即运行任务")
     @PreAuthorize("@ss.hasPermi('monitor:job:run')")
     @PutMapping("/run")
     public Result<Void> run(@RequestBody SysJob job) throws SchedulerException {

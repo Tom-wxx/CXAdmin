@@ -16,10 +16,6 @@ spring:
   output:
     ansi:
       enabled: always
-  # 解决Swagger与Spring Boot 2.6+的兼容性问题
-  mvc:
-    pathmatch:
-      matching-strategy: ant_path_matcher
   # DevTools 热部署配置
   devtools:
     restart:
@@ -77,23 +73,24 @@ spring:
           config:
             multi-statement-allow: true
 
-  # Redis 配置
-  redis:
-    host: localhost
-    port: 6379
-    password:
-    database: 0
-    timeout: 10s
-    lettuce:
-      pool:
-        # 连接池最大连接数
-        max-active: 200
-        # 连接池最大阻塞等待时间
-        max-wait: -1ms
-        # 连接池中的最大空闲连接
-        max-idle: 10
-        # 连接池中的最小空闲连接
-        min-idle: 0
+  # Redis 配置（Spring Boot 3+ 配置 key 为 spring.data.redis）
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 10s
+      lettuce:
+        pool:
+          # 连接池最大连接数
+          max-active: 200
+          # 连接池最大阻塞等待时间
+          max-wait: -1ms
+          # 连接池中的最大空闲连接
+          max-idle: 10
+          # 连接池中的最小空闲连接
+          min-idle: 0
 
   # 文件上传配置
   servlet:
@@ -103,12 +100,10 @@ spring:
       # 总上传大小
       max-request-size: 20MB
 
-  # Jackson配置
+  # Jackson配置（Jackson 3：日期默认即 ISO 字符串，write-dates-as-timestamps 已移除）
   jackson:
     time-zone: GMT+8
     date-format: yyyy-MM-dd HH:mm:ss
-    serialization:
-      write-dates-as-timestamps: false
 
   # 邮件配置
   mail:
@@ -143,31 +138,21 @@ mybatis-plus:
       # 逻辑未删除值
       logic-not-delete-value: 0
 
-# PageHelper分页插件
-pagehelper:
-  helper-dialect: mysql
-  reasonable: true
-  support-methods-arguments: true
-  params: count=countSql
-
 # JWT配置
 jwt:
-  # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz123456
+  # 令牌密钥（jjwt 0.12 要求 HS512 密钥 ≥64 字节；生产请放环境变量并使用随机强密钥）
+  secret: ${JWT_SECRET:abcdefghijklmnopqrstuvwxyz123456ABCDEFGHIJKLMNOPQRSTUVWXYZ789012}
   # 令牌有效期（默认30分钟）
   expireTime: 30
   # 刷新令牌有效期（默认7天）
   refreshTime: 10080
 
-# Swagger配置
-swagger:
-  enabled: true
-  title: '后台管理系统 API'
-  description: '后台管理系统接口文档'
-  version: '1.0.0'
-  contact:
-    name: Admin
-    email: admin@example.com
+# springdoc-openapi (OpenAPI 3 / Swagger UI)
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
 
 # 文件上传配置
 file:

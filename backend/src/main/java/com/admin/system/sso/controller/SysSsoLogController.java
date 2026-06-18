@@ -5,8 +5,8 @@ import com.admin.system.sso.entity.SysSsoLoginLog;
 import com.admin.system.sso.service.ISsoAuditLogService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 
-@Api(tags = "SSO 审计日志")
+@Tag(name = "SSO 审计日志")
 @RestController
 @RequestMapping("/system/sso/log")
 @RequiredArgsConstructor
@@ -25,7 +25,7 @@ public class SysSsoLogController {
 
     private final ISsoAuditLogService auditLog;
 
-    @ApiOperation("分页查询 SSO 审计日志")
+    @Operation(summary = "分页查询 SSO 审计日志")
     @GetMapping("/list")
     @PreAuthorize("@ss.hasPermi('system:sso:log:list')")
     public PageResult<SysSsoLoginLog> list(

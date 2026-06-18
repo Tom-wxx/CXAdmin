@@ -7,15 +7,15 @@ import com.admin.system.entity.SysOperLog;
 import com.admin.system.service.ISysOperLogService;
 import com.admin.system.utils.PageUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import com.admin.system.utils.ExcelUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -24,7 +24,7 @@ import java.util.List;
  *
  * @author Admin
  */
-@Api(tags = "操作日志管理")
+@Tag(name = "操作日志管理")
 @RestController
 @RequestMapping("/system/operlog")
 @RequiredArgsConstructor
@@ -35,17 +35,17 @@ public class SysOperLogController {
     /**
      * 分页查询操作日志列表
      */
-    @ApiOperation("分页查询操作日志列表")
+    @Operation(summary = "分页查询操作日志列表")
     @PreAuthorize("@ss.hasPermi('monitor:operlog:list')")
     @GetMapping("/list")
     public PageResult<SysOperLog> list(
             PageQuery pageQuery,
-            @ApiParam("模块标题") @RequestParam(required = false) String title,
-            @ApiParam("操作人员") @RequestParam(required = false) String operName,
-            @ApiParam("业务类型") @RequestParam(required = false) Integer businessType,
-            @ApiParam("操作状态") @RequestParam(required = false) Integer status,
-            @ApiParam("开始时间") @RequestParam(required = false) String beginTime,
-            @ApiParam("结束时间") @RequestParam(required = false) String endTime) {
+            @Parameter(description = "模块标题") @RequestParam(required = false) String title,
+            @Parameter(description = "操作人员") @RequestParam(required = false) String operName,
+            @Parameter(description = "业务类型") @RequestParam(required = false) Integer businessType,
+            @Parameter(description = "操作状态") @RequestParam(required = false) Integer status,
+            @Parameter(description = "开始时间") @RequestParam(required = false) String beginTime,
+            @Parameter(description = "结束时间") @RequestParam(required = false) String endTime) {
 
         Page<SysOperLog> page = pageQuery.build();
         Page<SysOperLog> result = operLogService.selectOperLogPage(page, title, operName, businessType, status, beginTime, endTime);
@@ -55,10 +55,10 @@ public class SysOperLogController {
     /**
      * 根据日志ID查询详细信息
      */
-    @ApiOperation("查询操作日志详情")
+    @Operation(summary = "查询操作日志详情")
     @PreAuthorize("@ss.hasPermi('monitor:operlog:query')")
     @GetMapping("/{operId}")
-    public Result<SysOperLog> getInfo(@ApiParam("日志ID") @PathVariable Long operId) {
+    public Result<SysOperLog> getInfo(@Parameter(description = "日志ID") @PathVariable Long operId) {
         SysOperLog operLog = operLogService.getById(operId);
         return Result.success(operLog);
     }
@@ -66,10 +66,10 @@ public class SysOperLogController {
     /**
      * 删除操作日志
      */
-    @ApiOperation("删除操作日志")
+    @Operation(summary = "删除操作日志")
     @PreAuthorize("@ss.hasPermi('monitor:operlog:remove')")
     @DeleteMapping("/{operIds}")
-    public Result<Void> remove(@ApiParam("日志ID数组") @PathVariable Long[] operIds) {
+    public Result<Void> remove(@Parameter(description = "日志ID数组") @PathVariable Long[] operIds) {
         operLogService.deleteOperLogByIds(operIds);
         return Result.success("删除操作日志成功");
     }
@@ -77,7 +77,7 @@ public class SysOperLogController {
     /**
      * 清空操作日志
      */
-    @ApiOperation("清空操作日志")
+    @Operation(summary = "清空操作日志")
     @PreAuthorize("@ss.hasPermi('monitor:operlog:remove')")
     @DeleteMapping("/clean")
     public Result<Void> clean() {
@@ -88,16 +88,16 @@ public class SysOperLogController {
     /**
      * 导出操作日志
      */
-    @ApiOperation("导出操作日志")
+    @Operation(summary = "导出操作日志")
     @PreAuthorize("@ss.hasPermi('monitor:operlog:export')")
     @PostMapping("/export")
     public void export(HttpServletResponse response,
-                       @ApiParam("模块标题") @RequestParam(required = false) String title,
-                       @ApiParam("操作人员") @RequestParam(required = false) String operName,
-                       @ApiParam("业务类型") @RequestParam(required = false) Integer businessType,
-                       @ApiParam("操作状态") @RequestParam(required = false) Integer status,
-                       @ApiParam("开始时间") @RequestParam(required = false) String beginTime,
-                       @ApiParam("结束时间") @RequestParam(required = false) String endTime) throws IOException {
+                       @Parameter(description = "模块标题") @RequestParam(required = false) String title,
+                       @Parameter(description = "操作人员") @RequestParam(required = false) String operName,
+                       @Parameter(description = "业务类型") @RequestParam(required = false) Integer businessType,
+                       @Parameter(description = "操作状态") @RequestParam(required = false) Integer status,
+                       @Parameter(description = "开始时间") @RequestParam(required = false) String beginTime,
+                       @Parameter(description = "结束时间") @RequestParam(required = false) String endTime) throws IOException {
         List<SysOperLog> list = operLogService.selectOperLogList(title, operName, businessType, status, beginTime, endTime);
         String[] headers = {"日志ID", "模块标题", "业务类型", "操作人员", "请求方式", "操作状态", "操作IP", "操作时间"};
         String[] fields = {"operId", "title", "businessType", "operName", "requestMethod", "status", "operIp", "operTime"};

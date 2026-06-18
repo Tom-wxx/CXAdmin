@@ -9,15 +9,15 @@ import com.admin.system.utils.FileUtil;
 import com.admin.system.utils.PageUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * @author Admin
  */
-@Api(tags = "文件管理")
+@Tag(name = "文件管理")
 @RestController
 @RequestMapping("/system/file")
 @RequiredArgsConstructor
@@ -37,14 +37,14 @@ public class SysFileController {
     /**
      * 分页查询文件列表
      */
-    @ApiOperation("分页查询文件列表")
+    @Operation(summary = "分页查询文件列表")
     @PreAuthorize("@ss.hasPermi('system:file:list')")
     @GetMapping("/list")
     public PageResult<SysFile> list(
             PageQuery pageQuery,
-            @ApiParam("文件名") @RequestParam(required = false) String fileName,
-            @ApiParam("文件分类") @RequestParam(required = false) String category,
-            @ApiParam("文件类型") @RequestParam(required = false) String fileExt
+            @Parameter(description = "文件名") @RequestParam(required = false) String fileName,
+            @Parameter(description = "文件分类") @RequestParam(required = false) String category,
+            @Parameter(description = "文件类型") @RequestParam(required = false) String fileExt
     ) {
         // 使用 PageQuery 快速构建分页对象
         Page<SysFile> page = pageQuery.build();
@@ -66,7 +66,7 @@ public class SysFileController {
     /**
      * 获取文件详情
      */
-    @ApiOperation("获取文件详情")
+    @Operation(summary = "获取文件详情")
     @PreAuthorize("@ss.hasPermi('system:file:query')")
     @GetMapping("/{fileId}")
     public Result<SysFile> getInfo(@PathVariable Long fileId) {
@@ -77,11 +77,11 @@ public class SysFileController {
     /**
      * 上传文件
      */
-    @ApiOperation("上传文件")
+    @Operation(summary = "上传文件")
     @PreAuthorize("@ss.hasPermi('system:file:upload')")
     @PostMapping("/upload")
     public Result<Map<String, Object>> upload(
-            @ApiParam("文件") @RequestParam("file") MultipartFile file
+            @Parameter(description = "文件") @RequestParam("file") MultipartFile file
     ) {
         try {
             SysFile sysFile = fileService.uploadFile(file);
@@ -105,11 +105,11 @@ public class SysFileController {
     /**
      * 批量上传文件
      */
-    @ApiOperation("批量上传文件")
+    @Operation(summary = "批量上传文件")
     @PreAuthorize("@ss.hasPermi('system:file:upload')")
     @PostMapping("/upload/batch")
     public Result<Map<String, Object>> batchUpload(
-            @ApiParam("文件列表") @RequestParam("files") MultipartFile[] files
+            @Parameter(description = "文件列表") @RequestParam("files") MultipartFile[] files
     ) {
         try {
             int successCount = 0;
@@ -138,7 +138,7 @@ public class SysFileController {
     /**
      * 下载文件
      */
-    @ApiOperation("下载文件")
+    @Operation(summary = "下载文件")
     @PreAuthorize("@ss.hasPermi('system:file:download')")
     @GetMapping("/download/{fileId}")
     public void download(@PathVariable Long fileId, HttpServletResponse response) {
@@ -152,7 +152,7 @@ public class SysFileController {
     /**
      * 更新文件信息
      */
-    @ApiOperation("更新文件信息")
+    @Operation(summary = "更新文件信息")
     @PreAuthorize("@ss.hasPermi('system:file:edit')")
     @PutMapping
     public Result<Void> update(@RequestBody SysFile sysFile) {
@@ -172,7 +172,7 @@ public class SysFileController {
     /**
      * 删除文件
      */
-    @ApiOperation("删除文件")
+    @Operation(summary = "删除文件")
     @PreAuthorize("@ss.hasPermi('system:file:remove')")
     @DeleteMapping("/{fileIds}")
     public Result<Void> delete(@PathVariable Long[] fileIds) {
@@ -183,7 +183,7 @@ public class SysFileController {
     /**
      * 获取文件统计信息
      */
-    @ApiOperation("获取文件统计信息")
+    @Operation(summary = "获取文件统计信息")
     @PreAuthorize("@ss.hasPermi('system:file:list')")
     @GetMapping("/statistics")
     public Result<Map<String, Object>> getStatistics() {

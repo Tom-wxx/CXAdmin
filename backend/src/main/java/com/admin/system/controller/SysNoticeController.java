@@ -8,9 +8,9 @@ import com.admin.system.service.ISysNoticeService;
 import com.admin.system.utils.PageUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  *
  * @author Admin
  */
-@Api(tags = "通知公告管理")
+@Tag(name = "通知公告管理")
 @RestController
 @RequestMapping("/system/notice")
 @RequiredArgsConstructor
@@ -32,14 +32,14 @@ public class SysNoticeController {
     /**
      * 分页查询通知公告列表
      */
-    @ApiOperation("分页查询通知公告列表")
+    @Operation(summary = "分页查询通知公告列表")
     @PreAuthorize("@ss.hasPermi('system:notice:list')")
     @GetMapping("/list")
     public PageResult<SysNotice> list(
             PageQuery pageQuery,
-            @ApiParam("公告标题") @RequestParam(required = false) String noticeTitle,
-            @ApiParam("公告类型") @RequestParam(required = false) String noticeType,
-            @ApiParam("公告状态") @RequestParam(required = false) String status) {
+            @Parameter(description = "公告标题") @RequestParam(required = false) String noticeTitle,
+            @Parameter(description = "公告类型") @RequestParam(required = false) String noticeType,
+            @Parameter(description = "公告状态") @RequestParam(required = false) String status) {
 
         Page<SysNotice> page = pageQuery.build();
         LambdaQueryWrapper<SysNotice> queryWrapper = new LambdaQueryWrapper<>();
@@ -55,10 +55,10 @@ public class SysNoticeController {
     /**
      * 根据公告ID查询详细信息
      */
-    @ApiOperation("查询通知公告详情")
+    @Operation(summary = "查询通知公告详情")
     @PreAuthorize("@ss.hasPermi('system:notice:query')")
     @GetMapping("/{noticeId}")
-    public Result<SysNotice> getInfo(@ApiParam("公告ID") @PathVariable Long noticeId) {
+    public Result<SysNotice> getInfo(@Parameter(description = "公告ID") @PathVariable Long noticeId) {
         SysNotice notice = noticeService.getById(noticeId);
         return Result.success(notice);
     }
@@ -66,7 +66,7 @@ public class SysNoticeController {
     /**
      * 新增通知公告
      */
-    @ApiOperation("新增通知公告")
+    @Operation(summary = "新增通知公告")
     @PreAuthorize("@ss.hasPermi('system:notice:add')")
     @PostMapping
     public Result<Void> add(@Validated @RequestBody SysNotice notice) {
@@ -77,7 +77,7 @@ public class SysNoticeController {
     /**
      * 修改通知公告
      */
-    @ApiOperation("修改通知公告")
+    @Operation(summary = "修改通知公告")
     @PreAuthorize("@ss.hasPermi('system:notice:edit')")
     @PutMapping
     public Result<Void> edit(@Validated @RequestBody SysNotice notice) {
@@ -88,10 +88,10 @@ public class SysNoticeController {
     /**
      * 删除通知公告
      */
-    @ApiOperation("删除通知公告")
+    @Operation(summary = "删除通知公告")
     @PreAuthorize("@ss.hasPermi('system:notice:remove')")
     @DeleteMapping("/{noticeIds}")
-    public Result<Void> remove(@ApiParam("公告ID数组") @PathVariable Long[] noticeIds) {
+    public Result<Void> remove(@Parameter(description = "公告ID数组") @PathVariable Long[] noticeIds) {
         noticeService.deleteNoticeByIds(noticeIds);
         return Result.success("删除通知公告成功");
     }

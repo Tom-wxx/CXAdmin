@@ -1,9 +1,9 @@
 package com.admin.system.controller;
 
 import com.admin.system.common.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.DataType;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Admin
  */
-@Api(tags = "缓存监控")
+@Tag(name = "缓存监控")
 @RestController
 @RequestMapping("/monitor/cache")
 @RequiredArgsConstructor
@@ -34,7 +34,7 @@ public class CacheMonitorController {
     /**
      * 获取缓存列表（按键前缀分类）
      */
-    @ApiOperation("获取缓存列表")
+    @Operation(summary = "获取缓存列表")
     @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
     @GetMapping("/list")
     public Result<List<Map<String, Object>>> getCacheList() {
@@ -76,12 +76,12 @@ public class CacheMonitorController {
     /**
      * 获取键名列表
      */
-    @ApiOperation("获取键名列表")
+    @Operation(summary = "获取键名列表")
     @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
     @GetMapping("/keys")
     public Result<List<Map<String, Object>>> getKeyList(
-            @ApiParam("缓存名称（键前缀）") @RequestParam(required = false) String cacheName,
-            @ApiParam("搜索关键字") @RequestParam(required = false) String keyword
+            @Parameter(description = "缓存名称（键前缀）") @RequestParam(required = false) String cacheName,
+            @Parameter(description = "搜索关键字") @RequestParam(required = false) String keyword
     ) {
         List<Map<String, Object>> keyList = new ArrayList<>();
 
@@ -136,11 +136,11 @@ public class CacheMonitorController {
     /**
      * 获取缓存内容
      */
-    @ApiOperation("获取缓存内容")
+    @Operation(summary = "获取缓存内容")
     @PreAuthorize("@ss.hasPermi('monitor:cache:query')")
     @GetMapping("/value")
     public Result<Map<String, Object>> getCacheValue(
-            @ApiParam("键名") @RequestParam String key
+            @Parameter(description = "键名") @RequestParam String key
     ) {
         Map<String, Object> result = new HashMap<>();
 
@@ -193,7 +193,7 @@ public class CacheMonitorController {
     /**
      * 删除缓存
      */
-    @ApiOperation("删除缓存")
+    @Operation(summary = "删除缓存")
     @PreAuthorize("@ss.hasPermi('monitor:cache:remove')")
     @DeleteMapping("/{key}")
     public Result<Void> deleteCache(@PathVariable String key) {
@@ -207,7 +207,7 @@ public class CacheMonitorController {
     /**
      * 批量删除缓存
      */
-    @ApiOperation("批量删除缓存")
+    @Operation(summary = "批量删除缓存")
     @PreAuthorize("@ss.hasPermi('monitor:cache:remove')")
     @DeleteMapping("/batch")
     public Result<Map<String, Object>> batchDeleteCache(@RequestBody List<String> keys) {
@@ -226,7 +226,7 @@ public class CacheMonitorController {
     /**
      * 清空所有缓存
      */
-    @ApiOperation("清空所有缓存")
+    @Operation(summary = "清空所有缓存")
     @PreAuthorize("@ss.hasPermi('monitor:cache:clear')")
     @DeleteMapping("/clear")
     public Result<Void> clearAllCache() {
