@@ -43,7 +43,7 @@ captcha-*.png
 *-debug.png
 
 # 计划文档（不入库）
-SSO_PLAN.md
+*_PLAN.md
 docs/superpowers/
 
 # AI 助手文档（不入库）
