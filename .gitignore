@@ -44,6 +44,7 @@ captcha-*.png
 
 # 计划文档（不入库）
 *_PLAN.md
+*_MIGRATION.md
 docs/superpowers/
 
 # AI 助手文档（不入库）
