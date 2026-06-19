@@ -5,7 +5,7 @@
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
-            <i class="el-icon-files stat-icon" style="color: #409EFF"></i>
+            <el-icon class="stat-icon" style="color: #409EFF"><Files /></el-icon>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.totalFiles || 0 }}</div>
               <div class="stat-label">文件总数</div>
@@ -16,7 +16,7 @@
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
-            <i class="el-icon-picture stat-icon" style="color: #67C23A"></i>
+            <el-icon class="stat-icon" style="color: #67C23A"><Picture /></el-icon>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.imageCount || 0 }}</div>
               <div class="stat-label">图片文件</div>
@@ -27,7 +27,7 @@
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
-            <i class="el-icon-document stat-icon" style="color: #E6A23C"></i>
+            <el-icon class="stat-icon" style="color: #E6A23C"><Document /></el-icon>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.documentCount || 0 }}</div>
               <div class="stat-label">文档文件</div>
@@ -38,7 +38,7 @@
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
-            <i class="el-icon-coin stat-icon" style="color: #F56C6C"></i>
+            <el-icon class="stat-icon" style="color: #F56C6C"><Coin /></el-icon>
             <div class="stat-info">
               <div class="stat-value">{{ formatFileSize(statistics.totalSize) }}</div>
               <div class="stat-label">存储空间</div>
@@ -61,7 +61,7 @@
       <!-- 操作按钮 -->
       <TableToolbar show-delete show-refresh :multiple="multiple" @delete="handleDelete" @refresh="getList">
         <el-col :span="1.5">
-          <el-button type="primary" icon="el-icon-upload" size="mini" @click="handleUpload">上传文件</el-button>
+          <el-button type="primary" icon="Upload" size="small" @click="handleUpload">上传文件</el-button>
         </el-col>
       </TableToolbar>
 
@@ -74,76 +74,76 @@
       >
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column label="文件预览" align="center" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div class="file-preview" @click="handlePreview(scope.row)">
               <img
                 v-if="scope.row.category === 'image'"
                 :src="getFileUrl(scope.row.fileUrl)"
                 class="preview-image"
               />
-              <i v-else :class="getFileIcon(scope.row.category)" class="preview-icon"></i>
+              <menu-icon v-else :name="getFileIcon(scope.row.category)" icon-class="preview-icon" />
             </div>
           </template>
         </el-table-column>
         <el-table-column label="文件名称" prop="originalName" :show-overflow-tooltip="true" min-width="150">
-          <template slot-scope="scope">
+          <template #default="scope">
             <span class="file-name" @click="handlePreview(scope.row)">{{ scope.row.originalName }}</span>
           </template>
         </el-table-column>
         <el-table-column label="文件类型" align="center" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             <DictTag :options="categoryOptions" :value="scope.row.category" />
           </template>
         </el-table-column>
         <el-table-column label="文件大小" align="center" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ formatFileSize(scope.row.fileSize) }}
           </template>
         </el-table-column>
         <el-table-column label="上传者" align="center" prop="createBy" width="120" />
         <el-table-column label="存储路径" prop="filePath" :show-overflow-tooltip="true" min-width="200">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tooltip :content="scope.row.filePath" placement="top">
               <span class="file-path">{{ scope.row.filePath }}</span>
             </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column label="文件用途" prop="remark" :show-overflow-tooltip="true" min-width="150">
-          <template slot-scope="scope">
+          <template #default="scope">
             <span v-if="scope.row.remark" class="file-remark">{{ scope.row.remark }}</span>
             <span v-else class="text-muted">未填写</span>
           </template>
         </el-table-column>
         <el-table-column label="下载次数" align="center" prop="downloadCount" width="100" />
         <el-table-column label="上传时间" align="center" prop="createTime" width="180">
-          <template slot-scope="scope">
+          <template #default="scope">
             <span>{{ parseTime(scope.row.createTime) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
-              size="mini"
+              size="small"
               type="text"
-              icon="el-icon-view"
+              icon="View"
               @click="handlePreview(scope.row)"
             >预览</el-button>
             <el-button
-              size="mini"
+              size="small"
               type="text"
-              icon="el-icon-edit"
+              icon="Edit"
               @click="handleEdit(scope.row)"
             >编辑</el-button>
             <el-button
-              size="mini"
+              size="small"
               type="text"
-              icon="el-icon-download"
+              icon="Download"
               @click="handleDownload(scope.row)"
             >下载</el-button>
             <el-button
-              size="mini"
+              size="small"
               type="text"
-              icon="el-icon-delete"
+              icon="Delete"
               @click="handleDelete(scope.row)"
               style="color: #F56C6C"
             >删除</el-button>
@@ -155,14 +155,14 @@
       <pagination
         v-show="total>0"
         :total="total"
-        :page.sync="queryParams.pageNum"
-        :limit.sync="queryParams.pageSize"
+        v-model:page="queryParams.pageNum"
+        v-model:limit="queryParams.pageSize"
         @pagination="getList"
       />
     </el-card>
 
     <!-- 上传对话框 -->
-    <el-dialog title="上传文件" :visible.sync="uploadDialogVisible" width="600px" @close="handleUploadClose">
+    <el-dialog title="上传文件" v-model="uploadDialogVisible" width="600px" @close="handleUploadClose">
       <el-upload
         ref="upload"
         class="upload-container"
@@ -176,21 +176,21 @@
         multiple
         :auto-upload="false"
       >
-        <i class="el-icon-upload"></i>
+        <el-icon><Upload /></el-icon>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-        <div class="el-upload__tip" slot="tip">
+        <template #tip><div class="el-upload__tip">
           <div>支持图片、文档、视频、音频等多种格式</div>
           <div>单个文件大小不超过 100MB</div>
-        </div>
+        </div></template>
       </el-upload>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="uploadDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="submitUpload">确 定</el-button>
-      </div>
+      </div></template>
     </el-dialog>
 
     <!-- 编辑对话框 -->
-    <el-dialog title="编辑文件信息" :visible.sync="editDialogVisible" width="600px" @close="handleEditClose">
+    <el-dialog title="编辑文件信息" v-model="editDialogVisible" width="600px" @close="handleEditClose">
       <el-form :model="editForm" :rules="editRules" ref="editForm" label-width="100px">
         <el-form-item label="文件名称">
           <el-input v-model="editForm.originalName" disabled />
@@ -218,16 +218,16 @@
           <el-input v-model="editForm.filePath" disabled />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="editDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="submitEdit">确 定</el-button>
-      </div>
+      </div></template>
     </el-dialog>
 
     <!-- 预览对话框 -->
     <el-dialog
       :title="previewFile.originalName"
-      :visible.sync="previewDialogVisible"
+      v-model="previewDialogVisible"
       width="800px"
       @close="handlePreviewClose"
     >
@@ -254,7 +254,7 @@
         ></audio>
         <!-- 其他文件显示信息 -->
         <div v-else class="preview-info">
-          <i :class="getFileIcon(previewFile.category)" class="preview-large-icon"></i>
+          <menu-icon :name="getFileIcon(previewFile.category)" icon-class="preview-large-icon" />
           <div class="file-details">
             <p><strong>文件名：</strong>{{ previewFile.originalName }}</p>
             <p><strong>文件大小：</strong>{{ formatFileSize(previewFile.fileSize) }}</p>
@@ -263,9 +263,9 @@
           </div>
         </div>
       </div>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="handleDownload(previewFile)">下载文件</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>
@@ -535,7 +535,7 @@ export default {
     margin-bottom: 20px;
 
     .stat-card {
-      ::v-deep .el-card__body {
+      :deep(.el-card__body){
         padding: 20px;
       }
 
@@ -615,7 +615,7 @@ export default {
   }
 
   .upload-container {
-    ::v-deep .el-upload-dragger {
+    :deep(.el-upload-dragger){
       width: 100%;
       height: 200px;
     }

@@ -51,7 +51,7 @@ export default {
     this.initChart()
     window.addEventListener('resize', this.handleResize)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.chart) {
       this.chart.dispose()
       this.chart = null

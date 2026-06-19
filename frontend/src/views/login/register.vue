@@ -2,13 +2,13 @@
   <div class="login-container">
     <div class="login-left">
       <div class="brand-area">
-        <div class="brand-icon"><i class="el-icon-s-platform"></i></div>
+        <div class="brand-icon"><el-icon><Platform /></el-icon></div>
         <h1 class="brand-title">CXAdmin</h1>
         <p class="brand-desc">简洁高效的企业级后台管理系统</p>
         <div class="brand-features">
-          <div class="feature-item"><i class="el-icon-check"></i><span>RBAC 权限控制</span></div>
-          <div class="feature-item"><i class="el-icon-check"></i><span>动态路由菜单</span></div>
-          <div class="feature-item"><i class="el-icon-check"></i><span>系统运行监控</span></div>
+          <div class="feature-item"><el-icon><Check /></el-icon><span>RBAC 权限控制</span></div>
+          <div class="feature-item"><el-icon><Check /></el-icon><span>动态路由菜单</span></div>
+          <div class="feature-item"><el-icon><Check /></el-icon><span>系统运行监控</span></div>
         </div>
       </div>
     </div>
@@ -18,30 +18,30 @@
         <p class="form-subtitle">创建您的管理账号</p>
         <el-form ref="registerForm" :model="form" :rules="rules" class="login-form">
           <el-form-item prop="username">
-            <el-input v-model="form.username" placeholder="用户名（2-20个字符）" prefix-icon="el-icon-user" />
+            <el-input v-model="form.username" placeholder="用户名（2-20个字符）" prefix-icon="User" />
           </el-form-item>
           <el-form-item prop="nickname">
-            <el-input v-model="form.nickname" placeholder="昵称" prefix-icon="el-icon-s-custom" />
+            <el-input v-model="form.nickname" placeholder="昵称" prefix-icon="UserFilled" />
           </el-form-item>
           <el-form-item prop="email">
-            <el-input v-model="form.email" placeholder="邮箱" prefix-icon="el-icon-message" />
+            <el-input v-model="form.email" placeholder="邮箱" prefix-icon="Message" />
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="form.password" type="password" placeholder="密码（6-20个字符）" prefix-icon="el-icon-lock" show-password />
+            <el-input v-model="form.password" type="password" placeholder="密码（6-20个字符）" prefix-icon="Lock" show-password />
           </el-form-item>
           <el-form-item prop="confirmPassword">
-            <el-input v-model="form.confirmPassword" type="password" placeholder="确认密码" prefix-icon="el-icon-lock" show-password />
+            <el-input v-model="form.confirmPassword" type="password" placeholder="确认密码" prefix-icon="Lock" show-password />
           </el-form-item>
           <el-form-item prop="code">
             <div class="captcha-row">
-              <el-input v-model="form.code" placeholder="验证码" prefix-icon="el-icon-key" class="captcha-input" @keyup.enter.native="handleRegister" />
+              <el-input v-model="form.code" placeholder="验证码" prefix-icon="Key" class="captcha-input" @keyup.enter="handleRegister" />
               <div class="captcha-image" @click="getCode">
                 <img :src="codeUrl" v-if="codeUrl" />
               </div>
             </div>
           </el-form-item>
           <el-form-item>
-            <el-button :loading="loading" type="primary" class="login-button" @click.native.prevent="handleRegister">
+            <el-button :loading="loading" type="primary" class="login-button" @click.prevent="handleRegister">
               {{ loading ? '注册中...' : '注 册' }}
             </el-button>
           </el-form-item>
@@ -182,13 +182,13 @@ $dark-bg: #001529;
   .form-subtitle { font-size: 14px; color: #8c8c8c; margin: 0 0 32px; }
 
   .login-form {
-    ::v-deep .el-input__inner {
+    :deep(.el-input__inner){
       height: 44px; border-radius: 4px; border-color: #d9d9d9;
       &:hover { border-color: $primary; }
       &:focus { border-color: $primary; box-shadow: 0 0 0 2px rgba(19,194,194,0.1); }
     }
-    ::v-deep .el-input__prefix { color: #bfbfbf; }
-    ::v-deep .el-form-item { margin-bottom: 20px; }
+    :deep(.el-input__prefix){ color: #bfbfbf; }
+    :deep(.el-form-item){ margin-bottom: 20px; }
 
     .captcha-row {
       display: flex; gap: 12px;

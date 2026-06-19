@@ -13,7 +13,7 @@
               <div class="avatar-wrapper">
                 <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" class="user-avatar" alt="avatar" />
                 <div v-else class="avatar-placeholder">
-                  <i class="el-icon-user-solid"></i>
+                  <el-icon><UserFilled /></el-icon>
                 </div>
                 <input
                   ref="avatarInput"
@@ -25,8 +25,8 @@
                 <el-button
                   class="upload-btn"
                   type="primary"
-                  icon="el-icon-camera"
-                  size="mini"
+                  icon="Camera"
+                  size="small"
                   circle
                   :loading="uploadingAvatar"
                   @click="handleUploadAvatar"
@@ -49,7 +49,7 @@
             <div class="info-list">
               <div class="info-item">
                 <div class="info-icon">
-                  <i class="el-icon-phone" style="color: #67C23A"></i>
+                  <el-icon style="color: #67C23A"><Phone /></el-icon>
                 </div>
                 <div class="info-content">
                   <div class="info-label">手机号码</div>
@@ -59,7 +59,7 @@
 
               <div class="info-item">
                 <div class="info-icon">
-                  <i class="el-icon-message" style="color: #409EFF"></i>
+                  <el-icon style="color: #409EFF"><Message /></el-icon>
                 </div>
                 <div class="info-content">
                   <div class="info-label">电子邮箱</div>
@@ -69,7 +69,7 @@
 
               <div class="info-item">
                 <div class="info-icon">
-                  <i class="el-icon-office-building" style="color: #E6A23C"></i>
+                  <el-icon style="color: #E6A23C"><OfficeBuilding /></el-icon>
                 </div>
                 <div class="info-content">
                   <div class="info-label">所属部门</div>
@@ -79,7 +79,7 @@
 
               <div class="info-item">
                 <div class="info-icon">
-                  <i class="el-icon-time" style="color: #909399"></i>
+                  <el-icon style="color: #909399"><Clock /></el-icon>
                 </div>
                 <div class="info-content">
                   <div class="info-label">注册时间</div>
@@ -93,7 +93,7 @@
           <div class="stats-card">
             <div class="stat-item">
               <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
-                <i class="el-icon-document"></i>
+                <el-icon><Document /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">128</div>
@@ -103,7 +103,7 @@
 
             <div class="stat-item">
               <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
-                <i class="el-icon-star-on"></i>
+                <el-icon><StarFilled /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">1.2k</div>
@@ -113,7 +113,7 @@
 
             <div class="stat-item">
               <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
-                <i class="el-icon-view"></i>
+                <el-icon><View /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">5.6k</div>
@@ -129,9 +129,9 @@
             <el-tabs v-model="activeTab" class="profile-tabs">
               <!-- 基本资料 -->
               <el-tab-pane name="userinfo">
-                <span slot="label">
-                  <i class="el-icon-user"></i> 基本资料
-                </span>
+                <template #label><span>
+                  <el-icon><User /></el-icon> 基本资料
+                </span></template>
 
                 <div class="tab-content">
                   <el-form :model="user" :rules="userRules" ref="userForm" label-width="100px" class="profile-form">
@@ -141,7 +141,7 @@
                           <el-input
                             v-model="user.nickname"
                             placeholder="请输入用户昵称"
-                            prefix-icon="el-icon-user"
+                            prefix-icon="User"
                           />
                         </el-form-item>
                       </el-col>
@@ -150,7 +150,7 @@
                           <el-input
                             v-model="user.username"
                             placeholder="用户名不可修改"
-                            prefix-icon="el-icon-s-custom"
+                            prefix-icon="UserFilled"
                             disabled
                           />
                         </el-form-item>
@@ -163,7 +163,7 @@
                           <el-input
                             v-model="user.phonenumber"
                             placeholder="请输入手机号码"
-                            prefix-icon="el-icon-phone"
+                            prefix-icon="Phone"
                           />
                         </el-form-item>
                       </el-col>
@@ -172,7 +172,7 @@
                           <el-input
                             v-model="user.email"
                             placeholder="请输入邮箱地址"
-                            prefix-icon="el-icon-message"
+                            prefix-icon="Message"
                           />
                         </el-form-item>
                       </el-col>
@@ -182,11 +182,11 @@
                       <el-col :span="12">
                         <el-form-item label="性别">
                           <el-radio-group v-model="user.sex">
-                            <el-radio label="0">
-                              <i class="el-icon-male" style="color: #409EFF"></i> 男
+                            <el-radio value="0">
+                              <el-icon style="color: #409EFF"><Male /></el-icon> 男
                             </el-radio>
-                            <el-radio label="1">
-                              <i class="el-icon-female" style="color: #F56C6C"></i> 女
+                            <el-radio value="1">
+                              <el-icon style="color: #F56C6C"><Female /></el-icon> 女
                             </el-radio>
                           </el-radio-group>
                         </el-form-item>
@@ -194,8 +194,8 @@
                     </el-row>
 
                     <el-form-item>
-                      <el-button type="primary" icon="el-icon-check" @click="handleSave">保存修改</el-button>
-                      <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
+                      <el-button type="primary" icon="Check" @click="handleSave">保存修改</el-button>
+                      <el-button icon="Refresh" @click="handleReset">重置</el-button>
                     </el-form-item>
                   </el-form>
                 </div>
@@ -203,9 +203,9 @@
 
               <!-- 修改密码 -->
               <el-tab-pane name="resetPwd">
-                <span slot="label">
-                  <i class="el-icon-lock"></i> 修改密码
-                </span>
+                <template #label><span>
+                  <el-icon><Lock /></el-icon> 修改密码
+                </span></template>
 
                 <div class="tab-content">
                   <el-form :model="pwdForm" :rules="pwdRules" ref="pwdForm" label-width="100px" class="profile-form">
@@ -223,7 +223,7 @@
                         v-model="pwdForm.oldPassword"
                         type="password"
                         placeholder="请输入旧密码"
-                        prefix-icon="el-icon-lock"
+                        prefix-icon="Lock"
                         show-password
                         style="max-width: 400px"
                       />
@@ -234,7 +234,7 @@
                         v-model="pwdForm.newPassword"
                         type="password"
                         placeholder="请输入新密码"
-                        prefix-icon="el-icon-key"
+                        prefix-icon="Key"
                         show-password
                         style="max-width: 400px"
                       />
@@ -245,15 +245,15 @@
                         v-model="pwdForm.confirmPassword"
                         type="password"
                         placeholder="请再次输入新密码"
-                        prefix-icon="el-icon-key"
+                        prefix-icon="Key"
                         show-password
                         style="max-width: 400px"
                       />
                     </el-form-item>
 
                     <el-form-item>
-                      <el-button type="primary" icon="el-icon-check" @click="handleChangePwd">修改密码</el-button>
-                      <el-button icon="el-icon-refresh" @click="handleResetPwd">重置</el-button>
+                      <el-button type="primary" icon="Check" @click="handleChangePwd">修改密码</el-button>
+                      <el-button icon="Refresh" @click="handleResetPwd">重置</el-button>
                     </el-form-item>
                   </el-form>
                 </div>
@@ -261,15 +261,15 @@
 
               <!-- 账号安全 -->
               <el-tab-pane name="security">
-                <span slot="label">
-                  <i class="el-icon-s-tools"></i> 账号安全
-                </span>
+                <template #label><span>
+                  <el-icon><Tools /></el-icon> 账号安全
+                </span></template>
 
                 <div class="tab-content">
                   <div class="security-list">
                     <div class="security-item">
                       <div class="security-info">
-                        <i class="el-icon-lock security-icon" style="color: #67C23A"></i>
+                        <el-icon class="security-icon" style="color: #67C23A"><Lock /></el-icon>
                         <div>
                           <div class="security-title">账号密码</div>
                           <div class="security-desc">定期更换密码可以保护账号安全</div>
@@ -280,7 +280,7 @@
 
                     <div class="security-item">
                       <div class="security-info">
-                        <i class="el-icon-phone security-icon" style="color: #409EFF"></i>
+                        <el-icon class="security-icon" style="color: #409EFF"><Phone /></el-icon>
                         <div>
                           <div class="security-title">密保手机</div>
                           <div class="security-desc">已绑定：{{ user.phonenumber || '未绑定' }}</div>
@@ -291,7 +291,7 @@
 
                     <div class="security-item">
                       <div class="security-info">
-                        <i class="el-icon-message security-icon" style="color: #E6A23C"></i>
+                        <el-icon class="security-icon" style="color: #E6A23C"><Message /></el-icon>
                         <div>
                           <div class="security-title">密保邮箱</div>
                           <div class="security-desc">已绑定：{{ user.email || '未绑定' }}</div>
@@ -305,20 +305,20 @@
 
               <!-- 账号绑定 -->
               <el-tab-pane name="bindings">
-                <span slot="label">
-                  <i class="el-icon-link"></i> 账号绑定
-                </span>
+                <template #label><span>
+                  <el-icon><Link /></el-icon> 账号绑定
+                </span></template>
 
                 <div class="tab-content" v-loading="bindingsLoading">
                   <h4 style="margin-top:0">已绑定的第三方账号</h4>
                   <div v-if="bindings.length === 0" class="binding-empty">
-                    <i class="el-icon-warning-outline" style="font-size:24px; color:#909399"></i>
+                    <el-icon style="font-size:24px; color:#909399"><Warning /></el-icon>
                     <p>暂未绑定任何第三方账号</p>
                   </div>
                   <div v-else class="binding-list">
                     <div v-for="b in bindings" :key="b.id" class="binding-item">
                       <div class="binding-info">
-                        <i :class="['binding-icon', b.providerIcon || 'el-icon-link']"></i>
+                        <menu-icon icon-class="binding-icon" :name="b.providerIcon || 'link'" />
                         <div>
                           <div class="binding-title">{{ b.providerName }}</div>
                           <div class="binding-desc">
@@ -339,7 +339,7 @@
                   <div v-else class="binding-list">
                     <div v-for="p in unboundProviders" :key="p.code" class="binding-item">
                       <div class="binding-info">
-                        <i :class="['binding-icon', p.icon || 'el-icon-link']"></i>
+                        <menu-icon icon-class="binding-icon" :name="p.icon || 'link'" />
                         <div>
                           <div class="binding-title">{{ p.name }}</div>
                           <div class="binding-desc">点击右侧按钮跳转到 {{ p.name }} 授权</div>
@@ -840,11 +840,11 @@ export default {
     min-height: 600px;
 
     .profile-tabs {
-      ::v-deep .el-tabs__nav-wrap::after {
+      :deep(.el-tabs__nav-wrap::after){
         display: none;
       }
 
-      ::v-deep .el-tabs__item {
+      :deep(.el-tabs__item){
         font-size: 15px;
         font-weight: 500;
         padding: 0 30px;
@@ -858,7 +858,7 @@ export default {
         }
       }
 
-      ::v-deep .el-tabs__active-bar {
+      :deep(.el-tabs__active-bar){
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         height: 3px;
       }
@@ -869,12 +869,12 @@ export default {
     }
 
     .profile-form {
-      ::v-deep .el-form-item__label {
+      :deep(.el-form-item__label){
         font-weight: 500;
         color: #606266;
       }
 
-      ::v-deep .el-input__inner {
+      :deep(.el-input__inner){
         border-radius: 8px;
         transition: all 0.3s ease;
 
@@ -884,7 +884,7 @@ export default {
         }
       }
 
-      ::v-deep .el-button--primary {
+      :deep(.el-button--primary){
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
         border-radius: 8px;
@@ -897,7 +897,7 @@ export default {
         }
       }
 
-      ::v-deep .el-button {
+      :deep(.el-button){
         border-radius: 8px;
         padding: 12px 28px;
       }
@@ -949,7 +949,7 @@ export default {
           }
         }
 
-        ::v-deep .el-button {
+        :deep(.el-button){
           border-radius: 8px;
         }
       }

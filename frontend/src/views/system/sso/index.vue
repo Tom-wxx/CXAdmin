@@ -10,24 +10,24 @@
       <el-table-column label="类型" prop="type" width="140" />
       <el-table-column label="client_id" prop="clientId" show-overflow-tooltip />
       <el-table-column label="启用" width="80" align="center">
-        <template slot-scope="s">
+        <template #default="s">
           <el-tag :type="s.row.enabled ? 'success' : 'info'">{{ s.row.enabled ? '是' : '否' }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="排序" prop="orderNum" width="70" align="center" />
       <el-table-column label="操作" width="180" align="center">
-        <template slot-scope="s">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleEdit(s.row)">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(s.row)">删除</el-button>
+        <template #default="s">
+          <el-button size="small" type="text" icon="Edit" @click="handleEdit(s.row)">修改</el-button>
+          <el-button size="small" type="text" icon="Delete" @click="handleDelete(s.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <pagination v-show="total > 0" :total="total"
-      :page.sync="queryParams.current" :limit.sync="queryParams.size"
+      v-model:page="queryParams.current" v-model:limit="queryParams.size"
       @pagination="getList" />
 
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="820px" append-to-body>
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="820px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="140px">
         <el-form-item label="标识" prop="code"><el-input v-model="form.code" :disabled="!!form.id" /></el-form-item>
         <el-form-item label="名称" prop="name"><el-input v-model="form.name" /></el-form-item>
@@ -36,7 +36,7 @@
             <el-option label="通用 OAuth2 / OIDC" value="OAUTH2_GENERIC" />
           </el-select>
         </el-form-item>
-        <el-form-item label="图标"><el-input v-model="form.icon" placeholder="例如 el-icon-platform-eleme" /></el-form-item>
+        <el-form-item label="图标"><el-input v-model="form.icon" placeholder="Element Plus 图标名，例如 Platform / Link" /></el-form-item>
         <el-form-item label="client_id" prop="clientId"><el-input v-model="form.clientId" /></el-form-item>
         <el-form-item label="client_secret">
           <div v-if="form.id" style="display:flex; gap:8px">
@@ -94,21 +94,21 @@
           </el-select>
         </el-form-item>
         <el-form-item label="字段映射">
-          <el-table :data="mappingRows" size="mini" border style="width:100%">
+          <el-table :data="mappingRows" size="small" border style="width:100%">
             <el-table-column label="标准字段" width="180">
-              <template slot-scope="s">
-                <el-tag size="mini" :type="s.row.required ? 'danger' : ''">{{ s.row.key }}</el-tag>
+              <template #default="s">
+                <el-tag size="small" :type="s.row.required ? 'danger' : ''">{{ s.row.key }}</el-tag>
                 <span class="mapping-desc">{{ s.row.desc }}</span>
               </template>
             </el-table-column>
             <el-table-column label="IdP 响应中的字段名">
-              <template slot-scope="s">
-                <el-input v-model="s.row.value" :placeholder="s.row.placeholder" size="mini" clearable />
+              <template #default="s">
+                <el-input v-model="s.row.value" :placeholder="s.row.placeholder" size="small" clearable />
               </template>
             </el-table-column>
           </el-table>
           <div class="mapping-hint">
-            红色 <el-tag size="mini" type="danger">id</el-tag> 为必填项；其它字段留空则跳过该属性同步。
+            红色 <el-tag size="small" type="danger">id</el-tag> 为必填项；其它字段留空则跳过该属性同步。
           </div>
         </el-form-item>
         <el-form-item label="默认角色">
@@ -125,22 +125,26 @@
           </el-select>
         </el-form-item>
         <el-form-item label="默认部门">
-          <treeselect
+          <el-tree-select
             v-model="form.defaultDeptId"
-            :options="deptOptions"
-            :normalizer="deptNormalizer"
-            :show-count="true"
+            :data="deptOptions"
+            :props="{ value: 'deptId', label: 'deptName', children: 'children' }"
+            value-key="deptId"
+            node-key="deptId"
+            check-strictly
+            clearable
             placeholder="新用户首次登录的默认部门"
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item label="启用"><el-switch v-model="form.enabled" :active-value="1" :inactive-value="0" /></el-form-item>
         <el-form-item label="排序"><el-input-number v-model="form.orderNum" :min="0" /></el-form-item>
         <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" /></el-form-item>
       </el-form>
-      <div slot="footer">
+      <template #footer><div>
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="dialogVisible = false">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>
@@ -149,8 +153,6 @@
 import { listProviders, getProvider, addProvider, updateProvider, delProvider } from '@/api/system/sso'
 import { listAllRole } from '@/api/system/role'
 import { treeSelect } from '@/api/system/dept'
-import Treeselect from '@riophae/vue-treeselect'
-import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import Pagination from '@/components/Pagination'
 import SearchForm from '@/components/SearchForm'
 import TableToolbar from '@/components/TableToolbar'
@@ -165,7 +167,7 @@ const MAPPING_KEYS = [
 
 export default {
   name: 'Sso',
-  components: { Treeselect, Pagination, SearchForm, TableToolbar },
+  components: { Pagination, SearchForm, TableToolbar },
   data() {
     return {
       searchFields: [
@@ -231,10 +233,6 @@ export default {
     },
     loadDeptOptions() {
       treeSelect().then(res => { this.deptOptions = res.data || [] })
-    },
-    deptNormalizer(node) {
-      if (node.children && !node.children.length) delete node.children
-      return { id: node.deptId, label: node.deptName, children: node.children }
     },
     onScopeChange(val) {
       this.form.scope = (val || []).join(' ')

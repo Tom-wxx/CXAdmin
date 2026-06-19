@@ -7,8 +7,8 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="mini"
+          icon="Delete"
+          size="small"
           :disabled="multiple"
           @click="handleBatchForceLogout"
         >批量强退</el-button>
@@ -23,7 +23,7 @@
     >
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" type="index" width="60" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ (queryParams.current - 1) * queryParams.size + scope.$index + 1 }}</span>
         </template>
       </el-table-column>
@@ -36,16 +36,16 @@
       <el-table-column label="浏览器" align="center" prop="browser" show-overflow-tooltip />
       <el-table-column label="操作系统" align="center" prop="os" show-overflow-tooltip />
       <el-table-column label="登录时间" align="center" prop="loginTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.loginTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleForceLogout(scope.row)"
           >强退</el-button>
         </template>
@@ -54,7 +54,7 @@
 
     <el-pagination
       v-if="total > 0"
-      :current-page.sync="queryParams.current"
+      v-model:current-page="queryParams.current"
       :page-sizes="[10, 20, 50, 100]"
       :page-size="queryParams.size"
       layout="total, sizes, prev, pager, next, jumper"

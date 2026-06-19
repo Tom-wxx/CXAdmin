@@ -9,7 +9,7 @@
       <div class="hero-deco">
         <div class="deco-bubble b1"></div>
         <div class="deco-bubble b2"></div>
-        <i class="el-icon-data-analysis"></i>
+        <el-icon><DataAnalysis /></el-icon>
       </div>
     </div>
 
@@ -22,14 +22,14 @@
         :style="{animationDelay: (80 + i * 80) + 'ms'}"
       >
         <div class="stat-icon" :style="{background: s.bg, color: s.color}">
-          <i :class="s.icon"></i>
+          <menu-icon :name="s.icon" />
         </div>
         <div class="stat-info">
           <div class="stat-title">{{ s.title }}</div>
           <div class="stat-value-row">
             <span class="stat-value">{{ animatedValues[s.key] }}</span>
             <span v-if="s.trend !== undefined" :class="['stat-trend', s.trend >= 0 ? 'up' : 'down']">
-              <i :class="s.trend >= 0 ? 'el-icon-top' : 'el-icon-bottom'"></i>{{ Math.abs(s.trend) }}%
+              <el-icon><component :is="s.trend >= 0 ? 'Top' : 'Bottom'" /></el-icon>{{ Math.abs(s.trend) }}%
             </span>
           </div>
           <div class="stat-footer">{{ s.footer }}</div>
@@ -56,14 +56,14 @@
         </div>
         <div class="card-body activity-list">
           <div v-if="recentLogs.length === 0" class="empty">
-            <i class="el-icon-document"></i>
+            <el-icon><Document /></el-icon>
             <p>暂无操作日志</p>
           </div>
           <div v-for="log in recentLogs" :key="log.id || log.operTime" class="activity-item">
             <div class="dot" :class="log.status === '成功' ? 'ok' : 'err'"></div>
             <div class="activity-main">
               <div class="row1">
-                <el-tag :type="operTagType(log.operType)" size="mini" effect="plain">{{ log.operType }}</el-tag>
+                <el-tag :type="operTagType(log.operType)" size="small" effect="plain">{{ log.operType }}</el-tag>
                 <span class="activity-text">{{ log.operContent }}</span>
               </div>
               <div class="row2">{{ log.operator }} · {{ log.operTime }}</div>
@@ -84,7 +84,7 @@
             class="quick-tile"
             :style="{'--tile-color': link.color}"
           >
-            <i :class="link.icon"></i>
+            <menu-icon :name="link.icon" />
             <span>{{ link.label }}</span>
           </router-link>
         </div>
@@ -312,8 +312,8 @@ $text-3: #8f959e;
 }
 .bento-card { padding: 20px; }
 .bento-card.chart-wrap { padding: 8px; }
-.bento-card.chart-wrap ::v-deep .chart-card,
-.bento-card.chart-wrap ::v-deep .panel {
+.bento-card.chart-wrap :deep(.chart-card),
+.bento-card.chart-wrap :deep(.panel){
   border: none !important;
   box-shadow: none !important;
   margin-bottom: 0 !important;

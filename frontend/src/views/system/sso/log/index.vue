@@ -6,38 +6,38 @@
     <el-table v-loading="loading" :data="dataList" border>
       <el-table-column label="ID" prop="id" width="80" align="center" />
       <el-table-column label="IdP" prop="providerCode" width="100">
-        <template slot-scope="s">
-          <el-tag size="mini" effect="plain">{{ s.row.providerCode || '—' }}</el-tag>
+        <template #default="s">
+          <el-tag size="small" effect="plain">{{ s.row.providerCode || '—' }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="动作" prop="action" width="100" align="center">
-        <template slot-scope="s">
-          <el-tag :type="actionType(s.row.action)" size="mini">{{ actionLabel(s.row.action) }}</el-tag>
+        <template #default="s">
+          <el-tag :type="actionType(s.row.action)" size="small">{{ actionLabel(s.row.action) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="模式" prop="mode" width="80" align="center">
-        <template slot-scope="s">
+        <template #default="s">
           <span v-if="s.row.mode" :class="'mode-' + s.row.mode">{{ s.row.mode === 'login' ? '登录' : '绑定' }}</span>
           <span v-else>—</span>
         </template>
       </el-table-column>
       <el-table-column label="状态" prop="status" width="80" align="center">
-        <template slot-scope="s">
-          <el-tag :type="s.row.status === 'success' ? 'success' : 'danger'" size="mini">
+        <template #default="s">
+          <el-tag :type="s.row.status === 'success' ? 'success' : 'danger'" size="small">
             {{ s.row.status === 'success' ? '成功' : '失败' }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="本地用户ID" prop="userId" width="100" align="center">
-        <template slot-scope="s">{{ s.row.userId || '—' }}</template>
+        <template #default="s">{{ s.row.userId || '—' }}</template>
       </el-table-column>
       <el-table-column label="外部用户ID" prop="externalUserId" width="140" show-overflow-tooltip>
-        <template slot-scope="s">{{ s.row.externalUserId || '—' }}</template>
+        <template #default="s">{{ s.row.externalUserId || '—' }}</template>
       </el-table-column>
       <el-table-column label="IP" prop="ip" width="130" show-overflow-tooltip />
       <el-table-column label="User-Agent" prop="userAgent" min-width="180" show-overflow-tooltip />
       <el-table-column label="错误信息" prop="errorMessage" min-width="200" show-overflow-tooltip>
-        <template slot-scope="s">
+        <template #default="s">
           <span v-if="s.row.errorMessage" class="error-msg">{{ s.row.errorMessage }}</span>
           <span v-else>—</span>
         </template>
@@ -48,8 +48,8 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
   </div>

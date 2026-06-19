@@ -18,28 +18,28 @@
       <el-table-column label="参数键名" align="center" prop="configKey" show-overflow-tooltip />
       <el-table-column label="参数键值" align="center" prop="configValue" show-overflow-tooltip />
       <el-table-column label="系统内置" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="configTypeOptions" :value="scope.row.configType" />
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" show-overflow-tooltip />
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            icon="Edit"
             @click="handleUpdate(scope.row)"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
             :disabled="scope.row.configType === 'Y'"
           >删除</el-button>
@@ -51,13 +51,13 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="600px" append-to-body>
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
       <el-form ref="configForm" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="参数名称" prop="configName">
           <el-input v-model="form.configName" placeholder="请输入参数名称" maxlength="100" />
@@ -70,18 +70,18 @@
         </el-form-item>
         <el-form-item label="系统内置" prop="configType">
           <el-radio-group v-model="form.configType">
-            <el-radio label="Y">是</el-radio>
-            <el-radio label="N">否</el-radio>
+            <el-radio value="Y">是</el-radio>
+            <el-radio value="N">否</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

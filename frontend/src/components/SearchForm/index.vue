@@ -5,7 +5,7 @@
     size="small"
     label-width="80px"
     class="search-form"
-    @submit.native.prevent
+    @submit.prevent
   >
     <el-form-item
       v-for="field in visibleFields"
@@ -19,7 +19,7 @@
         :placeholder="field.placeholder || ('请输入' + field.label)"
         :clearable="field.clearable !== false"
         :style="{ width: field.width || '200px' }"
-        @keyup.enter.native="handleSearch"
+        @keyup.enter="handleSearch"
       />
       <el-select
         v-else-if="field.type === 'select'"
@@ -68,16 +68,16 @@
     </el-form-item>
 
     <el-form-item>
-      <el-button type="primary" icon="el-icon-search" size="mini" @click="handleSearch">搜索</el-button>
-      <el-button icon="el-icon-refresh" size="mini" @click="handleReset">重置</el-button>
+      <el-button type="primary" icon="Search" size="small" @click="handleSearch">搜索</el-button>
+      <el-button icon="Refresh" size="small" @click="handleReset">重置</el-button>
       <el-button
         v-if="collapsible"
         type="text"
-        size="mini"
+        size="small"
         @click="collapsed = !collapsed"
       >
         {{ collapsed ? '展开' : '收起' }}
-        <i :class="collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'" />
+        <el-icon><component :is="collapsed ? 'ArrowDown' : 'ArrowUp'" /></el-icon>
       </el-button>
     </el-form-item>
   </el-form>
@@ -121,11 +121,11 @@ export default {
     handleReset() {
       this.fields.forEach(f => {
         if (f.type === 'daterange') {
-          this.$set(this.model, f.prop, [])
+          this.model[f.prop] = []
         } else if (f.defaultValue !== undefined) {
-          this.$set(this.model, f.prop, f.defaultValue)
+          this.model[f.prop] = f.defaultValue
         } else {
-          this.$set(this.model, f.prop, undefined)
+          this.model[f.prop] = undefined
         }
       })
       this.$emit('reset')

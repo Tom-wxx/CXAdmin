@@ -5,7 +5,7 @@
       <el-col :span="6">
         <el-card class="overview-card">
           <div class="card-content">
-            <i class="el-icon-user" style="color: #409EFF;"></i>
+            <el-icon style="color: #409EFF;"><User /></el-icon>
             <div class="card-info">
               <div class="card-title">用户总数</div>
               <div class="card-value">{{ overview.totalUsers || 0 }}</div>
@@ -18,7 +18,7 @@
       <el-col :span="6">
         <el-card class="overview-card">
           <div class="card-content">
-            <i class="el-icon-s-custom" style="color: #67C23A;"></i>
+            <el-icon style="color: #67C23A;"><UserFilled /></el-icon>
             <div class="card-info">
               <div class="card-title">角色总数</div>
               <div class="card-value">{{ overview.totalRoles || 0 }}</div>
@@ -31,7 +31,7 @@
       <el-col :span="6">
         <el-card class="overview-card">
           <div class="card-content">
-            <i class="el-icon-s-promotion" style="color: #E6A23C;"></i>
+            <el-icon style="color: #E6A23C;"><Promotion /></el-icon>
             <div class="card-info">
               <div class="card-title">今日登录</div>
               <div class="card-value">{{ overview.todayLoginCount || 0 }}</div>
@@ -44,7 +44,7 @@
       <el-col :span="6">
         <el-card class="overview-card">
           <div class="card-content">
-            <i class="el-icon-s-operation" style="color: #F56C6C;"></i>
+            <el-icon style="color: #F56C6C;"><Operation /></el-icon>
             <div class="card-info">
               <div class="card-title">今日操作</div>
               <div class="card-value">{{ overview.todayOperationCount || 0 }}</div>
@@ -60,14 +60,14 @@
       <!-- 用户增长趋势 -->
       <el-col :span="12">
         <el-card>
-          <div slot="header" class="clearfix">
+          <template #header><div class="clearfix">
             <span>用户增长趋势</span>
             <el-select v-model="userGrowthDays" size="small" style="float: right; width: 100px;" @change="loadUserGrowthTrend">
               <el-option label="7天" :value="7"></el-option>
               <el-option label="15天" :value="15"></el-option>
               <el-option label="30天" :value="30"></el-option>
             </el-select>
-          </div>
+          </div></template>
           <div id="userGrowthChart" style="height: 300px;"></div>
         </el-card>
       </el-col>
@@ -75,14 +75,14 @@
       <!-- 登录统计 -->
       <el-col :span="12">
         <el-card>
-          <div slot="header" class="clearfix">
+          <template #header><div class="clearfix">
             <span>登录统计</span>
             <el-select v-model="loginDays" size="small" style="float: right; width: 100px;" @change="loadLoginStatistics">
               <el-option label="7天" :value="7"></el-option>
               <el-option label="15天" :value="15"></el-option>
               <el-option label="30天" :value="30"></el-option>
             </el-select>
-          </div>
+          </div></template>
           <div id="loginChart" style="height: 300px;"></div>
         </el-card>
       </el-col>
@@ -92,9 +92,9 @@
       <!-- 部门人员分布 -->
       <el-col :span="12">
         <el-card>
-          <div slot="header">
+          <template #header><div>
             <span>部门人员分布</span>
-          </div>
+          </div></template>
           <div id="deptDistributionChart" style="height: 300px;"></div>
         </el-card>
       </el-col>
@@ -102,9 +102,9 @@
       <!-- 角色人员分布 -->
       <el-col :span="12">
         <el-card>
-          <div slot="header">
+          <template #header><div>
             <span>角色人员分布</span>
-          </div>
+          </div></template>
           <div id="roleDistributionChart" style="height: 300px;"></div>
         </el-card>
       </el-col>
@@ -114,14 +114,14 @@
       <!-- 操作日志统计 -->
       <el-col :span="12">
         <el-card>
-          <div slot="header" class="clearfix">
+          <template #header><div class="clearfix">
             <span>操作日志趋势</span>
             <el-select v-model="operationDays" size="small" style="float: right; width: 100px;" @change="loadOperationStatistics">
               <el-option label="7天" :value="7"></el-option>
               <el-option label="15天" :value="15"></el-option>
               <el-option label="30天" :value="30"></el-option>
             </el-select>
-          </div>
+          </div></template>
           <div id="operationChart" style="height: 300px;"></div>
         </el-card>
       </el-col>
@@ -129,9 +129,9 @@
       <!-- 操作类型统计 -->
       <el-col :span="12">
         <el-card>
-          <div slot="header">
+          <template #header><div>
             <span>操作类型分布</span>
-          </div>
+          </div></template>
           <div id="operationTypeChart" style="height: 300px;"></div>
         </el-card>
       </el-col>
@@ -165,7 +165,7 @@ export default {
   mounted() {
     this.loadData()
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 销毁图表实例
     Object.values(this.charts).forEach(chart => {
       if (chart) {

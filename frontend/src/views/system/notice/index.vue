@@ -16,39 +16,39 @@
       <el-table-column label="公告编号" align="center" prop="noticeId" width="100" />
       <el-table-column label="公告标题" align="center" prop="noticeTitle" show-overflow-tooltip />
       <el-table-column label="公告类型" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="noticeTypeOptions" :value="scope.row.noticeType" />
         </template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" width="120" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-view"
+            icon="View"
             @click="handleView(scope.row)"
           >查看</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            icon="Edit"
             @click="handleUpdate(scope.row)"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
         </template>
@@ -59,32 +59,33 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="820px" append-to-body :close-on-click-modal="false">
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="820px" append-to-body :close-on-click-modal="false">
       <el-form ref="noticeForm" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="公告标题" prop="noticeTitle">
           <el-input v-model="form.noticeTitle" placeholder="请输入公告标题" maxlength="50" />
         </el-form-item>
         <el-form-item label="公告类型" prop="noticeType">
           <el-radio-group v-model="form.noticeType">
-            <el-radio label="1">通知</el-radio>
-            <el-radio label="2">公告</el-radio>
+            <el-radio value="1">通知</el-radio>
+            <el-radio value="2">公告</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="0">正常</el-radio>
-            <el-radio label="1">关闭</el-radio>
+            <el-radio value="0">正常</el-radio>
+            <el-radio value="1">关闭</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="公告内容" prop="noticeContent">
-          <quill-editor
-            v-model="form.noticeContent"
+          <QuillEditor
+            v-model:content="form.noticeContent"
+            content-type="html"
             :options="editorOptions"
             class="notice-editor"
           />
@@ -93,14 +94,14 @@
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog title="公告详情" :visible.sync="viewDialogVisible" width="820px" append-to-body>
+    <el-dialog title="公告详情" v-model="viewDialogVisible" width="820px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="公告标题">{{ viewForm.noticeTitle }}</el-descriptions-item>
         <el-descriptions-item label="公告类型">
@@ -118,9 +119,9 @@
         </el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{ viewForm.remark }}</el-descriptions-item>
       </el-descriptions>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="viewDialogVisible = false">关 闭</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>
@@ -131,8 +132,8 @@ import Pagination from '@/components/Pagination'
 import SearchForm from '@/components/SearchForm'
 import TableToolbar from '@/components/TableToolbar'
 import DictTag from '@/components/DictTag'
-import { quillEditor } from 'vue-quill-editor'
-import 'quill/dist/quill.snow.css'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 const NOTICE_TYPE_OPTIONS = [
   { value: '1', label: '通知', type: 'success' },
@@ -150,7 +151,7 @@ export default {
     SearchForm,
     TableToolbar,
     DictTag,
-    quillEditor
+    QuillEditor
   },
   data() {
     return {
@@ -362,12 +363,12 @@ export default {
 .mb8 {
   margin-bottom: 8px;
 }
-/* Quill 编辑器内部高度（不加 scoped 影响，因为是动态生成的子元素，用 ::v-deep 穿透） */
-.notice-editor ::v-deep .ql-container {
+/* Quill 编辑器内部高度（动态生成的子元素，用 :deep() 穿透 scoped 样式） */
+.notice-editor :deep(.ql-container) {
   min-height: 240px;
   font-size: 14px;
 }
-.notice-editor ::v-deep .ql-editor {
+.notice-editor :deep(.ql-editor) {
   min-height: 240px;
 }
 /* 查看详情：使用 ql-snow + ql-editor 的样式（颜色/对齐/列表等回显） */

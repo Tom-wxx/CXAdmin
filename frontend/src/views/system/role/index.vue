@@ -26,7 +26,7 @@
       <el-table-column label="权限字符" align="center" prop="roleKey" />
       <el-table-column label="显示顺序" align="center" prop="roleSort" width="100" />
       <el-table-column label="状态" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             active-value="0"
@@ -36,28 +36,28 @@
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="240" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            icon="Edit"
             @click="handleUpdate(scope.row)"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-s-promotion"
+            icon="Promotion"
             @click="handlePermission(scope.row)"
           >权限分配</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
         </template>
@@ -68,13 +68,13 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="600px" append-to-body>
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
       <el-form ref="roleForm" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
@@ -99,8 +99,8 @@
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="form.status">
-                <el-radio label="0">正常</el-radio>
-                <el-radio label="1">停用</el-radio>
+                <el-radio value="0">正常</el-radio>
+                <el-radio value="1">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -125,14 +125,14 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
 
     <!-- 权限分配对话框 -->
-    <el-dialog title="权限分配" :visible.sync="permissionDialogVisible" width="600px" append-to-body>
+    <el-dialog title="权限分配" v-model="permissionDialogVisible" width="600px" append-to-body>
       <el-form label-width="100px">
         <el-form-item label="角色名称">
           <el-input v-model="currentRole.roleName" disabled />
@@ -156,10 +156,10 @@
           ></el-tree>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitPermission">确 定</el-button>
         <el-button @click="cancelPermission">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

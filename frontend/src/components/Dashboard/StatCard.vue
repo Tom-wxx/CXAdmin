@@ -3,7 +3,7 @@
     <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6" v-for="item in cardData" :key="item.key">
       <div class="stat-card">
         <div class="stat-card-icon" :style="{ background: item.bgColor, color: item.iconColor }">
-          <i :class="item.icon"></i>
+          <menu-icon :name="item.icon" />
         </div>
         <div class="stat-card-info">
           <div class="stat-card-title">{{ item.title }}</div>

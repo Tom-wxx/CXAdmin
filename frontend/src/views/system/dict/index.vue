@@ -4,23 +4,23 @@
       <!-- 字典类型列表 -->
       <el-col :span="8">
         <el-card shadow="hover">
-          <div slot="header">
+          <template #header><div>
             <span>字典类型</span>
             <el-button
               style="float: right; padding: 3px 10px"
               type="text"
-              icon="el-icon-plus"
+              icon="Plus"
               @click="handleAddType"
             >新增</el-button>
-          </div>
+          </div></template>
           <el-input
             v-model="typeQuery"
             placeholder="请输入字典名称"
             clearable
             size="small"
-            prefix-icon="el-icon-search"
+            prefix-icon="Search"
             style="margin-bottom: 10px"
-            @keyup.enter.native="handleTypeSearch"
+            @keyup.enter="handleTypeSearch"
             @clear="handleTypeSearch"
           />
           <el-table
@@ -34,22 +34,22 @@
             <el-table-column prop="dictName" label="字典名称" show-overflow-tooltip />
             <el-table-column prop="dictType" label="字典类型" show-overflow-tooltip />
             <el-table-column label="状态" width="60">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <DictTag :options="statusOptions" :value="scope.row.status" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="120">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
-                  icon="el-icon-edit"
+                  icon="Edit"
                   @click.stop="handleEditType(scope.row)"
                 >修改</el-button>
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
-                  icon="el-icon-delete"
+                  icon="Delete"
                   @click.stop="handleDeleteType(scope.row)"
                 >删除</el-button>
               </template>
@@ -61,7 +61,7 @@
             layout="prev, pager, next"
             :total="typeTotal"
             :page-size="typeQueryParams.size"
-            :current-page.sync="typeQueryParams.current"
+            v-model:current-page="typeQueryParams.current"
             @current-change="handleTypePageChange"
             style="margin-top: 10px; text-align: center"
           />
@@ -71,7 +71,7 @@
       <!-- 字典数据列表 -->
       <el-col :span="16">
         <el-card shadow="hover">
-          <div slot="header">
+          <template #header><div>
             <span>字典数据</span>
             <span v-if="currentType" style="margin-left: 10px; color: #909399">
               ({{ currentType.dictName }} - {{ currentType.dictType }})
@@ -80,10 +80,10 @@
               v-if="currentType"
               style="float: right; padding: 3px 10px"
               type="text"
-              icon="el-icon-plus"
+              icon="Plus"
               @click="handleAddData"
             >新增</el-button>
-          </div>
+          </div></template>
           <el-table
             v-loading="dataLoading"
             :data="dataList"
@@ -93,22 +93,22 @@
             <el-table-column prop="dictValue" label="字典键值" />
             <el-table-column prop="dictSort" label="排序" width="80" />
             <el-table-column label="状态" width="80">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <DictTag :options="statusOptions" :value="scope.row.status" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="150">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
-                  icon="el-icon-edit"
+                  icon="Edit"
                   @click="handleEditData(scope.row)"
                 >修改</el-button>
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
-                  icon="el-icon-delete"
+                  icon="Delete"
                   @click="handleDeleteData(scope.row)"
                 >删除</el-button>
               </template>
@@ -120,7 +120,7 @@
             layout="prev, pager, next"
             :total="dataTotal"
             :page-size="dataQueryParams.size"
-            :current-page.sync="dataQueryParams.current"
+            v-model:current-page="dataQueryParams.current"
             @current-change="handleDataPageChange"
             style="margin-top: 10px; text-align: center"
           />
@@ -129,7 +129,7 @@
     </el-row>
 
     <!-- 字典类型对话框 -->
-    <el-dialog :title="typeDialogTitle" :visible.sync="typeDialogVisible" width="600px">
+    <el-dialog :title="typeDialogTitle" v-model="typeDialogVisible" width="600px">
       <el-form ref="typeForm" :model="typeForm" :rules="typeRules" label-width="100px">
         <el-form-item label="字典名称" prop="dictName">
           <el-input v-model="typeForm.dictName" placeholder="请输入字典名称" />
@@ -139,22 +139,22 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="typeForm.status">
-            <el-radio label="0">正常</el-radio>
-            <el-radio label="1">停用</el-radio>
+            <el-radio value="0">正常</el-radio>
+            <el-radio value="1">停用</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="typeForm.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <template #footer><div>
         <el-button type="primary" @click="submitTypeForm">确 定</el-button>
         <el-button @click="typeDialogVisible = false">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
 
     <!-- 字典数据对话框 -->
-    <el-dialog :title="dataDialogTitle" :visible.sync="dataDialogVisible" width="600px">
+    <el-dialog :title="dataDialogTitle" v-model="dataDialogVisible" width="600px">
       <el-form ref="dataForm" :model="dataForm" :rules="dataRules" label-width="100px">
         <el-form-item label="字典类型">
           <el-input v-model="dataForm.dictType" disabled />
@@ -183,18 +183,18 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="dataForm.status">
-            <el-radio label="0">正常</el-radio>
-            <el-radio label="1">停用</el-radio>
+            <el-radio value="0">正常</el-radio>
+            <el-radio value="1">停用</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="dataForm.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <template #footer><div>
         <el-button type="primary" @click="submitDataForm">确 定</el-button>
         <el-button @click="dataDialogVisible = false">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

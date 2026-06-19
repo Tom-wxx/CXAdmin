@@ -11,10 +11,10 @@
     <!-- 工具栏 -->
     <TableToolbar show-refresh @refresh="getList">
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="handleClean">清空</el-button>
+        <el-button type="danger" plain icon="Delete" size="small" @click="handleClean">清空</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-back" size="mini" @click="handleBack">返回</el-button>
+        <el-button type="warning" plain icon="Back" size="small" @click="handleBack">返回</el-button>
       </el-col>
     </TableToolbar>
 
@@ -26,27 +26,27 @@
       <el-table-column label="调用目标" align="center" prop="invokeTarget" show-overflow-tooltip />
       <el-table-column label="日志信息" align="center" prop="jobMessage" show-overflow-tooltip />
       <el-table-column label="执行状态" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="执行时间" align="center" prop="createTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-view"
+            icon="View"
             @click="handleView(scope.row)"
           >详细</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
         </template>
@@ -57,13 +57,13 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
     <!-- 查看详情对话框 -->
-    <el-dialog title="调度日志详细" :visible.sync="viewDialogVisible" width="700px" append-to-body>
+    <el-dialog title="调度日志详细" v-model="viewDialogVisible" width="700px" append-to-body>
       <el-form ref="form" :model="viewForm" label-width="120px">
         <el-row>
           <el-col :span="12">
@@ -94,9 +94,9 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="viewDialogVisible = false">关 闭</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

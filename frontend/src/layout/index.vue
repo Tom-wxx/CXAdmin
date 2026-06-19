@@ -19,31 +19,31 @@
               :key="route.path"
               :index="route.path"
             >
-              <i v-if="route.meta && route.meta.icon" :class="'el-icon-' + route.meta.icon"></i>
+              <menu-icon v-if="route.meta && route.meta.icon" :name="route.meta.icon" />
               <span>{{ route.meta ? route.meta.title : '' }}</span>
             </el-menu-item>
           </el-menu>
         </div>
         <div class="navbar-right">
           <el-tooltip content="主题设置" placement="bottom">
-            <i class="el-icon-setting theme-btn" @click="showThemeSettings = true"></i>
+            <el-icon class="theme-btn" @click="showThemeSettings = true"><Setting /></el-icon>
           </el-tooltip>
           <el-dropdown class="avatar-container" trigger="click">
             <div class="avatar-wrapper">
               <img :src="getAvatarUrl(avatar)" class="user-avatar" />
               <span class="user-name">{{ name }}</span>
-              <i class="el-icon-caret-bottom" />
+              <el-icon><CaretBottom /></el-icon>
             </div>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item @click.native="goToProfile">
-                <i class="el-icon-user"></i>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item @click="goToProfile">
+                <el-icon><User /></el-icon>
                 <span>个人中心</span>
               </el-dropdown-item>
-              <el-dropdown-item divided @click.native="logout">
-                <i class="el-icon-switch-button"></i>
+              <el-dropdown-item divided @click="logout">
+                <el-icon><SwitchButton /></el-icon>
                 <span>退出登录</span>
               </el-dropdown-item>
-            </el-dropdown-menu>
+            </el-dropdown-menu></template>
           </el-dropdown>
         </div>
       </div>
@@ -75,11 +75,13 @@
       <div class="main-container" :class="{ 'no-sidebar': currentTopMenuChildren.length === 0 }">
         <div class="sub-navbar">
           <div class="left-menu">
-            <i
+            <el-icon
               v-if="currentTopMenuChildren.length > 0"
-              :class="isCollapse ? 'el-icon-s-unfold' : 'el-icon-s-fold'"
               @click="toggleSideBar"
-            ></i>
+            >
+              <Expand v-if="isCollapse" />
+              <Fold v-else />
+            </el-icon>
             <span class="title">{{ title }}</span>
           </div>
         </div>
@@ -112,28 +114,31 @@
       <div class="main-container">
         <div class="navbar">
           <div class="left-menu">
-            <i :class="isCollapse ? 'el-icon-s-unfold' : 'el-icon-s-fold'" @click="toggleSideBar"></i>
+            <el-icon @click="toggleSideBar">
+              <Expand v-if="isCollapse" />
+              <Fold v-else />
+            </el-icon>
           </div>
           <div class="right-menu">
             <el-tooltip content="主题设置" placement="bottom">
-              <i class="el-icon-setting theme-btn" @click="showThemeSettings = true"></i>
+              <el-icon class="theme-btn" @click="showThemeSettings = true"><Setting /></el-icon>
             </el-tooltip>
             <el-dropdown class="avatar-container" trigger="click">
               <div class="avatar-wrapper">
                 <img :src="getAvatarUrl(avatar)" class="user-avatar" />
                 <span class="user-name">{{ name }}</span>
-                <i class="el-icon-caret-bottom" />
+                <el-icon><CaretBottom /></el-icon>
               </div>
-              <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item @click.native="goToProfile">
-                  <i class="el-icon-user"></i>
+              <template #dropdown><el-dropdown-menu>
+                <el-dropdown-item @click="goToProfile">
+                  <el-icon><User /></el-icon>
                   <span>个人中心</span>
                 </el-dropdown-item>
-                <el-dropdown-item divided @click.native="logout">
-                  <i class="el-icon-switch-button"></i>
+                <el-dropdown-item divided @click="logout">
+                  <el-icon><SwitchButton /></el-icon>
                   <span>退出登录</span>
                 </el-dropdown-item>
-              </el-dropdown-menu>
+              </el-dropdown-menu></template>
             </el-dropdown>
           </div>
         </div>
@@ -142,7 +147,7 @@
     </template>
 
     <!-- 主题设置抽屉 -->
-    <theme-settings :visible.sync="showThemeSettings" />
+    <theme-settings v-model="showThemeSettings" />
   </div>
 </template>
 
@@ -324,12 +329,12 @@ $navbar-height: 48px;
       height: 0;
     }
 
-    ::v-deep .el-menu {
+    :deep(.el-menu){
       border-right: none;
     }
 
-    ::v-deep .el-menu-item,
-    ::v-deep .el-submenu__title {
+    :deep(.el-menu-item),
+    :deep(.el-sub-menu__title){
       height: 44px;
       line-height: 44px;
       font-size: 14px;
@@ -339,22 +344,22 @@ $navbar-height: 48px;
       }
     }
 
-    ::v-deep .el-menu-item.is-active {
+    :deep(.el-menu-item.is-active){
       background-color: $primary !important;
       color: #fff !important;
     }
 
-    ::v-deep .el-menu-item i,
-    ::v-deep .el-submenu__title i {
+    :deep(.el-menu-item i),
+    :deep(.el-sub-menu__title i){
       color: inherit;
     }
 
     &.sidebar-collapsed {
-      ::v-deep .el-menu--collapse {
+      :deep(.el-menu--collapse){
         width: $sidebar-collapsed-width;
 
         .el-menu-item,
-        .el-submenu__title {
+        .el-sub-menu__title {
           padding: 0 !important;
           text-align: center;
 
@@ -366,17 +371,17 @@ $navbar-height: 48px;
           }
         }
 
-        .el-submenu__icon-arrow { display: none; }
+        .el-sub-menu__icon-arrow { display: none; }
       }
 
-      ::v-deep .el-tooltip {
+      :deep(.el-tooltip){
         padding: 0 !important;
       }
     }
 
     &:not(.sidebar-collapsed) {
-      ::v-deep .el-menu-item i,
-      ::v-deep .el-submenu__title i {
+      :deep(.el-menu-item i),
+      :deep(.el-sub-menu__title i){
         font-size: 16px;
         margin-right: 8px;
       }
@@ -463,13 +468,13 @@ $navbar-height: 48px;
               color: #595959;
             }
 
-            .el-icon-caret-bottom {
+            .el-icon {
               font-size: 12px;
               color: #bfbfbf;
             }
           }
 
-          ::v-deep .el-dropdown-menu__item {
+          :deep(.el-dropdown-menu__item){
             i {
               margin-right: 8px;
               font-size: 14px;
@@ -543,13 +548,13 @@ $navbar-height: 48px;
               font-size: 14px;
             }
 
-            .el-icon-caret-bottom {
+            .el-icon {
               color: rgba(255, 255, 255, 0.45);
               font-size: 12px;
             }
           }
 
-          ::v-deep .el-dropdown-menu__item {
+          :deep(.el-dropdown-menu__item){
             i {
               margin-right: 8px;
               font-size: 14px;
@@ -563,7 +568,7 @@ $navbar-height: 48px;
         }
       }
 
-      ::v-deep .el-menu--horizontal {
+      :deep(.el-menu--horizontal){
         border-bottom: none;
         flex: 1;
 

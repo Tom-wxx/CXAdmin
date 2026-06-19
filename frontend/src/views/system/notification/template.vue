@@ -10,7 +10,7 @@
       <el-table-column label="模板编码" align="center" prop="templateCode" :show-overflow-tooltip="true" />
       <el-table-column label="模板名称" align="center" prop="templateName" :show-overflow-tooltip="true" />
       <el-table-column label="通知类型" align="center" prop="type" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span v-if="scope.row.type === 'system'">系统通知</span>
           <span v-else-if="scope.row.type === 'todo'">待办提醒</span>
           <span v-else-if="scope.row.type === 'approval'">审批消息</span>
@@ -19,12 +19,12 @@
         </template>
       </el-table-column>
       <el-table-column label="优先级" align="center" prop="priority" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="priorityOptions" :value="scope.row.priority || 'normal'" />
         </template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             active-value="1"
@@ -34,23 +34,23 @@
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            icon="Edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:notification:template:edit']"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:notification:template:remove']"
           >删除</el-button>
@@ -61,12 +61,12 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
 
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="模板编码" prop="templateCode">
           <el-input v-model="form.templateCode" placeholder="请输入模板编码" />
@@ -97,18 +97,18 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="1">启用</el-radio>
-            <el-radio label="0">停用</el-radio>
+            <el-radio value="1">启用</el-radio>
+            <el-radio value="0">停用</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
         <el-button type="primary" @click="submitForm">确 定</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

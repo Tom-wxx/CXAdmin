@@ -1,7 +1,4 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-
-Vue.use(Router)
+import { createRouter, createWebHistory } from 'vue-router'
 
 /* Layout */
 import Layout from '@/layout'
@@ -110,42 +107,19 @@ export const constantRoutes = [
   }
 ]
 
-const createRouter = () => new Router({
-  mode: 'history',
-  scrollBehavior: () => ({ y: 0 }),
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
+  scrollBehavior: () => ({ top: 0 }),
   routes: constantRoutes
 })
 
-const router = createRouter()
-
-// 重置路由
+// 重置路由：移除所有动态添加的路由，仅保留公共路由
 export function resetRouter() {
-  const newRouter = createRouter()
-  router.matcher = newRouter.matcher
-}
-
-// 解决 NavigationDuplicated 错误
-const originalPush = Router.prototype.push
-const originalReplace = Router.prototype.replace
-
-Router.prototype.push = function push(location, onResolve, onReject) {
-  if (onResolve || onReject) {
-    return originalPush.call(this, location, onResolve, onReject)
-  }
-  return originalPush.call(this, location).catch(err => {
-    if (err.name !== 'NavigationDuplicated') {
-      return Promise.reject(err)
-    }
-  })
-}
-
-Router.prototype.replace = function replace(location, onResolve, onReject) {
-  if (onResolve || onReject) {
-    return originalReplace.call(this, location, onResolve, onReject)
-  }
-  return originalReplace.call(this, location).catch(err => {
-    if (err.name !== 'NavigationDuplicated') {
-      return Promise.reject(err)
+  const constantNames = new Set()
+  constantRoutes.forEach(route => route.name && constantNames.add(route.name))
+  router.getRoutes().forEach(route => {
+    if (route.name && !constantNames.has(route.name)) {
+      router.removeRoute(route.name)
     }
   })
 }
