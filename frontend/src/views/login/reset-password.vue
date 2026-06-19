@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-left">
       <div class="brand-area">
-        <div class="brand-icon"><i class="el-icon-s-platform"></i></div>
+        <div class="brand-icon"><el-icon><Platform /></el-icon></div>
         <h1 class="brand-title">CXAdmin</h1>
         <p class="brand-desc">简洁高效的企业级后台管理系统</p>
       </div>
@@ -13,13 +13,13 @@
         <p class="form-subtitle">请输入您的新密码</p>
         <el-form ref="form" :model="form" :rules="rules" class="login-form">
           <el-form-item prop="newPassword">
-            <el-input v-model="form.newPassword" type="password" placeholder="新密码（6-20个字符）" prefix-icon="el-icon-lock" show-password />
+            <el-input v-model="form.newPassword" type="password" placeholder="新密码（6-20个字符）" prefix-icon="Lock" show-password />
           </el-form-item>
           <el-form-item prop="confirmPassword">
-            <el-input v-model="form.confirmPassword" type="password" placeholder="确认新密码" prefix-icon="el-icon-lock" show-password @keyup.enter.native="handleReset" />
+            <el-input v-model="form.confirmPassword" type="password" placeholder="确认新密码" prefix-icon="Lock" show-password @keyup.enter="handleReset" />
           </el-form-item>
           <el-form-item>
-            <el-button :loading="loading" type="primary" class="login-button" @click.native.prevent="handleReset">
+            <el-button :loading="loading" type="primary" class="login-button" @click.prevent="handleReset">
               {{ loading ? '提交中...' : '重置密码' }}
             </el-button>
           </el-form-item>
@@ -116,13 +116,13 @@ $dark-bg: #001529;
   .form-title { font-size: 24px; font-weight: 600; color: #303133; margin: 0 0 8px; }
   .form-subtitle { font-size: 14px; color: #8c8c8c; margin: 0 0 32px; }
   .login-form {
-    ::v-deep .el-input__inner {
+    :deep(.el-input__inner){
       height: 44px; border-radius: 4px; border-color: #d9d9d9;
       &:hover { border-color: $primary; }
       &:focus { border-color: $primary; box-shadow: 0 0 0 2px rgba(19,194,194,0.1); }
     }
-    ::v-deep .el-input__prefix { color: #bfbfbf; }
-    ::v-deep .el-form-item { margin-bottom: 24px; }
+    :deep(.el-input__prefix){ color: #bfbfbf; }
+    :deep(.el-form-item){ margin-bottom: 24px; }
     .login-button {
       width: 100%; height: 44px; font-size: 15px; font-weight: 500;
       background: $primary; border-color: $primary; border-radius: 4px;

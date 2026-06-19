@@ -21,7 +21,7 @@
     />
 
     <!-- 导入对话框 -->
-    <el-dialog title="用户导入" :visible.sync="importDialogVisible" width="400px" append-to-body>
+    <el-dialog title="用户导入" v-model="importDialogVisible" width="400px" append-to-body>
       <el-upload
         ref="upload"
         :limit="1"
@@ -30,17 +30,17 @@
         :on-change="handleFileChange"
         drag
       >
-        <i class="el-icon-upload"></i>
+        <el-icon><Upload /></el-icon>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-        <div class="el-upload__tip" slot="tip">
+        <template #tip><div class="el-upload__tip">
           <el-checkbox v-model="updateSupport" />是否更新已存在的用户数据
           <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="handleDownloadTemplate">下载模板</el-link>
-        </div>
+        </div></template>
       </el-upload>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitImport">确 定</el-button>
         <el-button @click="importDialogVisible = false">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
 
     <!-- 数据表格 -->
@@ -52,7 +52,7 @@
       <el-table-column label="手机号" align="center" prop="phone" width="120" />
       <el-table-column label="邮箱" align="center" prop="email" width="180" />
       <el-table-column label="状态" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             active-value="0"
@@ -62,31 +62,31 @@
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            icon="Edit"
             @click="handleUpdate(scope.row)"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
-          <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)">
+          <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)">
             <span class="el-dropdown-link">
-              <i class="el-icon-d-arrow-right el-icon--right"></i>更多
+              <el-icon class="el-icon--right"><DArrowRight /></el-icon>更多
             </span>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="resetPwd" icon="el-icon-key">重置密码</el-dropdown-item>
-            </el-dropdown-menu>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item command="resetPwd" icon="Key">重置密码</el-dropdown-item>
+            </el-dropdown-menu></template>
           </el-dropdown>
         </template>
       </el-table-column>
@@ -96,13 +96,13 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="700px" append-to-body>
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px" append-to-body>
       <el-form ref="userForm" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
@@ -119,12 +119,16 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="归属部门" prop="deptId">
-              <treeselect
+              <el-tree-select
                 v-model="form.deptId"
-                :options="deptOptions"
-                :normalizer="deptNormalizer"
-                :show-count="true"
+                :data="deptOptions"
+                :props="{ value: 'deptId', label: 'deptName', children: 'children' }"
+                value-key="deptId"
+                node-key="deptId"
+                check-strictly
+                clearable
                 placeholder="选择归属部门"
+                style="width: 100%"
               />
             </el-form-item>
           </el-col>
@@ -150,8 +154,8 @@
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="form.status">
-                <el-radio label="0">正常</el-radio>
-                <el-radio label="1">停用</el-radio>
+                <el-radio value="0">正常</el-radio>
+                <el-radio value="1">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -197,18 +201,16 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import { listUser, getUser, addUser, updateUser, delUser, resetUserPwd, changeUserStatus, getUserFormOptions, exportUser, downloadTemplate, importUser } from '@/api/system/user'
-import Treeselect from '@riophae/vue-treeselect'
-import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import Pagination from '@/components/Pagination'
 import SearchForm from '@/components/SearchForm'
 import TableToolbar from '@/components/TableToolbar'
@@ -227,7 +229,6 @@ const GENDER_OPTIONS = [
 export default {
   name: 'User',
   components: {
-    Treeselect,
     Pagination,
     SearchForm,
     TableToolbar,
@@ -331,17 +332,6 @@ export default {
         this.postOptions = response.data.posts || []
         this.roleOptions = response.data.roles || []
       })
-    },
-    /** 部门树形选择器规范化 */
-    deptNormalizer(node) {
-      if (node.children && !node.children.length) {
-        delete node.children
-      }
-      return {
-        id: node.deptId,
-        label: node.deptName,
-        children: node.children
-      }
     },
     /** 搜索按钮操作 */
     handleQuery() {

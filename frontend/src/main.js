@@ -1,27 +1,36 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
 
-import ElementUI from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'normalize.css/normalize.css'
 import '@/styles/index.scss'
 
 import '@/permission' // 权限控制
 import { parseTime, resetForm } from '@/utils'
+import MenuIcon from '@/components/MenuIcon'
 
-Vue.use(ElementUI)
+const app = createApp(App)
 
-// 全局混入工具函数
-Vue.mixin({
+// 全局注册所有 Element Plus 图标组件（模板中可直接以 <el-icon><Edit/></el-icon> 使用）
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
+
+// 全局菜单图标组件：把数据库存储的历史图标名解析为 Element Plus 组件
+app.component('MenuIcon', MenuIcon)
+
+// 全局混入工具函数（保持与 Vue 2 时一致的调用方式）
+app.mixin({
   methods: {
     parseTime,
     resetForm
   }
 })
-
-Vue.config.productionTip = false
 
 // 全局错误处理 - 抑制路由重定向警告
 const isNavigationFailure = (error) => {
@@ -33,10 +42,12 @@ const isNavigationFailure = (error) => {
          /navigat/i.test(name)
 }
 
-Vue.config.errorHandler = (err, vm, info) => {
+app.config.errorHandler = (err, vm, info) => {
   if (isNavigationFailure(err)) {
     return
   }
+  // eslint-disable-next-line no-console
+  console.error(err, info)
 }
 
 // 处理未捕获的 Promise 错误
@@ -55,8 +66,8 @@ window.addEventListener('error', event => {
   }
 }, true)
 
-new Vue({
-  router,
-  store,
-  render: h => h(App)
-}).$mount('#app')
+app.use(router)
+app.use(store)
+app.use(ElementPlus, { locale: zhCn })
+
+app.mount('#app')

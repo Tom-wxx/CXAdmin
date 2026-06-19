@@ -2,18 +2,17 @@
   <div class="theme-settings-wrapper">
     <el-drawer
       title="主题设置"
-      :visible.sync="visible"
+      v-model="drawerVisible"
       direction="rtl"
       size="280px"
-      @close="handleClose"
     >
       <div class="theme-settings-content">
         <!-- 侧边栏位置设置 -->
         <div class="setting-section">
           <div class="section-title">布局模式</div>
           <el-radio-group v-model="sidebarPosition" size="small" @change="handlePositionChange">
-            <el-radio-button label="left">左侧</el-radio-button>
-            <el-radio-button label="top">顶部</el-radio-button>
+            <el-radio-button value="left">左侧</el-radio-button>
+            <el-radio-button value="top">顶部</el-radio-button>
           </el-radio-group>
         </div>
 
@@ -29,7 +28,7 @@
               @click="selectTheme(theme)"
             >
               <div class="theme-color" :style="{ backgroundColor: theme.color }">
-                <i v-if="currentColor === theme.color" class="el-icon-check"></i>
+                <el-icon v-if="currentColor === theme.color"><Check /></el-icon>
               </div>
               <div class="theme-name">{{ theme.name }}</div>
             </div>
@@ -61,11 +60,12 @@ import { mapState } from 'vuex'
 export default {
   name: 'ThemeSettings',
   props: {
-    visible: {
+    modelValue: {
       type: Boolean,
       default: false
     }
   },
+  emits: ['update:modelValue'],
   data() {
     return {
       selectedColor: '',
@@ -87,6 +87,14 @@ export default {
     }
   },
   computed: {
+    drawerVisible: {
+      get() {
+        return this.modelValue
+      },
+      set(val) {
+        this.$emit('update:modelValue', val)
+      }
+    },
     ...mapState({
       currentColor: state => state.settings.sidebarColor,
       currentPosition: state => state.settings.sidebarPosition
@@ -107,9 +115,6 @@ export default {
     }
   },
   methods: {
-    handleClose() {
-      this.$emit('update:visible', false)
-    },
     handleColorChange(color) {
       this.$store.dispatch('settings/setSidebarColor', color)
     },

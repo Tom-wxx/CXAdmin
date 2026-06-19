@@ -12,24 +12,24 @@
     >
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" type="index" width="50" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ (queryParams.current - 1) * queryParams.size + scope.$index + 1 }}</span>
         </template>
       </el-table-column>
       <el-table-column label="表名称" align="center" prop="tableName" show-overflow-tooltip />
       <el-table-column label="表注释" align="center" prop="tableComment" show-overflow-tooltip />
       <el-table-column label="操作" align="center" width="300" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-view" @click="handlePreview(scope.row)">预览</el-button>
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="mini" type="text" icon="el-icon-download" @click="handleGenerate(scope.row)">生成代码</el-button>
+        <template #default="scope">
+          <el-button size="small" type="text" icon="View" @click="handlePreview(scope.row)">预览</el-button>
+          <el-button size="small" type="text" icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button size="small" type="text" icon="Download" @click="handleGenerate(scope.row)">生成代码</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <el-pagination
       v-if="total > 0"
-      :current-page.sync="queryParams.current"
+      v-model:current-page="queryParams.current"
       :page-sizes="[10, 20, 50, 100]"
       :page-size="queryParams.size"
       layout="total, sizes, prev, pager, next, jumper"
@@ -39,7 +39,7 @@
       style="margin-top: 15px; text-align: right"
     />
 
-    <el-dialog title="表结构预览" :visible.sync="previewDialogVisible" width="800px" append-to-body>
+    <el-dialog title="表结构预览" v-model="previewDialogVisible" width="800px" append-to-body>
       <el-descriptions :column="2" border v-if="tableInfo">
         <el-descriptions-item label="表名称">{{ tableInfo.tableName }}</el-descriptions-item>
         <el-descriptions-item label="表注释">{{ tableInfo.tableComment }}</el-descriptions-item>
@@ -56,25 +56,25 @@
         <el-table-column label="Java类型" prop="javaType" width="100" />
         <el-table-column label="Java属性" prop="propertyName" />
         <el-table-column label="主键" width="80" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.isPrimaryKey" type="success" size="small">是</el-tag>
             <el-tag v-else type="info" size="small">否</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="必填" width="80" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.isRequired" type="warning" size="small">是</el-tag>
             <el-tag v-else type="info" size="small">否</el-tag>
           </template>
         </el-table-column>
       </el-table>
 
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="previewDialogVisible = false">关 闭</el-button>
-      </div>
+      </div></template>
     </el-dialog>
 
-    <el-dialog title="生成配置" :visible.sync="configDialogVisible" width="600px" append-to-body>
+    <el-dialog title="生成配置" v-model="configDialogVisible" width="600px" append-to-body>
       <el-form ref="configForm" :model="configForm" :rules="configRules" label-width="120px">
         <el-form-item label="表名" prop="tableName">
           <el-input v-model="configForm.tableName" disabled />
@@ -102,10 +102,10 @@
           />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="configDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="submitGenerate">确 定</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

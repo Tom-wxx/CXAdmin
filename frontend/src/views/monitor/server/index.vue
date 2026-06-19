@@ -1,9 +1,9 @@
 <template>
   <div class="server-monitor-container">
     <el-card class="box-card">
-      <div slot="header" class="header-container">
+      <template #header><div class="header-container">
         <span class="card-title">
-          <i class="el-icon-monitor"></i>
+          <el-icon><Monitor /></el-icon>
           系统监控
         </span>
         <div class="refresh-controls">
@@ -15,8 +15,8 @@
           />
           <el-button
             type="primary"
-            size="mini"
-            icon="el-icon-refresh"
+            size="small"
+            icon="Refresh"
             :loading="loading"
             @click="loadServerInfo"
             style="margin-left: 10px"
@@ -24,7 +24,7 @@
             刷新
           </el-button>
         </div>
-      </div>
+      </div></template>
 
       <el-tabs v-model="activeTab">
         <!-- 服务器信息 -->
@@ -34,7 +34,7 @@
             <el-col :span="12">
               <el-card shadow="hover" class="info-card">
                 <div class="card-header-custom">
-                  <i class="el-icon-cpu" style="color: #409EFF"></i>
+                  <el-icon style="color: #409EFF"><Cpu /></el-icon>
                   <span>CPU信息</span>
                 </div>
                 <div class="progress-item">
@@ -68,7 +68,7 @@
             <el-col :span="12">
               <el-card shadow="hover" class="info-card">
                 <div class="card-header-custom">
-                  <i class="el-icon-coin" style="color: #67C23A"></i>
+                  <el-icon style="color: #67C23A"><Coin /></el-icon>
                   <span>内存信息</span>
                 </div>
                 <div class="progress-item">
@@ -102,7 +102,7 @@
             <el-col :span="12">
               <el-card shadow="hover" class="info-card">
                 <div class="card-header-custom">
-                  <i class="el-icon-data-analysis" style="color: #E6A23C"></i>
+                  <el-icon style="color: #E6A23C"><DataAnalysis /></el-icon>
                   <span>JVM信息</span>
                 </div>
                 <div class="progress-item">
@@ -144,7 +144,7 @@
             <el-col :span="12">
               <el-card shadow="hover" class="info-card">
                 <div class="card-header-custom">
-                  <i class="el-icon-folder-opened" style="color: #F56C6C"></i>
+                  <el-icon style="color: #F56C6C"><FolderOpened /></el-icon>
                   <span>磁盘信息</span>
                 </div>
                 <div
@@ -180,7 +180,7 @@
             <el-button
               type="primary"
               size="small"
-              icon="el-icon-s-management"
+              icon="Management"
               @click="goCacheMonitor"
             >
               进入缓存监控
@@ -190,7 +190,7 @@
             <el-col :span="8">
               <el-card shadow="hover" class="stat-card-small">
                 <div class="stat-content-small">
-                  <i class="el-icon-connection stat-icon-small" style="color: #409EFF"></i>
+                  <el-icon class="stat-icon-small" style="color: #409EFF"><Connection /></el-icon>
                   <div class="stat-info-small">
                     <div class="stat-value-small">{{ redisInfo.version || '-' }}</div>
                     <div class="stat-label-small">Redis版本</div>
@@ -201,7 +201,7 @@
             <el-col :span="8">
               <el-card shadow="hover" class="stat-card-small">
                 <div class="stat-content-small">
-                  <i class="el-icon-time stat-icon-small" style="color: #67C23A"></i>
+                  <el-icon class="stat-icon-small" style="color: #67C23A"><Clock /></el-icon>
                   <div class="stat-info-small">
                     <div class="stat-value-small">{{ redisInfo.uptime || 0 }}天</div>
                     <div class="stat-label-small">运行天数</div>
@@ -212,7 +212,7 @@
             <el-col :span="8">
               <el-card shadow="hover" class="stat-card-small">
                 <div class="stat-content-small">
-                  <i class="el-icon-user stat-icon-small" style="color: #E6A23C"></i>
+                  <el-icon class="stat-icon-small" style="color: #E6A23C"><User /></el-icon>
                   <div class="stat-info-small">
                     <div class="stat-value-small">{{ redisInfo.connectedClients || 0 }}</div>
                     <div class="stat-label-small">连接数</div>
@@ -224,7 +224,7 @@
             <el-col :span="12">
               <el-card shadow="hover" class="info-card">
                 <div class="card-header-custom">
-                  <i class="el-icon-coin" style="color: #409EFF"></i>
+                  <el-icon style="color: #409EFF"><Coin /></el-icon>
                   <span>内存使用</span>
                 </div>
                 <div class="progress-item">
@@ -253,7 +253,7 @@
             <el-col :span="12">
               <el-card shadow="hover" class="info-card">
                 <div class="card-header-custom">
-                  <i class="el-icon-data-analysis" style="color: #67C23A"></i>
+                  <el-icon style="color: #67C23A"><DataAnalysis /></el-icon>
                   <span>命令统计</span>
                 </div>
                 <div class="info-list">
@@ -280,7 +280,7 @@
             <el-col :span="12">
               <el-card shadow="hover" class="info-card">
                 <div class="card-header-custom">
-                  <i class="el-icon-document-copy" style="color: #909399"></i>
+                  <el-icon style="color: #909399"><DocumentCopy /></el-icon>
                   <span>持久化状态</span>
                 </div>
                 <div class="info-list">
@@ -322,7 +322,7 @@
             <el-col :span="24">
               <el-card shadow="hover" class="info-card">
                 <div class="card-header-custom">
-                  <i class="el-icon-coin" style="color: #409EFF"></i>
+                  <el-icon style="color: #409EFF"><Coin /></el-icon>
                   <span>Druid连接池信息</span>
                 </div>
                 <el-table :data="[dbInfo]" border style="width: 100%">
@@ -332,7 +332,7 @@
                   <el-table-column prop="initialSize" label="初始连接数" width="120" align="center" />
                   <el-table-column prop="minIdle" label="最小空闲连接" width="130" align="center" />
                   <el-table-column prop="maxWait" label="最大等待时间" width="130" align="center">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       {{ scope.row.maxWait }}ms
                     </template>
                   </el-table-column>
@@ -395,7 +395,7 @@ export default {
   created() {
     this.loadServerInfo()
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.stopAutoRefresh()
   },
   methods: {
@@ -574,7 +574,7 @@ export default {
   .stat-card-small {
     margin-bottom: 20px;
 
-    ::v-deep .el-card__body {
+    :deep(.el-card__body){
       padding: 20px;
     }
 

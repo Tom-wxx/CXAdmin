@@ -8,7 +8,7 @@
 
       <div class="brand-area">
         <div class="brand-icon">
-          <i class="el-icon-s-platform"></i>
+          <el-icon><Platform /></el-icon>
         </div>
         <h1 class="brand-title">CXAdmin</h1>
         <p class="brand-desc">简洁高效的企业级后台管理系统</p>
@@ -25,7 +25,7 @@
               ref="username"
               v-model="loginForm.username"
               placeholder="用户名"
-              prefix-icon="el-icon-user"
+              prefix-icon="User"
               name="username"
               type="text"
               tabindex="1"
@@ -41,20 +41,20 @@
                 v-model="loginForm.password"
                 :type="passwordType"
                 placeholder="密码"
-                prefix-icon="el-icon-lock"
+                prefix-icon="Lock"
                 name="password"
                 tabindex="2"
                 autocomplete="on"
-                @keyup.native="checkCapslock"
+                @keyup="checkCapslock"
                 @blur="capsTooltip = false"
-                @keyup.enter.native="handleLogin"
+                @keyup.enter="handleLogin"
               >
-                <i
-                  slot="suffix"
-                  :class="passwordType === 'password' ? 'el-icon-view' : 'el-icon-minus'"
-                  class="show-pwd"
-                  @click="showPwd"
-                ></i>
+                <template #suffix>
+                  <el-icon class="show-pwd" @click="showPwd">
+                    <View v-if="passwordType === 'password'" />
+                    <Hide v-else />
+                  </el-icon>
+                </template>
               </el-input>
             </el-form-item>
           </el-tooltip>
@@ -65,9 +65,9 @@
                 v-model="loginForm.code"
                 auto-complete="off"
                 placeholder="验证码"
-                prefix-icon="el-icon-key"
+                prefix-icon="Key"
                 class="captcha-input"
-                @keyup.enter.native="handleLogin"
+                @keyup.enter="handleLogin"
               />
               <div class="captcha-image" @click="getCode">
                 <img :src="codeUrl" v-if="codeUrl" />
@@ -80,7 +80,7 @@
               :loading="loading"
               type="primary"
               class="login-button"
-              @click.native.prevent="handleLogin"
+              @click.prevent="handleLogin"
             >
               {{ loading ? '登录中...' : '登 录' }}
             </el-button>
@@ -316,7 +316,7 @@ $dark-bg: #001529;
   }
 
   .login-form {
-    ::v-deep .el-input__inner {
+    :deep(.el-input__inner){
       height: 44px;
       border-radius: 4px;
       border-color: #d9d9d9;
@@ -331,7 +331,7 @@ $dark-bg: #001529;
       }
     }
 
-    ::v-deep .el-input__prefix {
+    :deep(.el-input__prefix){
       color: #bfbfbf;
     }
 
@@ -393,7 +393,7 @@ $dark-bg: #001529;
       }
     }
 
-    ::v-deep .el-form-item {
+    :deep(.el-form-item){
       margin-bottom: 24px;
     }
   }

@@ -11,7 +11,7 @@
     <!-- 工具栏 -->
     <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList">
       <el-col :span="1.5">
-        <el-button type="info" plain icon="el-icon-sort" size="mini" @click="toggleExpandAll">展开/折叠</el-button>
+        <el-button type="info" plain icon="Sort" size="small" @click="toggleExpandAll">展开/折叠</el-button>
       </el-col>
     </TableToolbar>
 
@@ -28,34 +28,34 @@
       <el-table-column prop="deptName" label="部门名称" width="260"></el-table-column>
       <el-table-column prop="orderNum" label="排序" width="80" align="center"></el-table-column>
       <el-table-column prop="status" label="状态" width="100" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            icon="Edit"
             @click="handleUpdate(scope.row)"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-plus"
+            icon="Plus"
             @click="handleAdd(scope.row)"
           >新增</el-button>
           <el-button
             v-if="scope.row.parentId != 0"
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
         </template>
@@ -63,17 +63,21 @@
     </el-table>
 
     <!-- 添加或修改部门对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="24">
             <el-form-item label="上级部门" prop="parentId">
-              <treeselect
+              <el-tree-select
                 v-model="form.parentId"
-                :options="deptOptions"
-                :normalizer="normalizer"
-                :show-count="true"
+                :data="deptOptions"
+                :props="{ value: 'deptId', label: 'deptName', children: 'children' }"
+                value-key="deptId"
+                node-key="deptId"
+                check-strictly
+                clearable
                 placeholder="选择上级部门"
+                style="width: 100%"
               />
             </el-form-item>
           </el-col>
@@ -111,25 +115,23 @@
           <el-col :span="12">
             <el-form-item label="部门状态">
               <el-radio-group v-model="form.status">
-                <el-radio label="0">正常</el-radio>
-                <el-radio label="1">停用</el-radio>
+                <el-radio value="0">正常</el-radio>
+                <el-radio value="1">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import { listDept, getDept, delDept, addDept, updateDept } from '@/api/system/dept'
-import Treeselect from '@riophae/vue-treeselect'
-import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import SearchForm from '@/components/SearchForm'
 import TableToolbar from '@/components/TableToolbar'
 import DictTag from '@/components/DictTag'
@@ -141,7 +143,7 @@ const STATUS_OPTIONS = [
 
 export default {
   name: 'Dept',
-  components: { Treeselect, SearchForm, TableToolbar, DictTag },
+  components: { SearchForm, TableToolbar, DictTag },
   data() {
     return {
       searchFields: [
@@ -209,17 +211,6 @@ export default {
         this.deptList = this.handleTree(response.data, 'deptId')
         this.loading = false
       })
-    },
-    /** 转换部门数据结构 */
-    normalizer(node) {
-      if (node.children && !node.children.length) {
-        delete node.children
-      }
-      return {
-        id: node.deptId,
-        label: node.deptName,
-        children: node.children
-      }
     },
     /** 查询部门下拉树结构 */
     getTreeselect() {

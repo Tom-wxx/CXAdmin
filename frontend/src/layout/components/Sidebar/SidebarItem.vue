@@ -3,16 +3,16 @@
     <template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild.children||onlyOneChild.noShowingChildren)&&!item.alwaysShow">
       <app-link v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path)">
         <el-menu-item :index="resolvePath(onlyOneChild.path)">
-          <i v-if="onlyOneChild.meta.icon" :class="'el-icon-' + onlyOneChild.meta.icon"></i>
-          <span slot="title">{{ onlyOneChild.meta.title }}</span>
+          <menu-icon v-if="onlyOneChild.meta.icon" :name="onlyOneChild.meta.icon" />
+          <template #title><span>{{ onlyOneChild.meta.title }}</span></template>
         </el-menu-item>
       </app-link>
     </template>
 
-    <el-submenu v-else ref="subMenu" :index="resolvePath(item.path)" popper-append-to-body>
-      <template slot="title">
-        <i v-if="item.meta && item.meta.icon" :class="'el-icon-' + item.meta.icon"></i>
-        <span slot="title">{{ item.meta && item.meta.title || '未命名' }}</span>
+    <el-sub-menu v-else ref="subMenu" :index="resolvePath(item.path)">
+      <template #title>
+        <menu-icon v-if="item.meta && item.meta.icon" :name="item.meta.icon" />
+        <span>{{ item.meta && item.meta.title || '未命名' }}</span>
       </template>
       <sidebar-item
         v-for="child in item.children"
@@ -22,7 +22,7 @@
         :base-path="resolvePath(child.path)"
         class="nest-menu"
       />
-    </el-submenu>
+    </el-sub-menu>
   </div>
 </template>
 

@@ -11,7 +11,7 @@
     <!-- 工具栏 -->
     <TableToolbar show-export show-refresh :export-disabled="exportLoading" @export="handleExport" @refresh="getList">
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="handleClean">清空</el-button>
+        <el-button type="danger" plain icon="Delete" size="small" @click="handleClean">清空</el-button>
       </el-col>
     </TableToolbar>
 
@@ -24,28 +24,28 @@
       <el-table-column label="浏览器" align="center" prop="browser" show-overflow-tooltip />
       <el-table-column label="操作系统" align="center" prop="os" show-overflow-tooltip />
       <el-table-column label="登录状态" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="提示消息" align="center" prop="msg" show-overflow-tooltip />
       <el-table-column label="登录时间" align="center" prop="loginTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.loginTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-view"
+            icon="View"
             @click="handleView(scope.row)"
           >详细</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
         </template>
@@ -56,13 +56,13 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
     <!-- 详细信息对话框 -->
-    <el-dialog title="登录日志详细" :visible.sync="detailVisible" width="700px" append-to-body>
+    <el-dialog title="登录日志详细" v-model="detailVisible" width="700px" append-to-body>
       <el-form ref="detailForm" :model="detailData" label-width="100px">
         <el-row>
           <el-col :span="12">
@@ -100,9 +100,9 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer">
+      <template #footer><div>
         <el-button @click="detailVisible = false">关 闭</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

@@ -26,13 +26,13 @@
       <el-table-column label="消息名称" align="center" prop="messageName" :show-overflow-tooltip="true" />
       <el-table-column label="消息编码" align="center" prop="messageCode" :show-overflow-tooltip="true" />
       <el-table-column label="消息类型" align="center" prop="messageType" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="messageTypeOptions" :value="scope.row.messageType" />
         </template>
       </el-table-column>
       <el-table-column label="消息主题" align="center" prop="subject" :show-overflow-tooltip="true" />
       <el-table-column label="状态" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             active-value="0"
@@ -43,17 +43,17 @@
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="160" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            icon="Edit"
             @click="handleUpdate(scope.row)"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
         </template>
@@ -64,13 +64,13 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
     <!-- 添加或修改对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="消息名称" prop="messageName">
           <el-input v-model="form.messageName" placeholder="请输入消息名称" />
@@ -80,10 +80,10 @@
         </el-form-item>
         <el-form-item label="消息类型" prop="messageType">
           <el-radio-group v-model="form.messageType">
-            <el-radio label="1">邮件</el-radio>
-            <el-radio label="2">短信</el-radio>
-            <el-radio label="3">站内信</el-radio>
-            <el-radio label="4">微信</el-radio>
+            <el-radio value="1">邮件</el-radio>
+            <el-radio value="2">短信</el-radio>
+            <el-radio value="3">站内信</el-radio>
+            <el-radio value="4">微信</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="消息主题" prop="subject">
@@ -97,18 +97,18 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="0">正常</el-radio>
-            <el-radio label="1">停用</el-radio>
+            <el-radio value="0">正常</el-radio>
+            <el-radio value="1">停用</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

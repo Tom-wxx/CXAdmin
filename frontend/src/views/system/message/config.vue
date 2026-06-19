@@ -8,17 +8,17 @@
       <el-table-column label="配置ID" align="center" prop="configId" width="80" />
       <el-table-column label="配置名称" align="center" prop="configName" />
       <el-table-column label="消息类型" align="center" prop="messageType" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="messageTypeOptions" :value="scope.row.messageType" />
         </template>
       </el-table-column>
       <el-table-column label="是否默认" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="isDefaultOptions" :value="scope.row.isDefault" />
         </template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             active-value="0"
@@ -28,17 +28,17 @@
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="250">
-        <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
+        <template #default="scope">
+          <el-button size="small" type="text" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
           <el-button
             v-if="scope.row.isDefault === '0'"
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-star-off"
+            icon="Star"
             @click="handleSetDefault(scope.row)"
           >设为默认</el-button>
-          <el-button size="mini" type="text" icon="el-icon-s-promotion" @click="handleTest(scope.row)">测试</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="small" type="text" icon="Promotion" @click="handleTest(scope.row)">测试</el-button>
+          <el-button size="small" type="text" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -46,22 +46,22 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="配置名称" prop="configName">
           <el-input v-model="form.configName" placeholder="请输入配置名称" />
         </el-form-item>
         <el-form-item label="消息类型" prop="messageType">
           <el-radio-group v-model="form.messageType" @change="handleTypeChange">
-            <el-radio label="1">邮件</el-radio>
-            <el-radio label="2">短信</el-radio>
-            <el-radio label="3">站内信</el-radio>
-            <el-radio label="4">微信</el-radio>
+            <el-radio value="1">邮件</el-radio>
+            <el-radio value="2">短信</el-radio>
+            <el-radio value="3">站内信</el-radio>
+            <el-radio value="4">微信</el-radio>
           </el-radio-group>
         </el-form-item>
 
@@ -114,7 +114,7 @@
         <template v-if="form.messageType === '3'">
           <el-form-item label="消息有效期">
             <el-input v-model="systemConfig.expireDays" placeholder="天数，0表示永久有效">
-              <template slot="append">天</template>
+              <template #append>天</template>
             </el-input>
           </el-form-item>
           <el-form-item label="启用推送">
@@ -136,27 +136,27 @@
 
         <el-form-item label="是否默认" prop="isDefault">
           <el-radio-group v-model="form.isDefault">
-            <el-radio label="1">是</el-radio>
-            <el-radio label="0">否</el-radio>
+            <el-radio value="1">是</el-radio>
+            <el-radio value="0">否</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="0">正常</el-radio>
-            <el-radio label="1">停用</el-radio>
+            <el-radio value="0">正常</el-radio>
+            <el-radio value="1">停用</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
 
-    <el-dialog title="测试发送" :visible.sync="testOpen" width="500px" append-to-body>
+    <el-dialog title="测试发送" v-model="testOpen" width="500px" append-to-body>
       <el-form ref="testForm" :model="testForm" label-width="100px">
         <el-form-item label="接收者">
           <el-input v-model="testForm.receiver" placeholder="邮箱或手机号" />
@@ -168,10 +168,10 @@
           <el-input v-model="testForm.content" type="textarea" :rows="4" placeholder="消息内容" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button type="primary" @click="submitTest">发 送</el-button>
         <el-button @click="testOpen = false">取 消</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>
@@ -313,7 +313,7 @@ export default {
             else if (this.form.messageType === '2') this.smsConfig = { ...this.smsConfig, ...config }
             else if (this.form.messageType === '3') this.systemConfig = { ...this.systemConfig, ...config }
             else if (this.form.messageType === '4') this.wechatConfig = { ...this.wechatConfig, ...config }
-          } catch (_) {}
+          } catch (_) { /* 配置非 JSON，忽略 */ }
         }
         this.open = true
         this.title = '修改消息配置'

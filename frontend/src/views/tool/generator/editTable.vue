@@ -1,10 +1,10 @@
 <template>
   <div class="app-container">
     <el-card class="box-card">
-      <div slot="header" class="clearfix">
+      <template #header><div class="clearfix">
         <span>{{ isEdit ? '编辑表' : '新增表' }}</span>
         <el-button style="float: right" type="text" @click="goBack">返回</el-button>
-      </div>
+      </div></template>
 
       <!-- 基本信息 -->
       <el-form ref="tableForm" :model="tableForm" :rules="tableRules" label-width="100px">
@@ -67,26 +67,26 @@
       <el-divider content-position="left">字段信息</el-divider>
       <el-row :gutter="10" class="mb8">
         <el-col :span="1.5">
-          <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAddColumn">添加字段</el-button>
+          <el-button type="primary" icon="Plus" size="small" @click="handleAddColumn">添加字段</el-button>
         </el-col>
         <el-col :span="1.5">
-          <el-button type="success" icon="el-icon-plus" size="mini" @click="handleAddCommonColumns">添加公共字段</el-button>
+          <el-button type="success" icon="Plus" size="small" @click="handleAddCommonColumns">添加公共字段</el-button>
         </el-col>
       </el-row>
 
       <el-table :data="tableForm.columns" border style="width: 100%">
         <el-table-column label="字段名" width="140">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-input v-model="scope.row.columnName" size="small" placeholder="user_id" />
           </template>
         </el-table-column>
         <el-table-column label="字段注释" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-input v-model="scope.row.columnComment" size="small" placeholder="用户ID" />
           </template>
         </el-table-column>
         <el-table-column label="字段类型" width="130">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-select v-model="scope.row.columnType" size="small" placeholder="类型" @change="handleColumnTypeChange(scope.row)" filterable>
               <el-option-group label="整数类型">
                 <el-option label="bigint" value="bigint" />
@@ -119,37 +119,37 @@
           </template>
         </el-table-column>
         <el-table-column label="Java类型" width="110">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag size="small">{{ scope.row.javaType }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="Java属性" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-input v-model="scope.row.propertyName" size="small" placeholder="自动生成" />
           </template>
         </el-table-column>
         <el-table-column label="主键" width="50" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-checkbox v-model="scope.row.isPrimaryKey" @change="handlePrimaryKeyChange(scope.$index)" />
           </template>
         </el-table-column>
         <el-table-column label="必填" width="50" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-checkbox v-model="scope.row.isRequired" />
           </template>
         </el-table-column>
         <el-table-column label="列表" width="50" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-checkbox v-model="scope.row.isList" />
           </template>
         </el-table-column>
         <el-table-column label="查询" width="50" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-checkbox v-model="scope.row.isQuery" />
           </template>
         </el-table-column>
         <el-table-column label="查询方式" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-select v-model="scope.row.queryType" size="small" :disabled="!scope.row.isQuery">
               <el-option label="=" value="EQ" />
               <el-option label="!=" value="NE" />
@@ -163,12 +163,12 @@
           </template>
         </el-table-column>
         <el-table-column label="表单显示" width="50" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-checkbox v-model="scope.row.isEdit" />
           </template>
         </el-table-column>
         <el-table-column label="显示类型" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-select v-model="scope.row.htmlType" size="small" :disabled="!scope.row.isEdit">
               <el-option label="文本框" value="input" />
               <el-option label="文本域" value="textarea" />
@@ -183,16 +183,16 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="80" align="center" fixed="right">
-          <template slot-scope="scope">
-            <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDeleteColumn(scope.$index)">删除</el-button>
+          <template #default="scope">
+            <el-button size="small" type="text" icon="Delete" @click="handleDeleteColumn(scope.$index)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 底部按钮 -->
       <div style="margin-top: 20px; text-align: center">
-        <el-button type="primary" icon="el-icon-download" @click="handleGenerate">生成代码</el-button>
-        <el-button icon="el-icon-close" @click="goBack">取消</el-button>
+        <el-button type="primary" icon="Download" @click="handleGenerate">生成代码</el-button>
+        <el-button icon="Close" @click="goBack">取消</el-button>
       </div>
     </el-card>
   </div>

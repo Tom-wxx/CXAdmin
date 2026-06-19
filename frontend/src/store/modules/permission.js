@@ -20,7 +20,8 @@ const actions = {
     return new Promise(resolve => {
       getRouters().then(res => {
         const accessedRoutes = filterAsyncRouter(res.data.menus)
-        accessedRoutes.push({ path: '*', redirect: '/404', hidden: true })
+        // Vue Router 4 通配符语法：'*' 已废弃，改用 /:pathMatch(.*)*
+        accessedRoutes.push({ path: '/:pathMatch(.*)*', redirect: '/404', hidden: true })
         commit('SET_ROUTES', accessedRoutes)
         resolve(accessedRoutes)
       })
@@ -65,7 +66,8 @@ function filterAsyncRouter(asyncRouterMap, parent) {
 }
 
 export const loadView = (view) => {
-  return (resolve) => require([`@/views/${view}`], resolve)
+  // Vue 3 异步组件：返回一个返回 import() Promise 的函数
+  return () => import(`@/views/${view}`)
 }
 
 export default {

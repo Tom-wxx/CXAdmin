@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Message, MessageBox } from 'element-ui'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import store from '@/store'
 import { HTTP_OK, HTTP_UNAUTHORIZED, HTTP_SERVER_ERROR } from '@/utils/constants'
 
@@ -27,7 +27,7 @@ service.interceptors.response.use(
     const code = res.code || HTTP_OK
 
     if (code === HTTP_UNAUTHORIZED) {
-      MessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', {
+      ElMessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', {
         confirmButtonText: '重新登录',
         cancelButtonText: '取消',
         type: 'warning'
@@ -38,14 +38,14 @@ service.interceptors.response.use(
       })
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     } else if (code === HTTP_SERVER_ERROR) {
-      Message({
+      ElMessage({
         message: res.message || 'Error',
         type: 'error',
         duration: 5 * 1000
       })
       return Promise.reject(new Error(res.message || 'Error'))
     } else if (code !== HTTP_OK) {
-      Message({
+      ElMessage({
         message: res.message || 'Error',
         type: 'error',
         duration: 5 * 1000
@@ -64,7 +64,7 @@ service.interceptors.response.use(
     } else if (message.includes('Request failed with status code')) {
       message = '系统接口' + message.substr(message.length - 3) + '异常'
     }
-    Message({
+    ElMessage({
       message: message,
       type: 'error',
       duration: 5 * 1000

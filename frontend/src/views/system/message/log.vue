@@ -4,30 +4,30 @@
 
     <TableToolbar>
       <el-col :span="1.5">
-        <el-button type="danger" icon="el-icon-delete" size="mini" @click="handleClean">清空</el-button>
+        <el-button type="danger" icon="Delete" size="small" @click="handleClean">清空</el-button>
       </el-col>
     </TableToolbar>
 
     <el-table v-loading="loading" :data="logList">
       <el-table-column label="日志ID" align="center" prop="logId" width="80" />
       <el-table-column label="消息类型" align="center" prop="messageType" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="messageTypeOptions" :value="scope.row.messageType" />
         </template>
       </el-table-column>
       <el-table-column label="接收者" align="center" prop="receiver" :show-overflow-tooltip="true" />
       <el-table-column label="主题" align="center" prop="subject" :show-overflow-tooltip="true" />
       <el-table-column label="发送状态" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="sendStatusOptions" :value="scope.row.sendStatus" />
         </template>
       </el-table-column>
       <el-table-column label="发送时间" align="center" prop="sendTime" width="160" />
       <el-table-column label="重试次数" align="center" prop="retryCount" width="80" />
       <el-table-column label="操作" align="center" width="150">
-        <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">详情</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+        <template #default="scope">
+          <el-button size="small" type="text" icon="View" @click="handleView(scope.row)">详情</el-button>
+          <el-button size="small" type="text" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -35,12 +35,12 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.current"
-      :limit.sync="queryParams.size"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
-    <el-dialog title="日志详情" :visible.sync="open" width="700px" append-to-body>
+    <el-dialog title="日志详情" v-model="open" width="700px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="日志ID">{{ detail.logId }}</el-descriptions-item>
         <el-descriptions-item label="消息类型">
@@ -60,9 +60,9 @@
           <div style="color: red;">{{ detail.errorMsg }}</div>
         </el-descriptions-item>
       </el-descriptions>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="open = false">关 闭</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>

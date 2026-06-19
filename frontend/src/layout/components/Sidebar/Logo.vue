@@ -3,7 +3,7 @@
     <router-link to="/" class="sidebar-logo-link">
       <div class="sidebar-logo-content">
         <div class="logo-icon-wrapper">
-          <i class="el-icon-s-home logo-icon"></i>
+          <el-icon class="logo-icon"><HomeFilled /></el-icon>
         </div>
         <transition name="sidebarLogoFade">
           <h1 v-if="!isCollapse" class="sidebar-title">{{ title }}</h1>

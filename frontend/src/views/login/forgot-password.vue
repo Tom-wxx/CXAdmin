@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-left">
       <div class="brand-area">
-        <div class="brand-icon"><i class="el-icon-s-platform"></i></div>
+        <div class="brand-icon"><el-icon><Platform /></el-icon></div>
         <h1 class="brand-title">CXAdmin</h1>
         <p class="brand-desc">简洁高效的企业级后台管理系统</p>
       </div>
@@ -14,10 +14,10 @@
           <p class="form-subtitle">输入注册邮箱，发送重置链接</p>
           <el-form ref="form" :model="form" :rules="rules" class="login-form">
             <el-form-item prop="email">
-              <el-input v-model="form.email" placeholder="注册邮箱" prefix-icon="el-icon-message" @keyup.enter.native="handleSubmit" />
+              <el-input v-model="form.email" placeholder="注册邮箱" prefix-icon="Message" @keyup.enter="handleSubmit" />
             </el-form-item>
             <el-form-item>
-              <el-button :loading="loading" type="primary" class="login-button" @click.native.prevent="handleSubmit">
+              <el-button :loading="loading" type="primary" class="login-button" @click.prevent="handleSubmit">
                 {{ loading ? '发送中...' : '发送重置邮件' }}
               </el-button>
             </el-form-item>
@@ -25,7 +25,7 @@
         </template>
         <template v-else>
           <div class="sent-notice">
-            <i class="el-icon-circle-check success-icon"></i>
+            <el-icon class="success-icon"><CircleCheck /></el-icon>
             <h3>邮件已发送</h3>
             <p>如该邮箱已注册，重置链接将发送至您的邮箱，请在 30 分钟内操作。</p>
           </div>
@@ -103,12 +103,12 @@ $dark-bg: #001529;
   .form-title { font-size: 24px; font-weight: 600; color: #303133; margin: 0 0 8px; }
   .form-subtitle { font-size: 14px; color: #8c8c8c; margin: 0 0 32px; }
   .login-form {
-    ::v-deep .el-input__inner {
+    :deep(.el-input__inner){
       height: 44px; border-radius: 4px; border-color: #d9d9d9;
       &:hover { border-color: $primary; }
       &:focus { border-color: $primary; box-shadow: 0 0 0 2px rgba(19,194,194,0.1); }
     }
-    ::v-deep .el-input__prefix { color: #bfbfbf; }
+    :deep(.el-input__prefix){ color: #bfbfbf; }
     .login-button {
       width: 100%; height: 44px; font-size: 15px; font-weight: 500;
       background: $primary; border-color: $primary; border-radius: 4px;

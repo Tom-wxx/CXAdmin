@@ -11,13 +11,13 @@
     <!-- 操作按钮 -->
     <TableToolbar show-refresh @refresh="getList">
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-check" size="mini" :disabled="multiple" @click="handleMarkAsRead">标记已读</el-button>
+        <el-button type="success" plain icon="Check" size="small" :disabled="multiple" @click="handleMarkAsRead">标记已读</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-finished" size="mini" @click="handleMarkAllAsRead">全部已读</el-button>
+        <el-button type="success" plain icon="Finished" size="small" @click="handleMarkAllAsRead">全部已读</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete">删除</el-button>
+        <el-button type="danger" plain icon="Delete" size="small" :disabled="multiple" @click="handleDelete">删除</el-button>
       </el-col>
     </TableToolbar>
 
@@ -25,24 +25,24 @@
     <el-table v-loading="loading" :data="notificationList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="状态" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="statusOptions" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="优先级" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <DictTag :options="priorityOptions" :value="scope.row.priority || 'normal'" />
         </template>
       </el-table-column>
       <el-table-column label="通知标题" prop="title" :show-overflow-tooltip="true" min-width="200">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span :style="{ fontWeight: scope.row.status === 'unread' ? 'bold' : 'normal' }">
             {{ scope.row.title }}
           </span>
         </template>
       </el-table-column>
       <el-table-column label="通知类型" align="center" prop="type" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span v-if="scope.row.type === 'system'">系统通知</span>
           <span v-else-if="scope.row.type === 'todo'">待办提醒</span>
           <span v-else-if="scope.row.type === 'approval'">审批消息</span>
@@ -51,27 +51,27 @@
         </template>
       </el-table-column>
       <el-table-column label="发送者" align="center" prop="senderName" width="120" :show-overflow-tooltip="true">
-        <template slot-scope="scope">
+        <template #default="scope">
           {{ scope.row.senderName || '系统' }}
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="150">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-view"
+            icon="View"
             @click="handleView(scope.row)"
           >查看</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            icon="Delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
         </template>
@@ -82,13 +82,13 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
 
     <!-- 查看通知对话框 -->
-    <el-dialog :title="viewForm.title" :visible.sync="viewOpen" width="600px" append-to-body>
+    <el-dialog :title="viewForm.title" v-model="viewOpen" width="600px" append-to-body>
       <el-descriptions :column="1" border>
         <el-descriptions-item label="通知类型">
           <span v-if="viewForm.type === 'system'">系统通知</span>
@@ -110,9 +110,9 @@
           <div v-html="viewForm.content" style="white-space: pre-wrap;"></div>
         </el-descriptions-item>
       </el-descriptions>
-      <div slot="footer" class="dialog-footer">
+      <template #footer><div class="dialog-footer">
         <el-button @click="viewOpen = false">关闭</el-button>
-      </div>
+      </div></template>
     </el-dialog>
   </div>
 </template>
@@ -121,7 +121,6 @@
 import {
   listNotification,
   getNotification,
-  markAsRead,
   batchMarkAsRead,
   markAllAsRead,
   delNotification

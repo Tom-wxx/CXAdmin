@@ -1,49 +1,49 @@
 <template>
   <div class="cache-monitor-container">
     <el-card class="box-card">
-      <div slot="header" class="header-container">
+      <template #header><div class="header-container">
         <span class="card-title">
-          <i class="el-icon-coin"></i>
+          <el-icon><Coin /></el-icon>
           缓存监控
         </span>
         <div class="header-actions">
           <el-button
             type="danger"
-            size="mini"
-            icon="el-icon-delete"
+            size="small"
+            icon="Delete"
             @click="handleClearAll"
           >
             清空所有
           </el-button>
           <el-button
             type="primary"
-            size="mini"
-            icon="el-icon-refresh"
+            size="small"
+            icon="Refresh"
             @click="refreshAll"
           >
             刷新
           </el-button>
         </div>
-      </div>
+      </div></template>
 
       <el-row :gutter="20" class="cache-content">
         <!-- 左侧：缓存列表 -->
         <el-col :span="6">
           <el-card shadow="hover" class="panel-card">
-            <div slot="header" class="panel-header">
+            <template #header><div class="panel-header">
               <div class="panel-header-left">
-                <i class="el-icon-folder-opened"></i>
+                <el-icon><FolderOpened /></el-icon>
                 缓存列表
               </div>
               <el-button
                 type="danger"
-                size="mini"
-                icon="el-icon-delete"
+                size="small"
+                icon="Delete"
                 @click="handleClearAllCache"
               >
                 清空
               </el-button>
-            </div>
+            </div></template>
             <div class="cache-list" v-loading="cacheListLoading">
               <div
                 v-for="cache in cacheList"
@@ -52,16 +52,16 @@
                 @click="handleCacheSelect(cache)"
               >
                 <div class="cache-item-header">
-                  <i class="el-icon-folder"></i>
+                  <el-icon><Folder /></el-icon>
                   <span class="cache-name">{{ cache.cacheName }}</span>
                 </div>
                 <div class="cache-item-info">
-                  <el-tag size="mini" type="info">{{ cache.keyCount }} 个键</el-tag>
+                  <el-tag size="small" type="info">{{ cache.keyCount }} 个键</el-tag>
                   <span class="cache-remark">{{ cache.remark }}</span>
                 </div>
               </div>
               <div v-if="cacheList.length === 0" class="empty-data">
-                <i class="el-icon-folder"></i>
+                <el-icon><Folder /></el-icon>
                 <p>暂无缓存数据</p>
               </div>
             </div>
@@ -71,30 +71,30 @@
         <!-- 中间：键名列表 -->
         <el-col :span="6">
           <el-card shadow="hover" class="panel-card">
-            <div slot="header" class="panel-header">
+            <template #header><div class="panel-header">
               <div class="panel-header-left">
-                <i class="el-icon-key"></i>
+                <el-icon><Key /></el-icon>
                 键名列表
-                <el-tag v-if="selectedCache" size="mini" type="primary" class="selected-tag">
+                <el-tag v-if="selectedCache" size="small" type="primary" class="selected-tag">
                   {{ selectedCache }}
                 </el-tag>
               </div>
               <el-button
                 v-if="selectedCache"
                 type="danger"
-                size="mini"
-                icon="el-icon-delete"
+                size="small"
+                icon="Delete"
                 @click="handleClearCacheByPrefix"
               >
                 清空
               </el-button>
-            </div>
+            </div></template>
             <div class="search-box">
               <el-input
                 v-model="keywordFilter"
                 placeholder="搜索键名"
                 size="small"
-                prefix-icon="el-icon-search"
+                prefix-icon="Search"
                 clearable
                 @input="handleKeySearch"
               />
@@ -107,18 +107,18 @@
                 @click="handleKeySelect(keyItem)"
               >
                 <div class="key-item-header">
-                  <i :class="getKeyIcon(keyItem.keyType)"></i>
+                  <menu-icon :name="getKeyIcon(keyItem.keyType)" />
                   <span class="key-name" :title="keyItem.keyName">{{ keyItem.keyName }}</span>
                 </div>
                 <div class="key-item-info">
-                  <el-tag size="mini" :type="getKeyTypeColor(keyItem.keyType)">
+                  <el-tag size="small" :type="getKeyTypeColor(keyItem.keyType)">
                     {{ keyItem.keyType }}
                   </el-tag>
                   <span class="key-ttl">{{ keyItem.ttl }}</span>
                 </div>
               </div>
               <div v-if="keyList.length === 0" class="empty-data">
-                <i class="el-icon-key"></i>
+                <el-icon><Key /></el-icon>
                 <p>{{ selectedCache ? '暂无键名' : '请选择缓存' }}</p>
               </div>
             </div>
@@ -128,24 +128,24 @@
         <!-- 右侧：缓存内容 -->
         <el-col :span="12">
           <el-card shadow="hover" class="panel-card content-panel">
-            <div slot="header" class="panel-header">
+            <template #header><div class="panel-header">
               <div class="content-header-left">
-                <i class="el-icon-document"></i>
+                <el-icon><Document /></el-icon>
                 缓存内容
-                <el-tag v-if="selectedKey" size="mini" type="success" class="selected-tag">
+                <el-tag v-if="selectedKey" size="small" type="success" class="selected-tag">
                   {{ selectedKey }}
                 </el-tag>
               </div>
               <el-button
                 v-if="selectedKey"
                 type="danger"
-                size="mini"
-                icon="el-icon-delete"
+                size="small"
+                icon="Delete"
                 @click="handleDeleteKey"
               >
                 删除
               </el-button>
-            </div>
+            </div></template>
             <div class="cache-value" v-loading="valueLoading">
               <div v-if="cacheValue" class="value-container">
                 <!-- 键信息 -->
@@ -224,7 +224,7 @@
                 </div>
               </div>
               <div v-else class="empty-data">
-                <i class="el-icon-document"></i>
+                <el-icon><Document /></el-icon>
                 <p>{{ selectedKey ? '加载中...' : '请选择键名' }}</p>
               </div>
             </div>
@@ -553,13 +553,13 @@ export default {
       display: flex;
       flex-direction: column;
 
-      ::v-deep .el-card__header {
+      :deep(.el-card__header){
         padding: 15px 20px;
         background: #f5f7fa;
         border-bottom: 1px solid #ebeef5;
       }
 
-      ::v-deep .el-card__body {
+      :deep(.el-card__body){
         flex: 1;
         padding: 0;
         overflow: hidden;
