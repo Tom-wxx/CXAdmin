@@ -6,15 +6,17 @@
 
 | 层级 | 技术 |
 |------|------|
-| 后端框架 | Spring Boot 2.7.18 |
-| 安全认证 | Spring Security + JWT + Redis |
-| ORM | MyBatis Plus 3.5.3 |
+| 后端框架 | Spring Boot 4.1.0（Spring Framework 7 / Jakarta EE 11 / Jackson 3） |
+| 安全认证 | Spring Security 7 + JWT（jjwt 0.12）+ Redis |
+| ORM | MyBatis Plus 3.5.15 |
 | 数据库 | MySQL 8.0 |
+| 连接池 / 监控 | Druid 1.2.28 |
 | 缓存 | Redis |
-| 前端框架 | Vue 2.6.14 |
-| UI 组件 | Element UI 2.15.13 |
-| 状态管理 | Vuex 3.6.2 |
-| 构建工具 | Maven / Webpack |
+| API 文档 | springdoc-openapi 3.0（OpenAPI 3.1） |
+| 前端框架 | Vue 3.5 |
+| UI 组件 | Element Plus 2.14 |
+| 路由 / 状态管理 | Vue Router 4 / Vuex 4 |
+| 构建工具 | Maven / @vue/cli 5（Webpack） |
 
 ## 功能模块
 
@@ -42,9 +44,9 @@
 
 ### 环境要求
 
-- JDK 17+
+- JDK 17+（Spring Boot 4 要求 17+）
 - Maven 3.6+
-- Node.js 14+
+- Node.js 18+（Vue 3 / @vue/cli 5）
 - MySQL 8.0
 - Redis
 
@@ -131,10 +133,11 @@ spring:
 
 ```yaml
 spring:
-  redis:
-    host: localhost
-    port: 6379
-    password:        # 默认无密码
+  data:
+    redis:           # Spring Boot 4 配置前缀为 spring.data.redis
+      host: localhost
+      port: 6379
+      password:      # 默认无密码
 ```
 
 ### 单点登录（SSO）配置
