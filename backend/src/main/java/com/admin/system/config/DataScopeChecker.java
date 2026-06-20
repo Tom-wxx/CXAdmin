@@ -1,7 +1,9 @@
 package com.admin.system.config;
 
 import com.admin.system.annotation.DataScope;
+import com.admin.system.entity.SysDept;
 import com.admin.system.entity.SysUser;
+import com.admin.system.mapper.SysDeptMapper;
 import com.admin.system.mapper.SysUserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class DataScopeChecker {
 
     private final SysUserMapper userMapper;
+    private final SysDeptMapper deptMapper;
 
     /**
      * 统计目标用户在当前登录用户数据范围内的可见数量（0 表示越权）。
@@ -28,5 +31,14 @@ public class DataScopeChecker {
     @DataScope(deptAlias = "d", userAlias = "u")
     public long countUserInScope(SysUser query) {
         return userMapper.countUserInScope(query);
+    }
+
+    /**
+     * 统计目标部门在当前登录用户数据范围内的可见数量（0 表示越权）。
+     * 部门无"仅本人"维度，故不传 userAlias。
+     */
+    @DataScope(deptAlias = "d")
+    public long countDeptInScope(SysDept query) {
+        return deptMapper.countDeptInScope(query);
     }
 }

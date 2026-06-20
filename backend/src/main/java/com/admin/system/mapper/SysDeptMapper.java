@@ -26,6 +26,12 @@ public interface SysDeptMapper extends BaseMapper<SysDept> {
     SysDept selectDeptById(@Param("deptId") Long deptId);
 
     /**
+     * Count whether a target dept is visible within the current user's data scope
+     * (data-scope SQL fragment appended via {@code @DataScope}). Used for by-id authz checks.
+     */
+    long countDeptInScope(@Param("query") SysDept query);
+
+    /**
      * 根据ID查询所有子部门
      */
     List<SysDept> selectChildrenDeptById(@Param("deptId") Long deptId);

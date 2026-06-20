@@ -39,7 +39,16 @@
         <if test="status != null and status != ''">
             AND d.status = #{status}
         </if>
+        <!-- 数据权限过滤片段（由 DataScopeAspect 注入；超级管理员/全部权限为空串） -->
+        <if test="params.dataScope != null">${params.dataScope}</if>
         ORDER BY d.parent_id, d.order_num
+    </select>
+
+    <!-- 单资源数据权限校验：目标部门在当前用户数据范围内的可见数量（复用与列表一致的过滤片段） -->
+    <select id="countDeptInScope" resultType="long">
+        SELECT COUNT(*) FROM sys_dept d
+        WHERE d.dept_id = #{query.deptId} AND d.deleted = 0
+        <if test="query.params.dataScope != null">${query.params.dataScope}</if>
     </select>
 
     <select id="selectDeptById" parameterType="Long" resultMap="SysDeptResult">

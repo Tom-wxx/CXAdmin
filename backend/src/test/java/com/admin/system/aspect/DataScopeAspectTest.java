@@ -117,6 +117,14 @@ class DataScopeAspectTest {
     }
 
     @Test
+    @DisplayName("仅本人(5) + 空 userAlias（部门列表场景）- 退化为看不到任何数据")
+    void scopeSelf_blankUserAlias_denies() {
+        login(2L, 100L, "zhangsan");
+        when(roleService.selectRolesByUserId(2L)).thenReturn(List.of(role(10L, "5")));
+        assertEquals(" AND (d.dept_id = 0)", aspect.buildFilter("d", ""));
+    }
+
+    @Test
     @DisplayName("多角色 - 本部门(3) OR 仅本人(5) 合并")
     void multiRole_orCombined() {
         login(2L, 100L, "zhangsan");
