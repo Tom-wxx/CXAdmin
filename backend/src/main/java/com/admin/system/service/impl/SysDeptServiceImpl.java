@@ -1,6 +1,8 @@
 package com.admin.system.service.impl;
 
+import com.admin.system.annotation.DataScope;
 import com.admin.system.common.exception.ServiceException;
+import com.admin.system.config.DataScopeChecker;
 import com.admin.system.entity.SysDept;
 import com.admin.system.mapper.SysDeptMapper;
 import com.admin.system.service.ISysDeptService;
@@ -26,11 +28,13 @@ import java.util.stream.Collectors;
 public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> implements ISysDeptService {
 
     private final SysDeptMapper deptMapper;
+    private final DataScopeChecker dataScopeChecker;
 
     /**
      * 查询部门管理数据
      */
     @Override
+    @DataScope(deptAlias = "d")
     public List<SysDept> selectDeptList(SysDept dept) {
         return deptMapper.selectDeptList(dept);
     }
@@ -98,7 +102,24 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
      */
     @Override
     public SysDept selectDeptById(Long deptId) {
+        checkDeptDataScope(deptId);
         return deptMapper.selectDeptById(deptId);
+    }
+
+    /**
+     * 水平越权防护：校验目标部门是否落在当前登录用户的数据范围内。
+     * 复用与部门列表一致的 {@code @DataScope} 过滤（经独立 Bean 触发 AOP 代理）；
+     * 超级管理员经切面放行；无登录上下文（系统内部调用）视为放行。
+     */
+    private void checkDeptDataScope(Long deptId) {
+        if (deptId == null) {
+            return;
+        }
+        SysDept query = new SysDept();
+        query.setDeptId(deptId);
+        if (dataScopeChecker.countDeptInScope(query) == 0) {
+            throw new ServiceException("没有权限访问该部门数据");
+        }
     }
 
     /**
@@ -170,6 +191,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         if (dept.getDeptId() == null) {
             throw new ServiceException("部门ID不能为空");
         }
+        // 水平越权防护：目标部门须在当前用户数据范围内
+        checkDeptDataScope(dept.getDeptId());
 
         // 校验部门名称是否唯一
         if (!checkDeptNameUnique(dept)) {
@@ -234,6 +257,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         if (deptId == null) {
             throw new ServiceException("部门ID不能为空");
         }
+        // 水平越权防护：目标部门须在当前用户数据范围内
+        checkDeptDataScope(deptId);
 
         // 判断是否存在子部门
         if (hasChildByDeptId(deptId)) {

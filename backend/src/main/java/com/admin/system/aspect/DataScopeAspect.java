@@ -109,8 +109,13 @@ public class DataScopeAspect {
                             + deptId + " OR FIND_IN_SET(" + deptId + ", ancestors))");
                 }
             } else if (SCOPE_SELF.equals(scope)) {
-                if (userId != null) {
-                    conditions.add(userAlias + ".user_id = " + userId);
+                if (userAlias != null && !userAlias.isEmpty()) {
+                    if (userId != null) {
+                        conditions.add(userAlias + ".user_id = " + userId);
+                    }
+                } else {
+                    // 非用户表（如部门列表）没有"仅本人"维度 → 该角色看不到任何数据
+                    conditions.add(deptAlias + ".dept_id = 0");
                 }
             }
         }
