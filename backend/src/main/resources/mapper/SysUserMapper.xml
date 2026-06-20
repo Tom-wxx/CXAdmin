@@ -91,15 +91,17 @@
         FROM sys_user u
         LEFT JOIN sys_dept d ON u.dept_id = d.dept_id
         WHERE u.deleted = 0
-        <if test="username != null and username != ''">
-            AND u.username LIKE CONCAT('%', #{username}, '%')
+        <if test="query.username != null and query.username != ''">
+            AND u.username LIKE CONCAT('%', #{query.username}, '%')
         </if>
-        <if test="phone != null and phone != ''">
-            AND u.phonenumber LIKE CONCAT('%', #{phone}, '%')
+        <if test="query.phonenumber != null and query.phonenumber != ''">
+            AND u.phonenumber LIKE CONCAT('%', #{query.phonenumber}, '%')
         </if>
-        <if test="status != null and status != ''">
-            AND u.status = #{status}
+        <if test="query.status != null and query.status != ''">
+            AND u.status = #{query.status}
         </if>
+        <!-- 数据权限过滤片段（由 DataScopeAspect 注入；超级管理员/全部权限为空串） -->
+        <if test="query.params.dataScope != null">${query.params.dataScope}</if>
         ORDER BY u.create_time DESC
     </select>
 
@@ -149,15 +151,17 @@
         FROM sys_user u
         LEFT JOIN sys_dept d ON u.dept_id = d.dept_id
         WHERE u.deleted = 0
-        <if test="username != null and username != ''">
-            AND u.username LIKE CONCAT('%', #{username}, '%')
+        <if test="query.username != null and query.username != ''">
+            AND u.username LIKE CONCAT('%', #{query.username}, '%')
         </if>
-        <if test="phone != null and phone != ''">
-            AND u.phonenumber LIKE CONCAT('%', #{phone}, '%')
+        <if test="query.phonenumber != null and query.phonenumber != ''">
+            AND u.phonenumber LIKE CONCAT('%', #{query.phonenumber}, '%')
         </if>
-        <if test="status != null and status != ''">
-            AND u.status = #{status}
+        <if test="query.status != null and query.status != ''">
+            AND u.status = #{query.status}
         </if>
+        <!-- 数据权限过滤片段（由 DataScopeAspect 注入；超级管理员/全部权限为空串） -->
+        <if test="query.params.dataScope != null">${query.params.dataScope}</if>
         ORDER BY u.create_time DESC
     </select>
 

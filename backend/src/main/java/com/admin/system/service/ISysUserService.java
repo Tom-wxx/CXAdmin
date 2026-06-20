@@ -19,8 +19,9 @@ public interface ISysUserService extends IService<SysUser> {
 
     /**
      * 分页查询用户列表
+     * @param query 查询条件载体（同时承载数据权限过滤片段，须为 {@link SysUser} 以触发 {@code @DataScope}）
      */
-    Page<UserVO> selectUserPage(Page<SysUser> page, String username, String phone, String status);
+    Page<UserVO> selectUserPage(Page<SysUser> page, SysUser query);
 
     /**
      * 根据用户名查询用户
@@ -90,7 +91,7 @@ public interface ISysUserService extends IService<SysUser> {
     /**
      * 查询用户列表（不分页，用于导出）
      */
-    List<UserVO> selectUserList(String username, String phone, String status);
+    List<UserVO> selectUserList(SysUser query);
 
     /**
      * 导入用户数据

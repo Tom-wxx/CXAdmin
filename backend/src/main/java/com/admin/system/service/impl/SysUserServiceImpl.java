@@ -1,5 +1,6 @@
 package com.admin.system.service.impl;
 
+import com.admin.system.annotation.DataScope;
 import com.admin.system.common.exception.ServiceException;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
@@ -37,8 +38,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * 分页查询用户列表
      */
     @Override
-    public Page<UserVO> selectUserPage(Page<SysUser> page, String username, String phone, String status) {
-        return userMapper.selectUserPage(page, username, phone, status);
+    @DataScope(deptAlias = "d", userAlias = "u")
+    public Page<UserVO> selectUserPage(Page<SysUser> page, SysUser query) {
+        return userMapper.selectUserPage(page, query);
     }
 
     /**
@@ -309,8 +311,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * 查询用户列表（不分页，用于导出）
      */
     @Override
-    public List<UserVO> selectUserList(String username, String phone, String status) {
-        return userMapper.selectUserList(username, phone, status);
+    @DataScope(deptAlias = "d", userAlias = "u")
+    public List<UserVO> selectUserList(SysUser query) {
+        return userMapper.selectUserList(query);
     }
 
     /**

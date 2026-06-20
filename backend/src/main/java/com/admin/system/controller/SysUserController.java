@@ -60,7 +60,7 @@ public class SysUserController {
             @Parameter(description = "状态") @RequestParam(required = false) String status) {
 
         Page<SysUser> page = pageQuery.build();
-        Page<UserVO> result = userService.selectUserPage(page, username, phone, status);
+        Page<UserVO> result = userService.selectUserPage(page, buildUserQuery(username, phone, status));
         return PageUtils.buildPageResult(result);
     }
 
@@ -221,13 +221,25 @@ public class SysUserController {
                        @Parameter(description = "手机号") @RequestParam(required = false) String phone,
                        @Parameter(description = "状态") @RequestParam(required = false) String status) throws IOException {
         // 查询用户列表（不分页）
-        List<UserVO> list = userService.selectUserList(username, phone, status);
+        List<UserVO> list = userService.selectUserList(buildUserQuery(username, phone, status));
 
         // 定义导出的表头和字段
         String[] headers = {"用户ID", "用户名", "昵称", "部门", "手机号", "邮箱", "状态", "创建时间"};
         String[] fields = {"userId", "username", "nickname", "deptName", "phone", "email", "status", "createTime"};
 
         ExcelUtil.exportExcel(response, "用户数据", headers, fields, list);
+    }
+
+    /**
+     * 构造用户查询载体（phone 映射到 phonenumber 列）。
+     * 用 {@link SysUser} 作为载体，以便 Service 层 {@code @DataScope} 注入数据权限过滤片段。
+     */
+    private SysUser buildUserQuery(String username, String phone, String status) {
+        SysUser query = new SysUser();
+        query.setUsername(username);
+        query.setPhonenumber(phone);
+        query.setStatus(status);
+        return query;
     }
 
     /**
