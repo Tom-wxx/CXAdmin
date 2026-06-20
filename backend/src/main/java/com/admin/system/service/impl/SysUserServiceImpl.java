@@ -2,6 +2,7 @@ package com.admin.system.service.impl;
 
 import com.admin.system.annotation.DataScope;
 import com.admin.system.common.exception.ServiceException;
+import com.admin.system.config.DataScopeChecker;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
@@ -33,6 +34,7 @@ import java.util.*;
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService {
 
     private final SysUserMapper userMapper;
+    private final DataScopeChecker dataScopeChecker;
 
     /**
      * 分页查询用户列表
@@ -56,6 +58,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public UserVO selectUserById(Long userId) {
+        checkUserDataScope(userId);
         return userMapper.selectUserVOById(userId);
     }
 
@@ -115,6 +118,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (userDTO.getUserId() == null) {
             throw new ServiceException("用户ID不能为空");
         }
+        // 垂直越权防护：禁止操作超级管理员；水平越权防护：目标用户须在当前用户数据范围内
+        checkUserAllowed(userDTO.getUserId());
+        checkUserDataScope(userDTO.getUserId());
 
         // 校验用户名唯一性
         if (!checkUsernameUnique(userDTO.getUsername(), userDTO.getUserId())) {
@@ -163,11 +169,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (userId == null) {
             throw new ServiceException("用户ID不能为空");
         }
-
-        // 超级管理员不允许删除
-        if (userId.equals(SystemConstants.SUPER_ADMIN_ID)) {
-            throw new ServiceException("不允许删除超级管理员用户");
-        }
+        // 垂直越权防护：禁止操作超级管理员；水平越权防护：目标用户须在当前用户数据范围内
+        checkUserAllowed(userId);
+        checkUserDataScope(userId);
 
         // 删除用户与角色关联
         userMapper.deleteUserRoleByUserId(userId);
@@ -205,6 +209,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (!StringUtils.hasText(newPassword)) {
             throw new ServiceException("新密码不能为空");
         }
+        // 垂直越权防护：禁止重置超级管理员密码；水平越权防护：目标用户须在当前用户数据范围内
+        checkUserAllowed(userId);
+        checkUserDataScope(userId);
 
         SysUser user = new SysUser();
         user.setUserId(userId);
@@ -225,11 +232,39 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (!StringUtils.hasText(status)) {
             throw new ServiceException("用户状态不能为空");
         }
+        // 垂直越权防护：禁止停用/启用超级管理员；水平越权防护：目标用户须在当前用户数据范围内
+        checkUserAllowed(userId);
+        checkUserDataScope(userId);
 
         SysUser user = new SysUser();
         user.setUserId(userId);
         user.setStatus(status);
         userMapper.updateById(user);
+    }
+
+    /**
+     * 垂直越权防护：禁止对超级管理员（id=1）执行管理操作（改/删/重置密码/改状态）。
+     */
+    private void checkUserAllowed(Long userId) {
+        if (userId != null && userId.equals(SystemConstants.SUPER_ADMIN_ID)) {
+            throw new ServiceException("不允许操作超级管理员用户");
+        }
+    }
+
+    /**
+     * 水平越权防护：校验目标用户是否落在当前登录用户的数据范围内。
+     * 复用与列表完全一致的 {@code @DataScope} 过滤（经独立 Bean 触发 AOP 代理）；
+     * 超级管理员经切面放行。无登录上下文（系统内部调用）视为放行。
+     */
+    private void checkUserDataScope(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        SysUser query = new SysUser();
+        query.setUserId(userId);
+        if (dataScopeChecker.countUserInScope(query) == 0) {
+            throw new ServiceException("没有权限访问该用户数据");
+        }
     }
 
     /**
