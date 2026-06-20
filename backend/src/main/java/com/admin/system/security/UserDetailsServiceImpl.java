@@ -1,5 +1,6 @@
 package com.admin.system.security;
 
+import com.admin.system.common.exception.ServiceException;
 import com.admin.system.entity.SysUser;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.service.ISysUserService;
@@ -31,7 +32,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("用户不存在：" + username);
         }
         if (SystemConstants.STATUS_DISABLE.equals(user.getStatus())) {
-            throw new RuntimeException("用户已被停用");
+            throw new ServiceException("用户已被停用");
         }
         // 获取用户权限
         Set<String> permissions = menuService.selectMenuPermsByUserId(user.getUserId());
