@@ -17,6 +17,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -90,7 +93,7 @@ class LoginServiceImplTest {
         when(redisUtil.get("captcha:test-uuid")).thenReturn("abcd");
 
         // Mock login retry check (no previous failures)
-        when(redisUtil.get("login_retry:admin")).thenReturn(null);
+        when(redisUtil.get("login_retry:admin:unknown")).thenReturn(null);
 
         // Mock authentication
         Authentication authentication = mock(Authentication.class);
@@ -111,7 +114,7 @@ class LoginServiceImplTest {
         // Verify captcha deleted
         verify(redisUtil).delete("captcha:test-uuid");
         // Verify login retry cleared
-        verify(redisUtil).delete("login_retry:admin");
+        verify(redisUtil).delete("login_retry:admin:unknown");
         // Verify token stored in Redis
         verify(redisUtil).set(startsWith("login_tokens:"), any(LoginUser.class), eq(30L), eq(TimeUnit.MINUTES));
     }
@@ -143,7 +146,7 @@ class LoginServiceImplTest {
     void login_captchaCaseInsensitive_shouldPass() {
         loginDTO.setCode("ABCD");
         when(redisUtil.get("captcha:test-uuid")).thenReturn("abcd");
-        when(redisUtil.get("login_retry:admin")).thenReturn(null);
+        when(redisUtil.get("login_retry:admin:unknown")).thenReturn(null);
 
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(loginUser);
@@ -161,7 +164,7 @@ class LoginServiceImplTest {
     @DisplayName("登录失败 - 用户名或密码错误")
     void login_badCredentials_shouldThrowException() {
         when(redisUtil.get("captcha:test-uuid")).thenReturn("abcd");
-        when(redisUtil.get("login_retry:admin")).thenReturn(null);
+        when(redisUtil.get("login_retry:admin:unknown")).thenReturn(null);
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
@@ -173,7 +176,7 @@ class LoginServiceImplTest {
     @DisplayName("登录成功 - Token存入Redis并设置过期时间")
     void login_success_shouldStoreTokenInRedis() {
         when(redisUtil.get("captcha:test-uuid")).thenReturn("abcd");
-        when(redisUtil.get("login_retry:admin")).thenReturn(null);
+        when(redisUtil.get("login_retry:admin:unknown")).thenReturn(null);
 
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(loginUser);
@@ -195,7 +198,7 @@ class LoginServiceImplTest {
     @DisplayName("登录失败 - 登录重试次数超限")
     void login_retryLimitExceeded_shouldThrowException() {
         when(redisUtil.get("captcha:test-uuid")).thenReturn("abcd");
-        when(redisUtil.get("login_retry:admin")).thenReturn("5");
+        when(redisUtil.get("login_retry:admin:unknown")).thenReturn("5");
 
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> loginService.login(loginDTO));
@@ -207,15 +210,39 @@ class LoginServiceImplTest {
     @DisplayName("登录失败 - 认证失败增加重试计数")
     void login_authFailed_shouldIncrementRetryCount() {
         when(redisUtil.get("captcha:test-uuid")).thenReturn("abcd");
-        when(redisUtil.get("login_retry:admin")).thenReturn(null);
+        when(redisUtil.get("login_retry:admin:unknown")).thenReturn(null);
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
-        when(redisUtil.increment("login_retry:admin")).thenReturn(1L);
+        when(redisUtil.increment("login_retry:admin:unknown")).thenReturn(1L);
 
         assertThrows(BadCredentialsException.class,
                 () -> loginService.login(loginDTO));
 
-        verify(redisUtil).increment("login_retry:admin");
+        verify(redisUtil).increment("login_retry:admin:unknown");
+    }
+
+    @Test
+    @DisplayName("登录失败 - 失败计数按 用户名+IP 维度隔离")
+    void login_authFailed_retryKeyScopedByIp() {
+        // 模拟带 IP 的请求上下文
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("x-forwarded-for", "10.0.0.1");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            when(redisUtil.get("captcha:test-uuid")).thenReturn("abcd");
+            when(redisUtil.get("login_retry:admin:10.0.0.1")).thenReturn(null);
+            when(authenticationManager.authenticate(any()))
+                    .thenThrow(new BadCredentialsException("Bad credentials"));
+            when(redisUtil.increment("login_retry:admin:10.0.0.1")).thenReturn(1L);
+
+            assertThrows(BadCredentialsException.class, () -> loginService.login(loginDTO));
+
+            // 计数键带该 IP；其它 IP 的同名用户不受影响（不会锁死任意账号）
+            verify(redisUtil).increment("login_retry:admin:10.0.0.1");
+            verify(redisUtil, never()).increment("login_retry:admin:unknown");
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
     }
 
     // ==================== Logout Tests ====================

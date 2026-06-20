@@ -7,6 +7,7 @@ import com.admin.system.service.ISysLoginLogService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,15 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void insertLoginLog(SysLoginLog loginLog) {
+        loginLogMapper.insert(loginLog);
+    }
+
+    /**
+     * 异步保存登录日志（运行于 taskExecutor 线程池，跨 Bean 调用以使 @Async 代理生效）
+     */
+    @Async("taskExecutor")
+    @Override
+    public void recordLoginInfoAsync(SysLoginLog loginLog) {
         loginLogMapper.insert(loginLog);
     }
 

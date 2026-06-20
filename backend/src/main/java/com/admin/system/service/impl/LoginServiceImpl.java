@@ -1,6 +1,7 @@
 package com.admin.system.service.impl;
 
 import com.admin.system.common.constants.SystemConstants;
+import com.admin.system.common.exception.ServiceException;
 import com.admin.system.config.JwtProperties;
 import com.admin.system.dto.LoginDTO;
 import com.admin.system.entity.SysFile;
@@ -66,13 +67,15 @@ public class LoginServiceImpl implements ILoginService {
         String username = loginDTO.getUsername();
         String msg = "登录成功";
         Integer status = SystemConstants.OPER_SUCCESS;
+        // 在请求线程内取好客户端 IP：既用于「用户名+IP」维度限流，也供异步日志使用
+        String ip = getClientIp();
 
         try {
             // 验证码校验
             validateCaptcha(loginDTO.getCode(), loginDTO.getUuid());
 
             // 登录限流检查
-            checkLoginRetryLimit(username);
+            checkLoginRetryLimit(username, ip);
 
             // 用户认证
             Authentication authentication = authenticationManager.authenticate(
@@ -80,7 +83,7 @@ public class LoginServiceImpl implements ILoginService {
             );
 
             // 认证成功，清除登录失败计数
-            clearLoginRetryCount(username);
+            clearLoginRetryCount(username, ip);
 
             LoginUser loginUser = (LoginUser) authentication.getPrincipal();
 
@@ -105,7 +108,7 @@ public class LoginServiceImpl implements ILoginService {
             redisUtil.set(userKey, loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
 
             // 记录登录日志
-            recordLoginLog(username, status, msg);
+            recordLoginLog(username, status, msg, ip);
 
             // 返回token
             Map<String, Object> result = new HashMap<>();
@@ -115,32 +118,33 @@ public class LoginServiceImpl implements ILoginService {
             status = SystemConstants.OPER_FAIL;
             msg = e.getMessage();
             // 认证失败时增加失败计数（验证码错误不计入限流）
-            if (!(e instanceof RuntimeException && ("验证码已过期".equals(e.getMessage()) || "验证码错误".equals(e.getMessage())))) {
-                incrementLoginRetryCount(username);
+            if (!("验证码已过期".equals(e.getMessage()) || "验证码错误".equals(e.getMessage()))) {
+                incrementLoginRetryCount(username, ip);
             }
             // 记录登录失败日志
-            recordLoginLog(username, status, msg);
+            recordLoginLog(username, status, msg, ip);
             throw e;
         }
     }
 
     /**
      * 检查登录重试次数是否超过限制
+     * 计数键以「用户名 + IP」为维度，避免攻击者用错误密码远程锁死任意账号（DoS / 枚举）。
      */
-    private void checkLoginRetryLimit(String username) {
-        String retryKey = SystemConstants.LOGIN_RETRY_KEY + username;
+    private void checkLoginRetryLimit(String username, String ip) {
+        String retryKey = buildRetryKey(username, ip);
         Object retryCount = redisUtil.get(retryKey);
         if (retryCount != null && Integer.parseInt(retryCount.toString()) >= MAX_LOGIN_RETRY_COUNT) {
-            throw new RuntimeException("登录失败次数过多，请" + LOGIN_LOCK_TIME_MINUTES + "分钟后再试");
+            throw new ServiceException("登录失败次数过多，请" + LOGIN_LOCK_TIME_MINUTES + "分钟后再试");
         }
     }
 
     /**
      * 增加登录失败计数
      */
-    private void incrementLoginRetryCount(String username) {
+    private void incrementLoginRetryCount(String username, String ip) {
         try {
-            String retryKey = SystemConstants.LOGIN_RETRY_KEY + username;
+            String retryKey = buildRetryKey(username, ip);
             Long count = redisUtil.increment(retryKey);
             if (count != null && count == 1L) {
                 // 首次失败，设置过期时间
@@ -155,13 +159,20 @@ public class LoginServiceImpl implements ILoginService {
     /**
      * 清除登录失败计数
      */
-    private void clearLoginRetryCount(String username) {
+    private void clearLoginRetryCount(String username, String ip) {
         try {
-            String retryKey = SystemConstants.LOGIN_RETRY_KEY + username;
+            String retryKey = buildRetryKey(username, ip);
             redisUtil.delete(retryKey);
         } catch (Exception e) {
             log.warn("清除登录失败计数异常: {}", e.getMessage());
         }
+    }
+
+    /**
+     * 构造「用户名 + IP」维度的登录失败计数键
+     */
+    private String buildRetryKey(String username, String ip) {
+        return SystemConstants.LOGIN_RETRY_KEY + username + ":" + ip;
     }
 
     @Override
@@ -221,18 +232,18 @@ public class LoginServiceImpl implements ILoginService {
         // 获取当前登录用户
         LoginUser loginUser = SecurityUtils.getLoginUser();
         if (loginUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new ServiceException("用户未登录");
         }
 
         // 验证文件类型
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new RuntimeException("只能上传图片文件");
+            throw new ServiceException("只能上传图片文件");
         }
 
         // 验证文件大小（限制2MB）
         if (file.getSize() > 2 * 1024 * 1024) {
-            throw new RuntimeException("头像文件大小不能超过2MB");
+            throw new ServiceException("头像文件大小不能超过2MB");
         }
 
         // 上传文件
@@ -269,39 +280,50 @@ public class LoginServiceImpl implements ILoginService {
         String captchaKey = SystemConstants.CAPTCHA_KEY + uuid;
         Object captcha = redisUtil.get(captchaKey);
         if (captcha == null) {
-            throw new RuntimeException("验证码已过期");
+            throw new ServiceException("验证码已过期");
         }
         // 不区分大小写比较
         if (!code.toLowerCase().equals(captcha.toString())) {
-            throw new RuntimeException("验证码错误");
+            throw new ServiceException("验证码错误");
         }
         redisUtil.delete(captchaKey);
     }
 
     /**
      * 记录登录日志
+     * IP 已在请求线程内取好并传入，落库走异步线程池（{@code recordLoginInfoAsync}），不阻塞登录主链路。
      */
-    private void recordLoginLog(String username, Integer status, String msg) {
+    private void recordLoginLog(String username, Integer status, String msg, String ip) {
         try {
             SysLoginLog loginLog = new SysLoginLog();
             loginLog.setUsername(username);
             loginLog.setStatus(String.valueOf(status));
             loginLog.setMsg(msg);
             loginLog.setLoginTime(new Date());
+            loginLog.setIpaddr(ip);
 
-            // 获取IP地址
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                loginLog.setIpaddr(IpUtil.getIpAddr(request));
-            }
-
-            // 异步保存登录日志
-            loginLogService.save(loginLog);
+            // 异步保存登录日志（跨 Bean 调用使 @Async 代理生效）
+            loginLogService.recordLoginInfoAsync(loginLog);
         } catch (Exception e) {
             // 记录日志失败不影响登录流程
             log.warn("记录登录日志失败: {}", e.getMessage());
         }
+    }
+
+    /**
+     * 在请求线程内获取客户端 IP（异步线程拿不到 RequestContextHolder，故必须在此提取）
+     */
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                return IpUtil.getIpAddr(request);
+            }
+        } catch (Exception e) {
+            log.warn("获取客户端IP失败: {}", e.getMessage());
+        }
+        return "unknown";
     }
 
 }
