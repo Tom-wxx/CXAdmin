@@ -25,6 +25,13 @@ public interface ISysLoginLogService extends IService<SysLoginLog> {
     void insertLoginLog(SysLoginLog loginLog);
 
     /**
+     * 异步保存登录日志
+     * 调用方须在请求线程内组装好 {@link SysLoginLog}（含 IP），本方法仅负责落库，
+     * 不依赖请求线程上下文，避免阻塞登录主链路。
+     */
+    void recordLoginInfoAsync(SysLoginLog loginLog);
+
+    /**
      * 删除登录日志
      */
     void deleteLoginLogById(Long infoId);

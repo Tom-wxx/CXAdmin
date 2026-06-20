@@ -14,6 +14,11 @@ import java.util.Map;
 /**
  * JWT工具类（jjwt 0.12.x API）
  *
+ * <p><b>架构说明（重要）：</b>本系统当前把 JWT 仅当作「登录时签发、之后作为 Redis 会话键」的
+ * <b>不透明令牌</b>使用——{@code JwtAuthenticationFilter} 在每次请求时<b>不验签、不解析 claims</b>，
+ * 而是直接拿 token 串去 Redis 查 {@code LoginUser}。即认证状态实为<b>有状态会话</b>，签名不参与运行期校验。
+ * 详见 {@code docs/adr/0001-token-as-opaque-session.md}。</p>
+ *
  * @author Admin
  */
 @Component

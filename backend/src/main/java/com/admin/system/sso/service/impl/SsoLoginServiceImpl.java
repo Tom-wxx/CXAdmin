@@ -1,6 +1,7 @@
 package com.admin.system.sso.service.impl;
 
 import com.admin.system.common.constants.SystemConstants;
+import com.admin.system.common.exception.ServiceException;
 import com.admin.system.config.JwtProperties;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
@@ -63,7 +64,7 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
 
     @Override
     public String buildBindAuthorizationUrl(String code, Long userId) {
-        if (userId == null) throw new RuntimeException("绑定 SSO 需要登录态");
+        if (userId == null) throw new ServiceException("绑定 SSO 需要登录态");
         return buildAuthorizationUrlInternal(code, SsoStateData.bind(code, userId));
     }
 
@@ -138,7 +139,7 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
                         .eq(SysUserSsoBinding::getProviderId, provider.getId())
                         .eq(SysUserSsoBinding::getExternalUserId, info.getExternalUserId()));
         if (existing != null && !existing.getUserId().equals(userId)) {
-            throw new RuntimeException("该 " + provider.getName() + " 账号已绑定其它用户");
+            throw new ServiceException("该 " + provider.getName() + " 账号已绑定其它用户");
         }
         if (existing == null) {
             createBinding(userId, provider.getId(), info);
@@ -185,12 +186,12 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
         SysUserSsoBinding b = bindingMapper.selectById(bindingId);
         if (b == null) {
             auditLog.recordUnbind(null, null, userId, null, false, "绑定记录不存在: " + bindingId);
-            throw new RuntimeException("绑定记录不存在");
+            throw new ServiceException("绑定记录不存在");
         }
         if (!b.getUserId().equals(userId)) {
             SysSsoProvider p = providerService.getById(b.getProviderId());
             auditLog.recordUnbind(b.getProviderId(), p != null ? p.getCode() : null, userId, b.getExternalUserId(), false, "不能解除他人的绑定");
-            throw new RuntimeException("不能解除他人的绑定");
+            throw new ServiceException("不能解除他人的绑定");
         }
         bindingMapper.deleteById(bindingId);
         SysSsoProvider p = providerService.getById(b.getProviderId());

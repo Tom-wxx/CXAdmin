@@ -111,11 +111,14 @@ public class GlobalExceptionHandler {
 
     /**
      * 运行时异常
+     * 注意：完整堆栈仅记录到服务端日志，对客户端只返回脱敏后的通用文案，
+     * 避免把底层 SQL / 空指针 / 第三方响应等内部细节泄露给前端。
+     * 需要向用户展示的业务提示请抛 {@link ServiceException}（由上面的处理器透传）。
      */
     @ExceptionHandler(RuntimeException.class)
     public Result<Void> handleRuntimeException(RuntimeException e) {
         log.error("运行时异常：{}", e.getMessage(), e);
-        return Result.fail(e.getMessage());
+        return Result.fail("请求处理失败，请稍后重试");
     }
 
     /**

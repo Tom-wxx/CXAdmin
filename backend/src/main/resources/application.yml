@@ -71,7 +71,8 @@ spring:
           merge-sql: true
         wall:
           config:
-            multi-statement-allow: true
+            # 关闭多语句执行，收紧 SQL 注入防护墙（批量插入使用 foreach 单条 INSERT，不依赖多语句）
+            multi-statement-allow: false
 
   # Redis 配置（Spring Boot 3+ 配置 key 为 spring.data.redis）
   data:
@@ -140,7 +141,9 @@ mybatis-plus:
 
 # JWT配置
 jwt:
-  # 令牌密钥（jjwt 0.12 要求 HS512 密钥 ≥64 字节；生产请放环境变量并使用随机强密钥）
+  # 令牌密钥（jjwt 0.12 要求 HS512 密钥 ≥64 字节）。
+  # ⚠️ 下方默认值【仅供本地 dev】，已知且入库，切勿用于生产。
+  # 生产请用 application-prod.yml + 环境变量 JWT_SECRET 覆盖；EnvironmentGuard 会在 prod 下拒绝该默认值启动。
   secret: ${JWT_SECRET:abcdefghijklmnopqrstuvwxyz123456ABCDEFGHIJKLMNOPQRSTUVWXYZ789012}
   # 令牌有效期（默认30分钟）
   expireTime: 30
@@ -212,7 +215,9 @@ app:
 # SSO 单点登录配置
 admin:
   sso:
-    # AES-256 主密钥（32 字节），Base64 编码。生产请放环境变量 ADMIN_SSO_CRYPTO_KEY
+    # AES-256 主密钥（32 字节），Base64 编码。
+    # ⚠️ 下方默认值【仅供本地 dev】，已知且入库，切勿用于生产（client_secret 的加密强度依赖它）。
+    # 生产请用 application-prod.yml + 环境变量 ADMIN_SSO_CRYPTO_KEY 覆盖；EnvironmentGuard 会在 prod 下拒绝该默认值启动。
     crypto-key: ${ADMIN_SSO_CRYPTO_KEY:q1bzST8qQgcOxwv9f6l/vGVODv5NrlauMkDMr762jUQ=}
     # IdP 回调地址：dev 走前端 8081（让 vue dev server 代理回后端），cookie 才会落在前端 origin
     callback-base-url: http://localhost:8081/api

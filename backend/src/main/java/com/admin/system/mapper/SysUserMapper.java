@@ -30,10 +30,7 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     /**
      * Select user page (VO)
      */
-    Page<UserVO> selectUserPage(Page<SysUser> page,
-                                 @Param("username") String username,
-                                 @Param("phone") String phone,
-                                 @Param("status") String status);
+    Page<UserVO> selectUserPage(@Param("page") Page<SysUser> page, @Param("query") SysUser query);
 
     /**
      * Select user by ID (VO)
@@ -88,9 +85,7 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     /**
      * Select user list (VO, for export)
      */
-    List<UserVO> selectUserList(@Param("username") String username,
-                                 @Param("phone") String phone,
-                                 @Param("status") String status);
+    List<UserVO> selectUserList(@Param("query") SysUser query);
 
     /**
      * Count users by role ID

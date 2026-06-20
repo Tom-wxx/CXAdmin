@@ -21,13 +21,16 @@ import java.util.Date;
 public class SsoAuditLogServiceImpl implements ISsoAuditLogService {
 
     private final SysSsoLoginLogMapper mapper;
+    private final SsoAuditLogWriter writer;
 
     @Override
     public void record(SysSsoLoginLog l) {
         try {
             if (l.getCreateTime() == null) l.setCreateTime(new Date());
+            // 必须在请求线程内采集 IP / User-Agent（异步线程拿不到 RequestContextHolder）
             fillRequestMeta(l);
-            mapper.insert(l);
+            // 仅落库异步化，不阻塞 SSO 主链路
+            writer.persist(l);
         } catch (Exception e) {
             // 审计日志失败永远不能影响主流程
             log.warn("Record SSO audit log failed: {}", e.getMessage());
