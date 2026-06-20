@@ -24,6 +24,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * JWT认证过滤器
  *
+ * <p><b>设计选择：</b>token 在此<b>不验签、不解析</b>，仅作为 Redis 会话键查出 {@code LoginUser}；
+ * 令牌有效期以 Redis 中的 {@code expireTime} 为准（剩余 ≤20 分钟时滑动续期）。
+ * 这意味着认证是有状态会话，JWT 的签名在运行期不提供安全价值。
+ * 取舍与未来演进见 {@code docs/adr/0001-token-as-opaque-session.md}。</p>
+ *
  * @author Admin
  */
 @Slf4j
