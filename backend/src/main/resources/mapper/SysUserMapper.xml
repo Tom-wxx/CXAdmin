@@ -165,6 +165,15 @@
         ORDER BY u.create_time DESC
     </select>
 
+    <!-- 单资源数据权限校验：目标用户在当前用户数据范围内的可见数量（复用与列表一致的过滤片段） -->
+    <select id="countUserInScope" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_user u
+        LEFT JOIN sys_dept d ON u.dept_id = d.dept_id
+        WHERE u.user_id = #{query.userId} AND u.deleted = 0
+        <if test="query.params.dataScope != null">${query.params.dataScope}</if>
+    </select>
+
     <select id="countUsersByRoleId" parameterType="Long" resultType="Long">
         SELECT COUNT(DISTINCT ur.user_id)
         FROM sys_user_role ur

@@ -1,6 +1,7 @@
 package com.admin.system.service;
 
 import com.admin.system.common.exception.ServiceException;
+import com.admin.system.config.DataScopeChecker;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
@@ -32,6 +33,9 @@ class SysUserServiceImplTest {
 
     @Mock
     private SysUserMapper userMapper;
+
+    @Mock
+    private DataScopeChecker dataScopeChecker;
 
     private UserDTO userDTO;
     private SysUser existingUser;
@@ -187,6 +191,7 @@ class SysUserServiceImplTest {
     @DisplayName("修改用户 - 成功")
     void updateUser_success() {
         userDTO.setUserId(2L);
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(1L);
         when(userMapper.checkUsernameUnique("newuser")).thenReturn(null);
         when(userMapper.checkPhoneUnique("13800138001")).thenReturn(null);
         when(userMapper.checkEmailUnique("newuser@example.com")).thenReturn(null);
@@ -220,6 +225,7 @@ class SysUserServiceImplTest {
     void updateUser_sameUsername_shouldPass() {
         userDTO.setUserId(2L);
         userDTO.setUsername("admin");
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(1L);
 
         SysUser sameUser = new SysUser();
         sameUser.setUserId(2L); // same user ID
@@ -241,6 +247,7 @@ class SysUserServiceImplTest {
     @Test
     @DisplayName("删除用户 - 成功(非管理员)")
     void deleteUserById_success() {
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(1L);
         when(userMapper.deleteUserRoleByUserId(2L)).thenReturn(1);
         when(userMapper.deleteUserPostByUserId(2L)).thenReturn(0);
         when(userMapper.deleteById(2L)).thenReturn(1);
@@ -267,7 +274,7 @@ class SysUserServiceImplTest {
         ServiceException exception = assertThrows(ServiceException.class,
                 () -> userService.deleteUserById(1L));
 
-        assertTrue(exception.getMessage().contains("不允许删除超级管理员"));
+        assertTrue(exception.getMessage().contains("超级管理员"));
     }
 
     // ==================== deleteUserByIds Tests ====================
@@ -276,6 +283,7 @@ class SysUserServiceImplTest {
     @DisplayName("批量删除用户 - 成功(非管理员)")
     void deleteUserByIds_success() {
         Long[] userIds = {2L, 3L, 4L};
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(1L);
         when(userMapper.deleteUserRoleByUserId(anyLong())).thenReturn(1);
         when(userMapper.deleteUserPostByUserId(anyLong())).thenReturn(1);
         when(userMapper.deleteById(anyLong())).thenReturn(1);
@@ -293,7 +301,7 @@ class SysUserServiceImplTest {
         ServiceException exception = assertThrows(ServiceException.class,
                 () -> userService.deleteUserByIds(userIds));
 
-        assertTrue(exception.getMessage().contains("不允许删除超级管理员"));
+        assertTrue(exception.getMessage().contains("超级管理员"));
     }
 
     @Test
@@ -319,12 +327,13 @@ class SysUserServiceImplTest {
     @Test
     @DisplayName("重置密码 - 成功")
     void resetPassword_success() {
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(1L);
         when(userMapper.updateById(any(SysUser.class))).thenReturn(1);
 
-        assertDoesNotThrow(() -> userService.resetPassword(1L, "newPass123"));
+        assertDoesNotThrow(() -> userService.resetPassword(2L, "newPass123"));
 
         verify(userMapper).updateById(argThat((SysUser user) -> {
-            assertEquals(1L, user.getUserId());
+            assertEquals(2L, user.getUserId());
             assertNotNull(user.getPassword());
             assertTrue(user.getPassword().startsWith("$2a$"));
             return true;
@@ -363,12 +372,13 @@ class SysUserServiceImplTest {
     @Test
     @DisplayName("修改用户状态 - 成功")
     void updateUserStatus_success() {
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(1L);
         when(userMapper.updateById(any(SysUser.class))).thenReturn(1);
 
-        assertDoesNotThrow(() -> userService.updateUserStatus(1L, "1"));
+        assertDoesNotThrow(() -> userService.updateUserStatus(2L, "1"));
 
         verify(userMapper).updateById(argThat((SysUser user) -> {
-            assertEquals(1L, user.getUserId());
+            assertEquals(2L, user.getUserId());
             assertEquals("1", user.getStatus());
             return true;
         }));
@@ -486,5 +496,50 @@ class SysUserServiceImplTest {
         assertEquals(2, result.size());
         assertTrue(result.contains(1L));
         assertTrue(result.contains(3L));
+    }
+
+    // ==================== 越权防护 Tests（垂直 + 水平）====================
+
+    @Test
+    @DisplayName("垂直越权防护 - 重置超级管理员密码被拒")
+    void resetPassword_superAdmin_shouldThrow() {
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> userService.resetPassword(1L, "newPass123"));
+        assertTrue(ex.getMessage().contains("超级管理员"));
+    }
+
+    @Test
+    @DisplayName("垂直越权防护 - 停用超级管理员被拒")
+    void updateUserStatus_superAdmin_shouldThrow() {
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> userService.updateUserStatus(1L, "1"));
+        assertTrue(ex.getMessage().contains("超级管理员"));
+    }
+
+    @Test
+    @DisplayName("垂直越权防护 - 修改超级管理员被拒")
+    void updateUser_superAdmin_shouldThrow() {
+        userDTO.setUserId(1L);
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> userService.updateUser(userDTO));
+        assertTrue(ex.getMessage().contains("超级管理员"));
+    }
+
+    @Test
+    @DisplayName("水平越权防护 - 目标用户不在数据范围内则拒绝重置密码")
+    void resetPassword_outOfScope_shouldThrow() {
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(0L);
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> userService.resetPassword(2L, "newPass123"));
+        assertTrue(ex.getMessage().contains("权限"));
+    }
+
+    @Test
+    @DisplayName("水平越权防护 - 目标用户不在数据范围内则拒绝查看详情")
+    void selectUserById_outOfScope_shouldThrow() {
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(0L);
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> userService.selectUserById(2L));
+        assertTrue(ex.getMessage().contains("权限"));
     }
 }

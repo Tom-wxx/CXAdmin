@@ -88,6 +88,12 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     List<UserVO> selectUserList(@Param("query") SysUser query);
 
     /**
+     * Count whether a target user is visible within the current user's data scope
+     * (data-scope SQL fragment appended via {@code @DataScope}). Used for by-id authz checks.
+     */
+    long countUserInScope(@Param("query") SysUser query);
+
+    /**
      * Count users by role ID
      */
     Long countUsersByRoleId(@Param("roleId") Long roleId);
