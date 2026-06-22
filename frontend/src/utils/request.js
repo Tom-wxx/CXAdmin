@@ -5,7 +5,7 @@ import { HTTP_OK, HTTP_UNAUTHORIZED, HTTP_SERVER_ERROR } from '@/utils/constants
 
 // 创建axios实例
 const service = axios.create({
-  baseURL: process.env.VUE_APP_BASE_API,
+  baseURL: import.meta.env.VITE_APP_BASE_API,
   timeout: 10000,
   withCredentials: true
 })

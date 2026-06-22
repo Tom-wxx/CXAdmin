@@ -327,7 +327,7 @@ export default {
       },
       // 上传对话框
       uploadDialogVisible: false,
-      uploadUrl: process.env.VUE_APP_BASE_API + '/system/file/upload',
+      uploadUrl: import.meta.env.VITE_APP_BASE_API + '/system/file/upload',
       uploadFileList: [],
       // 编辑对话框
       editDialogVisible: false,

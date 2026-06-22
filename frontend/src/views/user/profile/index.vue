@@ -454,7 +454,7 @@ export default {
       }
 
       // 其他相对路径，拼接API地址
-      const baseURL = process.env.VUE_APP_BASE_API || '/api'
+      const baseURL = import.meta.env.VITE_APP_BASE_API || '/api'
       return baseURL + avatar
     },
     loadUserInfo() {

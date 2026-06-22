@@ -246,7 +246,7 @@ export default {
       if (avatar.startsWith('/uploads/')) {
         return '/api' + avatar
       }
-      const baseURL = process.env.VUE_APP_BASE_API || '/api'
+      const baseURL = import.meta.env.VITE_APP_BASE_API || '/api'
       return baseURL + avatar
     },
     async logout() {

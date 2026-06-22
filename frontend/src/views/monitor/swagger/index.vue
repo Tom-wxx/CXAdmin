@@ -13,7 +13,7 @@ export default {
   name: 'Swagger',
   data() {
     return {
-      swaggerUrl: process.env.VUE_APP_BASE_API + '/swagger-ui/index.html'
+      swaggerUrl: import.meta.env.VITE_APP_BASE_API + '/swagger-ui/index.html'
     }
   }
 }

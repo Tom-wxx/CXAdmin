@@ -191,7 +191,7 @@ export default {
     },
     ssoLogin(code) {
       // 走 SP 后端跳 IdP
-      window.location.href = process.env.VUE_APP_BASE_API + '/sso/authorize/' + code
+      window.location.href = import.meta.env.VITE_APP_BASE_API + '/sso/authorize/' + code
     }
   }
 }

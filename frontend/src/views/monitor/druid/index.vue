@@ -13,7 +13,7 @@ export default {
   name: 'Druid',
   data() {
     return {
-      druidUrl: process.env.VUE_APP_BASE_API + '/druid/index.html'
+      druidUrl: import.meta.env.VITE_APP_BASE_API + '/druid/index.html'
     }
   }
 }
