@@ -27,17 +27,18 @@
     "vuex": "^4.1.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.25.0",
     "@babel/eslint-parser": "^7.25.0",
-    "@types/js-cookie": "latest",
-    "@types/node": "latest",
-    "@types/nprogress": "latest",
+    "@types/js-cookie": "^3.0.6",
+    "@types/node": "^25.9.3",
+    "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^5.2.4",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.33.0",
     "sass": "^1.62.1",
-    "typescript": "latest",
+    "typescript": "^6.0.3",
     "vite": "^6.3.5",
-    "vue-tsc": "latest"
+    "vue-tsc": "^3.3.5"
   },
   "eslintConfig": {
     "root": true,

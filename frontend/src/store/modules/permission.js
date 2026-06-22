@@ -70,7 +70,12 @@ const viewModules = import.meta.glob('/src/views/**/*.vue')
 
 export const loadView = (view) => {
   // view 形如 'system/user/index'，匹配 /src/views/system/user/index.vue
-  return viewModules[`/src/views/${view}.vue`]
+  const mod = viewModules[`/src/views/${view}.vue`]
+  if (!mod) {
+    // 后端 component 字段与实际文件不匹配时，路由会静默跳过导致白屏，这里给出明确告警便于排错
+    console.warn(`[loadView] 未找到视图组件: /src/views/${view}.vue`)
+  }
+  return mod
 }
 
 export default {
