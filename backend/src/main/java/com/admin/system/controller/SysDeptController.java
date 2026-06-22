@@ -1,6 +1,6 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.Result;
+import com.admin.common.Result;
 import com.admin.system.entity.SysDept;
 import com.admin.system.service.ISysDeptService;
 import io.swagger.v3.oas.annotations.tags.Tag;

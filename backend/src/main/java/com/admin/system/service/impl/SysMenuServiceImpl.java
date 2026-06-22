@@ -6,7 +6,7 @@ import com.admin.system.service.ISysMenuService;
 import com.admin.system.vo.MetaVo;
 import com.admin.system.vo.RouterVo;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.constants.SystemConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -255,7 +255,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     public void insertMenu(com.admin.system.dto.MenuDTO menuDTO) {
         // 校验菜单名称唯一性
         if (!checkMenuNameUnique(menuDTO.getMenuName(), null, menuDTO.getParentId())) {
-            throw new com.admin.system.common.exception.ServiceException("新增菜单'" + menuDTO.getMenuName() + "'失败，菜单名称已存在");
+            throw new com.admin.common.exception.ServiceException("新增菜单'" + menuDTO.getMenuName() + "'失败，菜单名称已存在");
         }
 
         // DTO 转 Entity
@@ -269,12 +269,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     @Override
     public void updateMenu(com.admin.system.dto.MenuDTO menuDTO) {
         if (menuDTO.getMenuId() == null) {
-            throw new com.admin.system.common.exception.ServiceException("菜单ID不能为空");
+            throw new com.admin.common.exception.ServiceException("菜单ID不能为空");
         }
 
         // 校验菜单名称唯一性
         if (!checkMenuNameUnique(menuDTO.getMenuName(), menuDTO.getMenuId(), menuDTO.getParentId())) {
-            throw new com.admin.system.common.exception.ServiceException("修改菜单'" + menuDTO.getMenuName() + "'失败，菜单名称已存在");
+            throw new com.admin.common.exception.ServiceException("修改菜单'" + menuDTO.getMenuName() + "'失败，菜单名称已存在");
         }
 
         // DTO 转 Entity
@@ -288,12 +288,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     @Override
     public void deleteMenuById(Long menuId, boolean force) {
         if (menuId == null) {
-            throw new com.admin.system.common.exception.ServiceException("菜单ID不能为空");
+            throw new com.admin.common.exception.ServiceException("菜单ID不能为空");
         }
 
         // 如果不是强制删除，检查是否有子菜单
         if (!force && hasChildByMenuId(menuId)) {
-            throw new com.admin.system.common.exception.ServiceException("存在子菜单，不允许删除");
+            throw new com.admin.common.exception.ServiceException("存在子菜单，不允许删除");
         }
 
         // 删除菜单

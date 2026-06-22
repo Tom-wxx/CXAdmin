@@ -1,8 +1,8 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.Result;
-import com.admin.system.common.constants.SystemConstants;
-import com.admin.system.config.JwtProperties;
+import com.admin.common.Result;
+import com.admin.common.constants.SystemConstants;
+import com.admin.common.config.JwtProperties;
 import com.admin.system.dto.LoginDTO;
 import com.admin.system.service.ILoginService;
 import io.swagger.v3.oas.annotations.tags.Tag;

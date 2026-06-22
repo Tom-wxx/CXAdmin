@@ -1,6 +1,6 @@
 package com.admin.system.config;
 
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.constants.SystemConstants;
 import com.admin.system.security.LoginUser;
 import com.admin.system.security.SecurityUtils;
 import org.springframework.stereotype.Service;

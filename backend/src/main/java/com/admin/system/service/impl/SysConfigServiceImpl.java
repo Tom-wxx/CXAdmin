@@ -1,12 +1,12 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.exception.ServiceException;
+import com.admin.common.exception.ServiceException;
 import com.admin.system.entity.SysConfig;
 import com.admin.system.mapper.SysConfigMapper;
 import com.admin.system.service.ISysConfigService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.constants.SystemConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,7 +1,7 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.PageResult;
-import com.admin.system.common.Result;
+import com.admin.common.PageResult;
+import com.admin.common.Result;
 import com.admin.system.generator.GenConfig;
 import com.admin.system.generator.TableInfo;
 import com.admin.system.service.ICodeGeneratorService;

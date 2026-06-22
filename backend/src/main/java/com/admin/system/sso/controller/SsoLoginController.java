@@ -1,6 +1,6 @@
 package com.admin.system.sso.controller;
 
-import com.admin.system.common.Result;
+import com.admin.common.Result;
 import com.admin.system.sso.service.ISsoLoginService;
 import com.admin.system.sso.service.ISysSsoProviderService;
 import com.admin.system.sso.vo.SsoProviderPublicVO;

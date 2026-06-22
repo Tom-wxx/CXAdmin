@@ -1,8 +1,8 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.constants.SystemConstants;
-import com.admin.system.common.exception.ServiceException;
-import com.admin.system.config.JwtProperties;
+import com.admin.common.constants.SystemConstants;
+import com.admin.common.exception.ServiceException;
+import com.admin.common.config.JwtProperties;
 import com.admin.system.dto.LoginDTO;
 import com.admin.system.entity.SysFile;
 import com.admin.system.entity.SysLoginLog;
@@ -15,10 +15,10 @@ import com.admin.system.service.ISysFileService;
 import com.admin.system.service.ISysLoginLogService;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.service.ISysUserService;
-import com.admin.system.utils.CaptchaUtil;
-import com.admin.system.utils.IpUtil;
-import com.admin.system.utils.JwtUtil;
-import com.admin.system.utils.RedisUtil;
+import com.admin.common.utils.CaptchaUtil;
+import com.admin.common.utils.IpUtil;
+import com.admin.common.utils.JwtUtil;
+import com.admin.common.utils.RedisUtil;
 import com.admin.system.vo.RouterVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

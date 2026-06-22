@@ -1,6 +1,6 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.PageResult;
+import com.admin.common.PageResult;
 import com.admin.system.generator.CodeGeneratorUtil;
 import com.admin.system.generator.ColumnInfo;
 import com.admin.system.generator.GenConfig;

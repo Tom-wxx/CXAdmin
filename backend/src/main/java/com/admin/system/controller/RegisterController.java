@@ -1,6 +1,6 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.Result;
+import com.admin.common.Result;
 import com.admin.system.dto.ForgotPasswordDTO;
 import com.admin.system.dto.RegisterDTO;
 import com.admin.system.dto.ResetPasswordDTO;

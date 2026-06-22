@@ -1,4 +1,4 @@
-package com.admin.system.utils;
+package com.admin.common.utils;
 
 import org.springframework.util.DigestUtils;
 

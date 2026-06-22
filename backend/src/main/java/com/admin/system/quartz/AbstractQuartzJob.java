@@ -3,7 +3,7 @@ package com.admin.system.quartz;
 import com.admin.system.entity.SysJob;
 import com.admin.system.entity.SysJobLog;
 import com.admin.system.service.ISysJobLogService;
-import com.admin.system.utils.SpringUtils;
+import com.admin.common.utils.SpringUtils;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;

@@ -1,6 +1,6 @@
 package com.admin.system.entity;
 
-import com.admin.system.common.BaseEntity;
+import com.admin.common.BaseEntity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;

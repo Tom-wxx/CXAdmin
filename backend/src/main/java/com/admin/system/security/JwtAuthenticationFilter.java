@@ -1,9 +1,9 @@
 package com.admin.system.security;
 
-import com.admin.system.common.constants.SystemConstants;
-import com.admin.system.config.JwtProperties;
-import com.admin.system.utils.JwtUtil;
-import com.admin.system.utils.RedisUtil;
+import com.admin.common.constants.SystemConstants;
+import com.admin.common.config.JwtProperties;
+import com.admin.common.utils.JwtUtil;
+import com.admin.common.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

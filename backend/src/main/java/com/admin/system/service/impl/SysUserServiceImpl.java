@@ -1,8 +1,8 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.annotation.DataScope;
-import com.admin.system.common.exception.ServiceException;
-import com.admin.system.config.DataScopeChecker;
+import com.admin.common.annotation.DataScope;
+import com.admin.common.exception.ServiceException;
+import com.admin.system.datascope.DataScopeChecker;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
@@ -14,7 +14,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.constants.SystemConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

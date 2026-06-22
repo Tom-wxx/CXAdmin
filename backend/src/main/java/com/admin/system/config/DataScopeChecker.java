@@ -1,6 +1,6 @@
 package com.admin.system.config;
 
-import com.admin.system.annotation.DataScope;
+import com.admin.common.annotation.DataScope;
 import com.admin.system.entity.SysDept;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysDeptMapper;

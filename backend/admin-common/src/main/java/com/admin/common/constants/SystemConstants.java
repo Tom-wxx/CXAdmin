@@ -1,4 +1,4 @@
-package com.admin.system.common.constants;
+package com.admin.common.constants;
 
 /**
  * 系统常量

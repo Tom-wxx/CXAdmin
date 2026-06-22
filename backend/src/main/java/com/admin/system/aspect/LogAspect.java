@@ -1,11 +1,11 @@
 package com.admin.system.aspect;
 
-import com.admin.system.annotation.Log;
+import com.admin.common.annotation.Log;
 import com.admin.system.entity.SysOperLog;
 import com.admin.system.security.LoginUser;
 import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.ISysOperLogService;
-import com.admin.system.utils.IpUtil;
+import com.admin.common.utils.IpUtil;
 import com.alibaba.fastjson2.JSON;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -44,7 +44,7 @@ public class LogAspect {
     /**
      * 配置织入点
      */
-    @Pointcut("@annotation(com.admin.system.annotation.Log)")
+    @Pointcut("@annotation(com.admin.common.annotation.Log)")
     public void logPointCut() {
     }
 

@@ -1,6 +1,6 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.exception.ServiceException;
+import com.admin.common.exception.ServiceException;
 import com.admin.system.entity.SysLoginLog;
 import com.admin.system.mapper.SysLoginLogMapper;
 import com.admin.system.service.ISysLoginLogService;

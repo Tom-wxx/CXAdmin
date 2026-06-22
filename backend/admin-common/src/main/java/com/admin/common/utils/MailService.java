@@ -1,6 +1,6 @@
-package com.admin.system.utils;
+package com.admin.common.utils;
 
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.constants.SystemConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

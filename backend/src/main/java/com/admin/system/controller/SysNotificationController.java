@@ -1,7 +1,7 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.PageResult;
-import com.admin.system.common.Result;
+import com.admin.common.PageResult;
+import com.admin.common.Result;
 import com.admin.system.dto.PageQuery;
 import com.admin.system.entity.SysNotification;
 import com.admin.system.security.SecurityUtils;

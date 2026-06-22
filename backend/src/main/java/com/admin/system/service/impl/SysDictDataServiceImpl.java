@@ -1,6 +1,6 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.exception.ServiceException;
+import com.admin.common.exception.ServiceException;
 import com.admin.system.entity.SysDictData;
 import com.admin.system.mapper.SysDictDataMapper;
 import com.admin.system.service.ISysDictDataService;

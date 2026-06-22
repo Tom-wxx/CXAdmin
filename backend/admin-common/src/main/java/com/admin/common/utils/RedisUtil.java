@@ -1,4 +1,4 @@
-package com.admin.system.utils;
+package com.admin.common.utils;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;

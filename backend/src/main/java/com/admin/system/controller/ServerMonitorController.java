@@ -1,6 +1,6 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.Result;
+import com.admin.common.Result;
 import com.admin.system.service.IServerMonitorService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;

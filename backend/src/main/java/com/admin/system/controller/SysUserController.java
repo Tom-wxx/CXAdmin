@@ -1,13 +1,13 @@
 package com.admin.system.controller;
 
-import com.admin.system.annotation.Log;
-import com.admin.system.common.PageResult;
-import com.admin.system.common.Result;
+import com.admin.common.annotation.Log;
+import com.admin.common.PageResult;
+import com.admin.common.Result;
 import com.admin.system.dto.PageQuery;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.service.ISysUserService;
-import com.admin.system.utils.PageUtils;
+import com.admin.common.utils.PageUtils;
 import com.admin.system.vo.UserVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.admin.system.utils.ExcelUtil;
+import com.admin.common.utils.ExcelUtil;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletResponse;

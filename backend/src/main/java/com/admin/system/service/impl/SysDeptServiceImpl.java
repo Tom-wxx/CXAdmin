@@ -1,13 +1,13 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.annotation.DataScope;
-import com.admin.system.common.exception.ServiceException;
-import com.admin.system.config.DataScopeChecker;
+import com.admin.common.annotation.DataScope;
+import com.admin.common.exception.ServiceException;
+import com.admin.system.datascope.DataScopeChecker;
 import com.admin.system.entity.SysDept;
 import com.admin.system.mapper.SysDeptMapper;
 import com.admin.system.service.ISysDeptService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.constants.SystemConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

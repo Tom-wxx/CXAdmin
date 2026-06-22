@@ -1,7 +1,7 @@
 package com.admin.system.service;
 
-import com.admin.system.common.exception.ServiceException;
-import com.admin.system.config.DataScopeChecker;
+import com.admin.common.exception.ServiceException;
+import com.admin.system.datascope.DataScopeChecker;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;

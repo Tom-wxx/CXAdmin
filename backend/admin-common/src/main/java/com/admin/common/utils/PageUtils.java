@@ -1,6 +1,6 @@
-package com.admin.system.utils;
+package com.admin.common.utils;
 
-import com.admin.system.common.PageResult;
+import com.admin.common.PageResult;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 /**

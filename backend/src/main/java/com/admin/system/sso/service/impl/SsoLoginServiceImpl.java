@@ -1,8 +1,8 @@
 package com.admin.system.sso.service.impl;
 
-import com.admin.system.common.constants.SystemConstants;
-import com.admin.system.common.exception.ServiceException;
-import com.admin.system.config.JwtProperties;
+import com.admin.common.constants.SystemConstants;
+import com.admin.common.exception.ServiceException;
+import com.admin.common.config.JwtProperties;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
 import com.admin.system.security.LoginUser;
@@ -20,8 +20,8 @@ import com.admin.system.sso.strategy.SsoStrategy;
 import com.admin.system.sso.strategy.SsoStrategyFactory;
 import com.admin.system.sso.util.PkceUtil;
 import com.admin.system.sso.vo.SsoBindingVO;
-import com.admin.system.utils.JwtUtil;
-import com.admin.system.utils.RedisUtil;
+import com.admin.common.utils.JwtUtil;
+import com.admin.common.utils.RedisUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

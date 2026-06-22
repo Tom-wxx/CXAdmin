@@ -1,6 +1,6 @@
 package com.admin.system.config;
 
-import com.admin.system.common.BaseEntity;
+import com.admin.common.BaseEntity;
 import com.admin.system.security.SecurityUtils;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;

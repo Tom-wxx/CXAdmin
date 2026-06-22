@@ -1,6 +1,6 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.Result;
+import com.admin.common.Result;
 import com.admin.system.service.IDashboardService;
 import com.admin.system.vo.DashboardVO;
 import io.swagger.v3.oas.annotations.tags.Tag;

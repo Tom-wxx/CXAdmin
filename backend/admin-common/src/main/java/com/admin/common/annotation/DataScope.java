@@ -1,4 +1,4 @@
-package com.admin.system.annotation;
+package com.admin.common.annotation;
 
 import java.lang.annotation.*;
 

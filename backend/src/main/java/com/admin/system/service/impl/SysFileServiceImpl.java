@@ -1,12 +1,12 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.exception.ServiceException;
-import com.admin.system.config.FileUploadConfig;
+import com.admin.common.exception.ServiceException;
+import com.admin.common.config.FileUploadConfig;
 import com.admin.system.entity.SysFile;
 import com.admin.system.mapper.SysFileMapper;
 import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.ISysFileService;
-import com.admin.system.utils.FileUtil;
+import com.admin.common.utils.FileUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

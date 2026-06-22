@@ -1,8 +1,8 @@
 package com.admin.system.aspect;
 
-import com.admin.system.annotation.DataScope;
-import com.admin.system.common.BaseEntity;
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.annotation.DataScope;
+import com.admin.common.BaseEntity;
+import com.admin.common.constants.SystemConstants;
 import com.admin.system.entity.SysRole;
 import com.admin.system.security.LoginUser;
 import com.admin.system.security.SecurityUtils;

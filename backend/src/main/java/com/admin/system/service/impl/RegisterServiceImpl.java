@@ -1,14 +1,14 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.constants.SystemConstants;
-import com.admin.system.common.exception.ServiceException;
+import com.admin.common.constants.SystemConstants;
+import com.admin.common.exception.ServiceException;
 import com.admin.system.dto.RegisterDTO;
 import com.admin.system.dto.ResetPasswordDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
 import com.admin.system.service.IRegisterService;
-import com.admin.system.utils.MailService;
-import com.admin.system.utils.RedisUtil;
+import com.admin.common.utils.MailService;
+import com.admin.common.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;

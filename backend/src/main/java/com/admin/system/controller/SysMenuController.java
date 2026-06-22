@@ -1,6 +1,6 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.Result;
+import com.admin.common.Result;
 import com.admin.system.dto.MenuDTO;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.vo.MenuVO;

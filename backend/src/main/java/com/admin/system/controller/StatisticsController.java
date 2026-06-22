@@ -1,6 +1,6 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.Result;
+import com.admin.common.Result;
 import com.admin.system.service.IStatisticsService;
 import com.admin.system.vo.StatisticsVO;
 import com.admin.system.vo.SystemOverviewVO;

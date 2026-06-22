@@ -1,6 +1,6 @@
 package com.admin.system.service;
 
-import com.admin.system.common.PageResult;
+import com.admin.common.PageResult;
 import com.admin.system.generator.GenConfig;
 import com.admin.system.generator.TableInfo;
 

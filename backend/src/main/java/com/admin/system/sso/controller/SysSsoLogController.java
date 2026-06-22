@@ -1,6 +1,6 @@
 package com.admin.system.sso.controller;
 
-import com.admin.system.common.PageResult;
+import com.admin.common.PageResult;
 import com.admin.system.sso.entity.SysSsoLoginLog;
 import com.admin.system.sso.service.ISsoAuditLogService;
 import com.baomidou.mybatisplus.core.metadata.IPage;

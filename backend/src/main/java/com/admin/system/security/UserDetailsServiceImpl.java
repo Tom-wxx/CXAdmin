@@ -1,10 +1,10 @@
 package com.admin.system.security;
 
-import com.admin.system.common.exception.ServiceException;
+import com.admin.common.exception.ServiceException;
 import com.admin.system.entity.SysUser;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.service.ISysUserService;
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.constants.SystemConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

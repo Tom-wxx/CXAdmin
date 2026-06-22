@@ -1,11 +1,11 @@
 package com.admin.system.service;
 
-import com.admin.system.config.JwtProperties;
+import com.admin.common.config.JwtProperties;
 import com.admin.system.dto.LoginDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.security.LoginUser;
 import com.admin.system.service.impl.LoginServiceImpl;
-import com.admin.system.utils.RedisUtil;
+import com.admin.common.utils.RedisUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

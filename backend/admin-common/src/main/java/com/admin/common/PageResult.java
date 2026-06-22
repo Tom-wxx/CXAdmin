@@ -1,4 +1,4 @@
-package com.admin.system.common;
+package com.admin.common;
 
 import lombok.Data;
 

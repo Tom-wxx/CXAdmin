@@ -1,6 +1,6 @@
 package com.admin.system.service;
 
-import com.admin.system.common.exception.ServiceException;
+import com.admin.common.exception.ServiceException;
 import com.admin.system.dto.RoleDTO;
 import com.admin.system.entity.SysRole;
 import com.admin.system.mapper.SysRoleMapper;

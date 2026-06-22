@@ -1,7 +1,7 @@
 package com.admin.system.sso.controller;
 
-import com.admin.system.common.PageResult;
-import com.admin.system.common.Result;
+import com.admin.common.PageResult;
+import com.admin.common.Result;
 import com.admin.system.sso.dto.SsoProviderDTO;
 import com.admin.system.sso.entity.SysSsoProvider;
 import com.admin.system.sso.service.ISysSsoProviderService;

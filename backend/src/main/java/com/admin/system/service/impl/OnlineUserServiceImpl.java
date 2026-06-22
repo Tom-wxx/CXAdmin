@@ -1,14 +1,14 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.PageResult;
-import com.admin.system.common.exception.ServiceException;
+import com.admin.common.PageResult;
+import com.admin.common.exception.ServiceException;
 import com.admin.system.entity.SysDept;
 import com.admin.system.entity.SysUser;
 import com.admin.system.security.LoginUser;
 import com.admin.system.service.IOnlineUserService;
-import com.admin.system.common.constants.SystemConstants;
+import com.admin.common.constants.SystemConstants;
 import com.admin.system.service.ISysDeptService;
-import com.admin.system.utils.RedisUtil;
+import com.admin.common.utils.RedisUtil;
 import com.admin.system.vo.OnlineUserVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;

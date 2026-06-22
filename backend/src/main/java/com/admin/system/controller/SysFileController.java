@@ -1,12 +1,12 @@
 package com.admin.system.controller;
 
-import com.admin.system.common.PageResult;
-import com.admin.system.common.Result;
+import com.admin.common.PageResult;
+import com.admin.common.Result;
 import com.admin.system.dto.PageQuery;
 import com.admin.system.entity.SysFile;
 import com.admin.system.service.ISysFileService;
-import com.admin.system.utils.FileUtil;
-import com.admin.system.utils.PageUtils;
+import com.admin.common.utils.FileUtil;
+import com.admin.common.utils.PageUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.tags.Tag;

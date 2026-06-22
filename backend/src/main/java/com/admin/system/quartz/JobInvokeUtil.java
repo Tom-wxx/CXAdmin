@@ -1,7 +1,7 @@
 package com.admin.system.quartz;
 
 import com.admin.system.entity.SysJob;
-import com.admin.system.utils.SpringUtils;
+import com.admin.common.utils.SpringUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;

@@ -1,6 +1,6 @@
 package com.admin.system.service.impl;
 
-import com.admin.system.common.exception.ServiceException;
+import com.admin.common.exception.ServiceException;
 import com.admin.system.entity.SysJob;
 import com.admin.system.mapper.SysJobMapper;
 import com.admin.system.quartz.ScheduleConstants;

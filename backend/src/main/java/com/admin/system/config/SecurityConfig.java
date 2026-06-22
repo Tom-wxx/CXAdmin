@@ -1,6 +1,6 @@
 package com.admin.system.config;
 
-import com.admin.system.security.JwtAuthenticationFilter;
+import com.admin.framework.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
