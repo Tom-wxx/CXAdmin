@@ -3,6 +3,8 @@
  * 兼容新旧URL格式，确保头像正确显示
  */
 
+import logoUrl from '@/assets/logo.png'
+
 /**
  * 获取头像的完整访问URL
  * @param {string} avatar - 头像路径（可能是完整URL、相对路径、新格式或旧格式）
@@ -12,7 +14,7 @@
 export function getAvatarUrl(avatar, defaultAvatar = null) {
   // 如果没有头像，返回默认头像
   if (!avatar) {
-    return defaultAvatar || require('@/assets/logo.png')
+    return defaultAvatar || logoUrl
   }
 
   // 如果已经是完整URL（http或https开头），直接返回

@@ -1,5 +1,6 @@
 import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
+import logoUrl from '@/assets/logo.png'
 
 const state = {
   token: getToken(),
@@ -51,7 +52,7 @@ const actions = {
     return new Promise((resolve, reject) => {
       getInfo().then(res => {
         const user = res.data.user
-        const avatar = user.avatar || require('@/assets/logo.png')
+        const avatar = user.avatar || logoUrl
 
         if (res.data.roles && res.data.roles.length > 0) {
           commit('SET_ROLES', res.data.roles)

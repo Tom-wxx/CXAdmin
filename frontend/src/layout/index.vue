@@ -157,6 +157,7 @@ import SidebarItem from './components/Sidebar/SidebarItem'
 import SidebarLogo from './components/Sidebar/Logo'
 import AppMain from './components/AppMain'
 import ThemeSettings from '@/components/ThemeSettings'
+import logoUrl from '@/assets/logo.png'
 
 export default {
   name: 'Layout',
@@ -234,7 +235,7 @@ export default {
     },
     getAvatarUrl(avatar) {
       if (!avatar) {
-        return require('@/assets/logo.png')
+        return logoUrl
       }
       if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
         return avatar
