@@ -65,9 +65,12 @@ function filterAsyncRouter(asyncRouterMap, parent) {
   })
 }
 
+// Vite：预生成 views 下所有 .vue 模块的懒加载表（key 为绝对路径 /src/views/...）
+const viewModules = import.meta.glob('/src/views/**/*.vue')
+
 export const loadView = (view) => {
-  // Vue 3 异步组件：返回一个返回 import() Promise 的函数
-  return () => import(`@/views/${view}`)
+  // view 形如 'system/user/index'，匹配 /src/views/system/user/index.vue
+  return viewModules[`/src/views/${view}.vue`]
 }
 
 export default {
