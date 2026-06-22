@@ -2,8 +2,8 @@ package ${packageName}.controller;
 
 import ${packageName}.entity.${className};
 import ${packageName}.service.I${className}Service;
-import com.admin.system.common.PageResult;
-import com.admin.system.common.Result;
+import com.admin.common.PageResult;
+import com.admin.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

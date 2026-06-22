@@ -1,4 +1,4 @@
-package com.admin.system.config;
+package com.admin.system.datascope;
 
 import com.admin.common.annotation.DataScope;
 import com.admin.system.entity.SysDept;
