@@ -1,7 +1,8 @@
-package com.admin.system.security;
+package com.admin.framework.security;
 
 import com.admin.common.exception.ServiceException;
 import com.admin.system.entity.SysUser;
+import com.admin.system.security.LoginUser;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.service.ISysUserService;
 import com.admin.common.constants.SystemConstants;

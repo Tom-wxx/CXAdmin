@@ -1,7 +1,8 @@
-package com.admin.system.security;
+package com.admin.framework.security;
 
 import com.admin.common.constants.SystemConstants;
 import com.admin.common.config.JwtProperties;
+import com.admin.system.security.LoginUser;
 import com.admin.common.utils.JwtUtil;
 import com.admin.common.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;

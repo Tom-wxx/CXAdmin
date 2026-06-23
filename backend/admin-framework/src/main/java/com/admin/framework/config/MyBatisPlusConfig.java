@@ -1,4 +1,4 @@
-package com.admin.system.config;
+package com.admin.framework.config;
 
 import com.admin.common.BaseEntity;
 import com.admin.system.security.SecurityUtils;

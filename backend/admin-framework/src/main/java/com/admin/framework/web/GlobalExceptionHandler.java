@@ -1,5 +1,7 @@
-package com.admin.system.common;
+package com.admin.framework.web;
 
+import com.admin.common.Result;
+import com.admin.common.ResultCode;
 import com.admin.common.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;

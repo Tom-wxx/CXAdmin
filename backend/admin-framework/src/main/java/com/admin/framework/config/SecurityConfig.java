@@ -1,4 +1,4 @@
-package com.admin.system.config;
+package com.admin.framework.config;
 
 import com.admin.framework.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;

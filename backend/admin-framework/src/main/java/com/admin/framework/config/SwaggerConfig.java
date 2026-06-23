@@ -1,4 +1,4 @@
-package com.admin.system.config;
+package com.admin.framework.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
