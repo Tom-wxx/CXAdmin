@@ -1,28 +1,25 @@
-import axios from 'axios'
+import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type AxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import store from '@/store'
 import { HTTP_OK, HTTP_UNAUTHORIZED, HTTP_SERVER_ERROR } from '@/utils/constants'
+import type { Result } from '@/types/api'
 
-// 创建axios实例
-const service = axios.create({
+// 创建 axios 实例
+const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_APP_BASE_API,
   timeout: 10000,
   withCredentials: true
 })
 
-// request拦截器
+// request 拦截器
 service.interceptors.request.use(
-  config => {
-    return config
-  },
-  error => {
-    return Promise.reject(error)
-  }
+  (config: AxiosRequestConfig) => config,
+  (error: unknown) => Promise.reject(error)
 )
 
-// response 拦截器
+// response 拦截器：成功时把后端 Result 解包返回
 service.interceptors.response.use(
-  response => {
+  (response: AxiosResponse) => {
     const res = response.data
     const code = res.code || HTTP_OK
 
@@ -55,8 +52,8 @@ service.interceptors.response.use(
       return res
     }
   },
-  error => {
-    let { message } = error
+  (error: AxiosError) => {
+    let message = error.message || ''
     if (message === 'Network Error') {
       message = '后端接口连接异常'
     } else if (message.includes('timeout')) {
@@ -73,4 +70,13 @@ service.interceptors.response.use(
   }
 )
 
-export default service
+/**
+ * 业务层类型化请求。
+ * 响应拦截器已把后端响应解包为 Result，故返回 Promise<Result<T>>；
+ * 对 responseType:'blob' 等场景，由调用方按需断言为 Promise<Blob>。
+ */
+export function request<T = unknown>(config: AxiosRequestConfig): Promise<Result<T>> {
+  return service(config) as unknown as Promise<Result<T>>
+}
+
+export default request
