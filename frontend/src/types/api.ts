@@ -23,3 +23,10 @@ export interface PageQuery {
   current?: number
   size?: number
 }
+
+/** 下拉树选项（部门/菜单 treeselect 等返回） */
+export interface TreeOption {
+  id: number
+  label: string
+  children?: TreeOption[]
+}
