@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import type { DirectiveBinding } from 'vue'
 import App from './App.vue'
 import router from './router'
-import store from './store'
+import store, { key } from './store'
 
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -60,7 +60,7 @@ window.addEventListener('error', event => {
 }, true)
 
 app.use(router)
-app.use(store)
+app.use(store, key)
 app.use(ElementPlus, { locale: zhCn })
 
 // 按钮级权限指令 v-hasPermi：无权限则从 DOM 移除元素（super-admin 的 '*:*:*' 放行）
