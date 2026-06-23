@@ -1,4 +1,4 @@
-package com.admin.system;
+package com.admin;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -13,10 +13,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @MapperScan({"com.admin.system.mapper", "com.admin.system.sso.mapper"})
 @EnableScheduling
-public class AdminSystemApplication {
+public class AdminApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(AdminSystemApplication.class, args);
+        SpringApplication.run(AdminApplication.class, args);
         System.out.println("\n" +
                 "  ___      _           _         ____            _                 \n" +
                 " / _ \\    | |         (_)       / ___|          | |                \n" +
@@ -28,5 +28,4 @@ public class AdminSystemApplication {
                 "                                         |___/                       \n" +
                 "\n后台管理系统启动成功！访问地址：http://localhost:8080/api\n");
     }
-
 }

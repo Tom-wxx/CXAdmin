@@ -47,7 +47,7 @@ jwt:
 logging:
   level:
     root: warn
-    com.admin.system: info
+    com.admin: info
     org.springframework.web: warn
     org.springframework.security: warn
     com.alibaba.druid: warn

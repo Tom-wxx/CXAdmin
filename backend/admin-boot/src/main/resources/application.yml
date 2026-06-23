@@ -173,7 +173,7 @@ file:
 logging:
   level:
     root: info
-    com.admin.system: debug
+    com.admin: debug
     # 特定组件日志级别
     org.springframework.web: info
     org.springframework.security: debug
