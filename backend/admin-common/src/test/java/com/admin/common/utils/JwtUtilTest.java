@@ -1,4 +1,4 @@
-package com.admin.system.utils;
+package com.admin.common.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;

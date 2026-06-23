@@ -1,7 +1,8 @@
-package com.admin.system.security;
+package com.admin.framework.security;
 
 import com.admin.common.config.JwtProperties;
 import com.admin.system.entity.SysUser;
+import com.admin.system.security.LoginUser;
 import com.admin.common.utils.RedisUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

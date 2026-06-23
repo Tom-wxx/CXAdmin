@@ -1,4 +1,4 @@
-package com.admin.system.config;
+package com.admin.framework.config;
 
 import com.admin.system.entity.SysUser;
 import com.admin.system.security.LoginUser;

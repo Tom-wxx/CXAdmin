@@ -1,4 +1,4 @@
-package com.admin.system.aspect;
+package com.admin.framework.aspect;
 
 import com.admin.system.entity.SysRole;
 import com.admin.system.entity.SysUser;
