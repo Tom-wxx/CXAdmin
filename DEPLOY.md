@@ -83,7 +83,7 @@ systemctl restart redis
 cd backend
 mvn clean package -DskipTests
 
-# 打包完成后，在 target 目录下会生成 admin-system-1.0.0.jar
+# 打包完成后，产物为 backend/admin-boot/target/admin-system.jar
 ```
 
 #### 6. 上传并运行
@@ -93,7 +93,7 @@ mkdir -p /opt/admin-system
 cd /opt/admin-system
 
 # 上传jar包到服务器
-# 使用scp或其他工具上传 admin-system-1.0.0.jar
+# 使用scp或其他工具上传 admin-system.jar
 
 # 创建启动脚本
 vi start.sh
@@ -102,7 +102,7 @@ vi start.sh
 **start.sh 内容：**
 ```bash
 #!/bin/bash
-nohup java -jar -Xms512m -Xmx1024m admin-system-1.0.0.jar --spring.profiles.active=prod > logs/app.log 2>&1 &
+nohup java -jar -Xms512m -Xmx1024m admin-system.jar --spring.profiles.active=prod > logs/app.log 2>&1 &
 echo $! > app.pid
 ```
 
@@ -132,7 +132,7 @@ After=syslog.target network.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/bin/java -jar -Xms512m -Xmx1024m /opt/admin-system/admin-system-1.0.0.jar --spring.profiles.active=prod
+ExecStart=/usr/bin/java -jar -Xms512m -Xmx1024m /opt/admin-system/admin-system.jar --spring.profiles.active=prod
 ExecStop=/bin/kill -15 $MAINPID
 Restart=on-failure
 RestartSec=10s
@@ -427,7 +427,7 @@ yum update
 mysqldump -u root -p admin_system > backup.sql
 
 # 备份应用
-cp admin-system-1.0.0.jar admin-system-1.0.0.jar.bak
+cp admin-system.jar admin-system.jar.bak
 ```
 
 #### 2. 部署新版本
@@ -454,7 +454,7 @@ tail -f logs/admin-system.log
 systemctl stop admin-system
 
 # 恢复旧版本
-mv admin-system-1.0.0.jar.bak admin-system-1.0.0.jar
+mv admin-system.jar.bak admin-system.jar
 
 # 恢复数据库
 mysql -u root -p admin_system < backup.sql

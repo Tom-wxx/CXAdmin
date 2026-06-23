@@ -1,0 +1,81 @@
+package com.admin.system.controller;
+
+import com.admin.common.Result;
+import com.admin.common.constants.SystemConstants;
+import com.admin.common.config.JwtProperties;
+import com.admin.system.dto.LoginDTO;
+import com.admin.system.service.ILoginService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import java.util.Map;
+
+@Tag(name = "登录管理")
+@RestController
+@RequiredArgsConstructor
+public class LoginController {
+
+    private final ILoginService loginService;
+    private final JwtProperties jwtProperties;
+
+    @Operation(summary = "用户登录")
+    @PostMapping("/login")
+    public Result<Map<String, Object>> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletResponse response) {
+        Map<String, Object> result = loginService.login(loginDTO);
+        String token = (String) result.remove("token");
+        // Build the Set-Cookie header manually to include SameSite=Lax (CSRF mitigation)
+        String cookieHeader = SystemConstants.TOKEN_COOKIE_NAME + "=" + token
+                + "; Path=/"
+                + "; HttpOnly"
+                + "; Max-Age=" + (jwtProperties.getExpireTime() * 60)
+                + "; SameSite=Lax";
+        response.addHeader("Set-Cookie", cookieHeader);
+        return Result.success(result);
+    }
+
+    @Operation(summary = "退出登录")
+    @PostMapping("/logout")
+    public Result<Void> logout(HttpServletResponse response) {
+        loginService.logout();
+        // 清 HttpOnly JWT cookie
+        response.addHeader("Set-Cookie", SystemConstants.TOKEN_COOKIE_NAME + "=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax");
+        // 清前端路由守卫读的会话标记 cookie（SSO 登录走的也是它）
+        response.addHeader("Set-Cookie", SystemConstants.SESSION_COOKIE_NAME + "=; Path=/; Max-Age=0; SameSite=Lax");
+        return Result.success("退出成功");
+    }
+
+    @Operation(summary = "获取验证码")
+    @GetMapping("/captcha")
+    public Result<Map<String, Object>> getCaptcha() {
+        return Result.success(loginService.getCaptcha());
+    }
+
+    @Operation(summary = "获取用户信息")
+    @GetMapping("/getInfo")
+    public Result<Map<String, Object>> getInfo() {
+        return Result.success(loginService.getInfo());
+    }
+
+    @Operation(summary = "获取路由信息")
+    @GetMapping("/getRouters")
+    public Result<Map<String, Object>> getRouters() {
+        return Result.success(loginService.getRouters());
+    }
+
+    @Operation(summary = "上传头像")
+    @PostMapping("/profile/avatar")
+    public Result<Map<String, Object>> uploadAvatar(
+            @Parameter(description = "头像文件") @RequestParam("file") MultipartFile file) {
+        try {
+            return Result.success("头像上传成功", loginService.uploadAvatar(file));
+        } catch (Exception e) {
+            return Result.fail("头像上传失败: " + e.getMessage());
+        }
+    }
+}

@@ -1,0 +1,67 @@
+# ============================================================================
+# 生产环境配置（profile=prod，覆盖 application.yml 中的 dev 默认值）
+# 启用方式：--spring.profiles.active=prod 或 SPRING_PROFILES_ACTIVE=prod
+#
+# 安全约定：本文件【不含任何明文密钥】，全部敏感值经环境变量注入，缺失即启动失败。
+# 必需环境变量：DB_URL DB_USERNAME DB_PASSWORD JWT_SECRET ADMIN_SSO_CRYPTO_KEY
+#               REDIS_HOST REDIS_PASSWORD APP_FRONTEND_URL SSO_CALLBACK_BASE_URL SSO_FRONT_BASE_URL
+# ============================================================================
+
+spring:
+  # 生产关闭热部署（打包 jar 本就不含 devtools，这里再显式关闭一层）
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+
+  datasource:
+    druid:
+      url: ${DB_URL}
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+      # 生产关闭 Druid 监控台（避免 /druid/* 暴露；如需开启请改 enabled 并经环境变量注入强口令）
+      stat-view-servlet:
+        enabled: false
+        # 控制台默认关闭；如需在生产开启，必须经环境变量注入强口令（空默认即覆盖掉 base 的 admin/admin）
+        login-username: ${DRUID_CONSOLE_USER:}
+        login-password: ${DRUID_CONSOLE_PASSWORD:}
+      web-stat-filter:
+        enabled: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      password: ${REDIS_PASSWORD}
+
+# 生产关闭 MyBatis Plus 的全量 SQL 控制台打印
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+# JWT 密钥：生产强制环境变量，无内置默认
+jwt:
+  secret: ${JWT_SECRET}
+
+# 日志收敛：生产不输出 debug，尤其 Spring Security 不再 debug
+logging:
+  level:
+    root: warn
+    com.admin: info
+    org.springframework.web: warn
+    org.springframework.security: warn
+    com.alibaba.druid: warn
+
+# 前端访问地址（重置密码邮件链接使用）
+app:
+  frontend-url: ${APP_FRONTEND_URL}
+
+# SSO：生产强制环境变量；代理 host 清空（直连），避免 dev 默认的 127.0.0.1:7890 拖垮出站
+admin:
+  sso:
+    crypto-key: ${ADMIN_SSO_CRYPTO_KEY}
+    callback-base-url: ${SSO_CALLBACK_BASE_URL}
+    front-base-url: ${SSO_FRONT_BASE_URL}
+    proxy:
+      host: ${ADMIN_SSO_PROXY_HOST:}
+      port: ${ADMIN_SSO_PROXY_PORT:0}
