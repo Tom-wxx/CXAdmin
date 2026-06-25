@@ -83,54 +83,67 @@
   </el-form>
 </template>
 
-<script>
-export default {
-  name: 'SearchForm',
-  props: {
-    model: {
-      type: Object,
-      required: true
-    },
-    fields: {
-      type: Array,
-      required: true
-    },
-    collapseAt: {
-      type: Number,
-      default: 4
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+
+defineOptions({ name: 'SearchForm' })
+
+interface FieldOption {
+  label: string
+  value: string | number
+}
+
+interface SearchField {
+  prop: string
+  label: string
+  type?: 'input' | 'select' | 'date' | 'daterange' | 'datetime'
+  placeholder?: string
+  clearable?: boolean
+  width?: string
+  multiple?: boolean
+  options?: FieldOption[]
+  defaultValue?: unknown
+}
+
+interface Props {
+  model: Record<string, unknown>
+  fields: SearchField[]
+  collapseAt?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  collapseAt: 4
+})
+
+const emit = defineEmits<{
+  (e: 'search'): void
+  (e: 'reset'): void
+}>()
+
+const collapsed = ref(props.fields.length > props.collapseAt)
+
+const collapsible = computed(() => props.fields.length > props.collapseAt)
+
+const visibleFields = computed(() => {
+  if (!collapsible.value || !collapsed.value) return props.fields
+  return props.fields.slice(0, props.collapseAt)
+})
+
+function handleSearch() {
+  emit('search')
+}
+
+function handleReset() {
+  props.fields.forEach(f => {
+    if (f.type === 'daterange') {
+      props.model[f.prop] = []
+    } else if (f.defaultValue !== undefined) {
+      props.model[f.prop] = f.defaultValue
+    } else {
+      props.model[f.prop] = undefined
     }
-  },
-  data() {
-    return {
-      collapsed: this.fields.length > this.collapseAt
-    }
-  },
-  computed: {
-    collapsible() {
-      return this.fields.length > this.collapseAt
-    },
-    visibleFields() {
-      if (!this.collapsible || !this.collapsed) return this.fields
-      return this.fields.slice(0, this.collapseAt)
-    }
-  },
-  methods: {
-    handleSearch() {
-      this.$emit('search')
-    },
-    handleReset() {
-      this.fields.forEach(f => {
-        if (f.type === 'daterange') {
-          this.model[f.prop] = []
-        } else if (f.defaultValue !== undefined) {
-          this.model[f.prop] = f.defaultValue
-        } else {
-          this.model[f.prop] = undefined
-        }
-      })
-      this.$emit('reset')
-    }
-  }
+  })
+  emit('reset')
 }
 </script>
 
