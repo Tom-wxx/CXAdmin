@@ -13,23 +13,14 @@
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex'
+<script setup lang="ts">
+import { useSettingsStore } from '@/composables/store'
 
-export default {
-  name: 'SidebarLogo',
-  props: {
-    isCollapse: {
-      type: Boolean,
-      required: true
-    }
-  },
-  computed: {
-    ...mapState({
-      title: state => state.settings.title
-    })
-  }
-}
+defineOptions({ name: 'SidebarLogo' })
+
+defineProps<{ isCollapse: boolean }>()
+
+const { title } = useSettingsStore()
 </script>
 
 <style lang="scss" scoped>
