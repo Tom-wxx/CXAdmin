@@ -24,55 +24,56 @@
   </span>
 </template>
 
-<script>
-export default {
-  name: 'DictTag',
-  props: {
-    options: {
-      type: Array,
-      default: () => []
-    },
-    value: {
-      type: [String, Number, Array],
-      default: ''
-    },
-    separator: {
-      type: String,
-      default: ','
-    },
-    size: {
-      type: String,
-      default: 'small'
-    },
-    effect: {
-      type: String,
-      default: 'light'
-    },
-    placeholder: {
-      type: String,
-      default: '-'
-    }
-  },
-  computed: {
-    values() {
-      if (this.value === null || this.value === undefined || this.value === '') return []
-      if (Array.isArray(this.value)) return this.value
-      if (typeof this.value === 'string' && this.value.includes(this.separator)) {
-        return this.value.split(this.separator)
-      }
-      return [this.value]
-    },
-    matchedItems() {
-      return this.values.map(v => {
-        const found = this.options.find(o => String(o.value) === String(v))
-        return found || { value: v, label: v, type: '' }
-      })
-    },
-    single() {
-      return this.matchedItems.length === 1 ? this.matchedItems[0] : null
-    }
-  }
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { ComponentSize } from 'element-plus'
+
+defineOptions({ name: 'DictTag' })
+
+type TagType = '' | 'primary' | 'success' | 'info' | 'warning' | 'danger'
+
+interface DictTagOption {
+  value: string | number
+  label: string
+  type?: TagType
 }
+
+const props = withDefaults(defineProps<{
+  options?: DictTagOption[]
+  value?: string | number | Array<string | number>
+  separator?: string
+  size?: ComponentSize
+  effect?: 'dark' | 'light' | 'plain'
+  placeholder?: string
+}>(), {
+  options: () => [],
+  value: '',
+  separator: ',',
+  size: 'small',
+  effect: 'light',
+  placeholder: '-'
+})
+
+const values = computed<Array<string | number>>(() => {
+  const v = props.value
+  if (v === null || v === undefined || v === '') return []
+  if (Array.isArray(v)) return v
+  if (typeof v === 'string' && v.includes(props.separator)) {
+    return v.split(props.separator)
+  }
+  return [v]
+})
+
+const matchedItems = computed<DictTagOption[]>(() =>
+  values.value.map((v) => {
+    const found = props.options.find((o) => String(o.value) === String(v))
+    return found || { value: v, label: String(v), type: '' }
+  })
+)
+
+const single = computed<DictTagOption | null>(() =>
+  matchedItems.value.length === 1 ? matchedItems.value[0] : null
+)
 </script>
 
 <style scoped>

@@ -6,14 +6,15 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Page404',
-  methods: {
-    goHome() {
-      this.$router.push('/')
-    }
-  }
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+defineOptions({ name: 'Page404' })
+
+const router = useRouter()
+
+function goHome() {
+  router.push('/')
 }
 </script>
 

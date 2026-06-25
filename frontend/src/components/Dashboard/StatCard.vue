@@ -15,58 +15,64 @@
   </el-row>
 </template>
 
-<script>
-export default {
-  name: 'StatCard',
-  props: {
-    data: {
-      type: Object,
-      default: () => ({})
-    }
-  },
-  computed: {
-    cardData() {
-      return [
-        {
-          key: 'totalUsers',
-          title: '用户总数',
-          value: this.data.totalUsers || 0,
-          icon: 'el-icon-user',
-          bgColor: '#e6fffb',
-          iconColor: '#13c2c2',
-          footer: `今日新增 ${this.data.todayUsers || 0}`
-        },
-        {
-          key: 'totalRoles',
-          title: '角色数量',
-          value: this.data.totalRoles || 0,
-          icon: 'el-icon-s-custom',
-          bgColor: '#e6f7ff',
-          iconColor: '#1890ff',
-          footer: `系统角色 ${this.data.totalRoles || 0}`
-        },
-        {
-          key: 'onlineUsers',
-          title: '在线用户',
-          value: this.data.onlineUsers || 0,
-          icon: 'el-icon-video-play',
-          bgColor: '#f6ffed',
-          iconColor: '#52c41a',
-          footer: `活跃用户 ${this.data.activeUsers || this.data.onlineUsers || 0}`
-        },
-        {
-          key: 'totalNotices',
-          title: '通知公告',
-          value: this.data.totalNotices || 0,
-          icon: 'el-icon-bell',
-          bgColor: '#fff7e6',
-          iconColor: '#fa8c16',
-          footer: `待办 ${this.data.pendingTasks || 0}`
-        }
-      ]
-    }
-  }
+<script setup lang="ts">
+import { computed } from 'vue'
+
+defineOptions({ name: 'StatCard' })
+
+interface StatData {
+  totalUsers?: number
+  todayUsers?: number
+  totalRoles?: number
+  onlineUsers?: number
+  activeUsers?: number
+  totalNotices?: number
+  pendingTasks?: number
+  [key: string]: number | undefined
 }
+
+const props = withDefaults(defineProps<{ data?: StatData }>(), {
+  data: () => ({})
+})
+
+const cardData = computed(() => [
+  {
+    key: 'totalUsers',
+    title: '用户总数',
+    value: props.data.totalUsers || 0,
+    icon: 'el-icon-user',
+    bgColor: '#e6fffb',
+    iconColor: '#13c2c2',
+    footer: `今日新增 ${props.data.todayUsers || 0}`
+  },
+  {
+    key: 'totalRoles',
+    title: '角色数量',
+    value: props.data.totalRoles || 0,
+    icon: 'el-icon-s-custom',
+    bgColor: '#e6f7ff',
+    iconColor: '#1890ff',
+    footer: `系统角色 ${props.data.totalRoles || 0}`
+  },
+  {
+    key: 'onlineUsers',
+    title: '在线用户',
+    value: props.data.onlineUsers || 0,
+    icon: 'el-icon-video-play',
+    bgColor: '#f6ffed',
+    iconColor: '#52c41a',
+    footer: `活跃用户 ${props.data.activeUsers || props.data.onlineUsers || 0}`
+  },
+  {
+    key: 'totalNotices',
+    title: '通知公告',
+    value: props.data.totalNotices || 0,
+    icon: 'el-icon-bell',
+    bgColor: '#fff7e6',
+    iconColor: '#fa8c16',
+    footer: `待办 ${props.data.pendingTasks || 0}`
+  }
+])
 </script>
 
 <style lang="scss" scoped>
