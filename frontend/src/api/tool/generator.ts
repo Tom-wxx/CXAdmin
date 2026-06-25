@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { GenTable, GenTableQuery } from '@/types/tool/generator'
 
 /** 查询数据库表列表 */
-export function listTable(query: GenTableQuery): Promise<Result<PageResult<GenTable>>> {
+export function listTable(query: GenTableQuery): Promise<TableResponse<GenTable>> {
   return request({ url: '/tool/generator/list', method: 'get', params: query })
 }
 

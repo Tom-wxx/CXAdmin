@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { Message, MessageQuery } from '@/types/system/message'
 
 /** 分页查询消息模板列表 */
-export function listMessage(query: MessageQuery): Promise<Result<PageResult<Message>>> {
+export function listMessage(query: MessageQuery): Promise<TableResponse<Message>> {
   return request({ url: '/system/message/list', method: 'get', params: query })
 }
 

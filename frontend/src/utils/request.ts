@@ -2,7 +2,6 @@ import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse,
 import { ElMessage, ElMessageBox } from 'element-plus'
 import store from '@/store'
 import { HTTP_OK, HTTP_UNAUTHORIZED, HTTP_SERVER_ERROR } from '@/utils/constants'
-import type { Result } from '@/types/api'
 
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
@@ -71,12 +70,13 @@ service.interceptors.response.use(
 )
 
 /**
- * 业务层类型化请求。
- * 响应拦截器已把后端响应解包为 Result，故返回 Promise<Result<T>>；
- * 对 responseType:'blob' 等场景，由调用方按需断言为 Promise<Blob>。
+ * 业务层类型化请求。返回类型由调用方注解决定（上下文推断 T）：
+ * - 对象接口注解 Promise<Result<X>>（拦截器返回的 body 即 Result）
+ * - 列表接口注解 Promise<TableResponse<X>>（body 顶层带 rows/total）
+ * - responseType:'blob' 等由调用方断言为 Promise<Blob>
  */
-export function request<T = unknown>(config: AxiosRequestConfig): Promise<Result<T>> {
-  return service(config) as unknown as Promise<Result<T>>
+export function request<T = unknown>(config: AxiosRequestConfig): Promise<T> {
+  return service(config) as unknown as Promise<T>
 }
 
 export default request

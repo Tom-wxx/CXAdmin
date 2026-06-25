@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { MessageLog, MessageLogQuery } from '@/types/system/message'
 
 /** 分页查询消息发送日志列表 */
-export function listMessageLog(query: MessageLogQuery): Promise<Result<PageResult<MessageLog>>> {
+export function listMessageLog(query: MessageLogQuery): Promise<TableResponse<MessageLog>> {
   return request({ url: '/system/message/log/list', method: 'get', params: query })
 }
 

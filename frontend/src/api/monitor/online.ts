@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { OnlineUser, OnlineQuery } from '@/types/monitor/online'
 
 /** 查询在线用户列表 */
-export function listOnlineUser(query: OnlineQuery): Promise<Result<PageResult<OnlineUser>>> {
+export function listOnlineUser(query: OnlineQuery): Promise<TableResponse<OnlineUser>> {
   return request({ url: '/monitor/online/list', method: 'get', params: query })
 }
 

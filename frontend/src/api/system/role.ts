@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { Role, RoleQuery } from '@/types/system/role'
 
 /** 分页查询角色列表 */
-export function listRole(query: RoleQuery): Promise<Result<PageResult<Role>>> {
+export function listRole(query: RoleQuery): Promise<TableResponse<Role>> {
   return request({ url: '/system/role/list', method: 'get', params: query })
 }
 

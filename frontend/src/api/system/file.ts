@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { FileInfo, FileQuery, FileStatistics } from '@/types/system/file'
 
 /** 获取文件列表 */
-export function listFile(query: FileQuery): Promise<Result<PageResult<FileInfo>>> {
+export function listFile(query: FileQuery): Promise<TableResponse<FileInfo>> {
   return request({ url: '/system/file/list', method: 'get', params: query })
 }
 

@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { Job, JobQuery, JobLog, JobLogQuery } from '@/types/monitor/job'
 
 /** 分页查询定时任务列表 */
-export function listJob(query: JobQuery): Promise<Result<PageResult<Job>>> {
+export function listJob(query: JobQuery): Promise<TableResponse<Job>> {
   return request({ url: '/monitor/job/list', method: 'get', params: query })
 }
 
@@ -38,7 +38,7 @@ export function runJob(data: { jobId: number; jobGroup?: string }): Promise<Resu
 }
 
 /** 分页查询任务日志列表 */
-export function listJobLog(query: JobLogQuery): Promise<Result<PageResult<JobLog>>> {
+export function listJobLog(query: JobLogQuery): Promise<TableResponse<JobLog>> {
   return request({ url: '/monitor/jobLog/list', method: 'get', params: query })
 }
 

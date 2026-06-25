@@ -28,6 +28,7 @@ export interface SsoProvider extends BaseEntity {
 
 /** SSO 提供商查询参数 */
 export interface SsoProviderQuery extends PageQuery {
+  code?: string
   name?: string
   type?: string
   enabled?: number

@@ -96,7 +96,8 @@ interface FieldOption {
 interface SearchField {
   prop: string
   label: string
-  type?: 'input' | 'select' | 'date' | 'daterange' | 'datetime'
+  /** input | select | date | daterange | datetime（宽松为 string，便于各页内联声明） */
+  type?: string
   placeholder?: string
   clearable?: boolean
   width?: string
@@ -106,7 +107,8 @@ interface SearchField {
 }
 
 interface Props {
-  model: Record<string, unknown>
+  // 宽松为 Record<string, any>，以便各页传入带类型的 query 对象（接口无索引签名）
+  model: Record<string, any>
   fields: SearchField[]
   collapseAt?: number
 }

@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { DictType, DictTypeQuery } from '@/types/system/dict'
 
 /** 分页查询字典类型列表 */
-export function listDictType(query: DictTypeQuery): Promise<Result<PageResult<DictType>>> {
+export function listDictType(query: DictTypeQuery): Promise<TableResponse<DictType>> {
   return request({ url: '/system/dict/type/list', method: 'get', params: query })
 }
 

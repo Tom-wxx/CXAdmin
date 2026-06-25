@@ -8,15 +8,10 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Swagger',
-  data() {
-    return {
-      swaggerUrl: import.meta.env.VITE_APP_BASE_API + '/swagger-ui/index.html'
-    }
-  }
-}
+<script setup lang="ts">
+defineOptions({ name: 'Swagger' })
+
+const swaggerUrl = import.meta.env.VITE_APP_BASE_API + '/swagger-ui/index.html'
 </script>
 
 <style lang="scss" scoped>

@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { Notice, NoticeQuery } from '@/types/system/notice'
 
 /** 分页查询通知公告列表 */
-export function listNotice(query: NoticeQuery): Promise<Result<PageResult<Notice>>> {
+export function listNotice(query: NoticeQuery): Promise<TableResponse<Notice>> {
   return request({ url: '/system/notice/list', method: 'get', params: query })
 }
 

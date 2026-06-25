@@ -1,10 +1,10 @@
 import { ref, reactive, type Ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { Result, PageResult, PageQuery } from '@/types/api'
+import type { Result, TableResponse, PageQuery } from '@/types/api'
 
 export interface CrudTableOptions<T, Q extends PageQuery> {
-  /** 列表查询接口（返回分页结果） */
-  listApi: (query: Q) => Promise<Result<PageResult<T>>>
+  /** 列表查询接口（返回分页结果，顶层 rows/total） */
+  listApi: (query: Q) => Promise<TableResponse<T>>
   /** 删除接口（可选） */
   delApi?: (ids: number | number[]) => Promise<Result<unknown>>
   /** 查询参数默认值（current/size 已内置） */
@@ -29,8 +29,8 @@ export function useCrudTable<T, Q extends PageQuery = PageQuery>(options: CrudTa
     loading.value = true
     try {
       const res = await options.listApi(queryParams)
-      list.value = res.data.records
-      total.value = res.data.total
+      list.value = res.rows
+      total.value = res.total
     } finally {
       loading.value = false
     }

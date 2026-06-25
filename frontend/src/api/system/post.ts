@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { Post, PostQuery } from '@/types/system/post'
 
 /** 查询岗位列表 */
@@ -8,7 +8,7 @@ export function listPost(query?: PostQuery): Promise<Result<Post[]>> {
 }
 
 /** 分页查询岗位列表 */
-export function pagePost(query: PostQuery): Promise<Result<PageResult<Post>>> {
+export function pagePost(query: PostQuery): Promise<TableResponse<Post>> {
   return request({ url: '/system/post/page', method: 'get', params: query })
 }
 

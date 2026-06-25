@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { Config, ConfigQuery } from '@/types/system/config'
 
 /** 分页查询参数配置列表 */
-export function listConfig(query: ConfigQuery): Promise<Result<PageResult<Config>>> {
+export function listConfig(query: ConfigQuery): Promise<TableResponse<Config>> {
   return request({ url: '/system/config/list', method: 'get', params: query })
 }
 

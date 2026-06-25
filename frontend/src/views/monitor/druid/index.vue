@@ -8,15 +8,10 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Druid',
-  data() {
-    return {
-      druidUrl: import.meta.env.VITE_APP_BASE_API + '/druid/index.html'
-    }
-  }
-}
+<script setup lang="ts">
+defineOptions({ name: 'Druid' })
+
+const druidUrl = import.meta.env.VITE_APP_BASE_API + '/druid/index.html'
 </script>
 
 <style lang="scss" scoped>

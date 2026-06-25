@@ -66,112 +66,106 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { listOnlineUser, forceLogout, batchForceLogout } from '@/api/monitor/online'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
+import { parseTime } from '@/utils'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import type { OnlineUser, OnlineQuery } from '@/types/monitor/online'
 
-export default {
-  name: 'OnlineUser',
-  components: { SearchForm, TableToolbar },
-  data() {
-    return {
-      searchFields: [
-        { prop: 'username', label: '用户名', type: 'input', placeholder: '请输入用户名' },
-        { prop: 'ipaddr', label: '登录地址', type: 'input', placeholder: '请输入登录地址' }
-      ],
-      loading: true,
-      ids: [],
-      multiple: true,
-      onlineList: [],
-      total: 0,
-      queryParams: {
-        username: undefined,
-        ipaddr: undefined,
-        current: 1,
-        size: 10
-      }
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    getList() {
-      this.loading = true
-      listOnlineUser(this.queryParams).then(response => {
-        this.onlineList = response.rows || []
-        this.total = response.total || 0
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    resetQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    handleSizeChange(size) {
-      this.queryParams.size = size
-      this.queryParams.current = 1
-      this.getList()
-    },
-    handleCurrentChange(current) {
-      this.queryParams.current = current
-      this.getList()
-    },
-    handleRefresh() {
-      this.getList()
-      this.$message.success('刷新成功')
-    },
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.tokenId)
-      this.multiple = !selection.length
-    },
-    handleForceLogout(row) {
-      this.$confirm('是否确认强退用户"' + row.username + '"？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return forceLogout(row.tokenId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('强制退出成功')
-      })
-    },
-    handleBatchForceLogout() {
-      const tokenIds = this.ids
-      if (tokenIds.length === 0) {
-        this.$message.warning('请选择要强退的用户')
-        return
-      }
-      this.$confirm('是否确认强退选中的' + tokenIds.length + '个用户？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return batchForceLogout(tokenIds.join(','))
-      }).then(() => {
-        this.getList()
-        this.$message.success('批量强制退出成功')
-      })
-    },
-    parseTime(time) {
-      if (!time) return ''
-      const date = new Date(time)
-      const year = date.getFullYear()
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const hour = date.getHours().toString().padStart(2, '0')
-      const minute = date.getMinutes().toString().padStart(2, '0')
-      const second = date.getSeconds().toString().padStart(2, '0')
-      return `${year}-${month}-${day} ${hour}:${minute}:${second}`
-    }
-  }
+defineOptions({ name: 'OnlineUser' })
+
+const searchFields = [
+  { prop: 'username', label: '用户名', type: 'input', placeholder: '请输入用户名' },
+  { prop: 'ipaddr', label: '登录地址', type: 'input', placeholder: '请输入登录地址' }
+]
+
+const loading = ref(true)
+const ids = ref<string[]>([])
+const multiple = ref(true)
+const onlineList = ref<OnlineUser[]>([])
+const total = ref(0)
+const queryParams = reactive<OnlineQuery & { current: number; size: number }>({
+  username: undefined,
+  ipaddr: undefined,
+  current: 1,
+  size: 10
+})
+
+function getList() {
+  loading.value = true
+  listOnlineUser(queryParams).then(res => {
+    onlineList.value = res.rows || []
+    total.value = res.total || 0
+  }).finally(() => {
+    loading.value = false
+  })
 }
+
+function handleQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+function resetQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+function handleSizeChange(size: number) {
+  queryParams.size = size
+  queryParams.current = 1
+  getList()
+}
+
+function handleCurrentChange(current: number) {
+  queryParams.current = current
+  getList()
+}
+
+function handleRefresh() {
+  getList()
+  ElMessage.success('刷新成功')
+}
+
+function handleSelectionChange(selection: OnlineUser[]) {
+  ids.value = selection.map(item => item.tokenId as string)
+  multiple.value = !selection.length
+}
+
+function handleForceLogout(row: OnlineUser) {
+  ElMessageBox.confirm('是否确认强退用户"' + row.username + '"？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return forceLogout(row.tokenId as string)
+  }).then(() => {
+    getList()
+    ElMessage.success('强制退出成功')
+  })
+}
+
+function handleBatchForceLogout() {
+  const tokenIds = ids.value
+  if (tokenIds.length === 0) {
+    ElMessage.warning('请选择要强退的用户')
+    return
+  }
+  ElMessageBox.confirm('是否确认强退选中的' + tokenIds.length + '个用户？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return batchForceLogout(tokenIds.join(','))
+  }).then(() => {
+    getList()
+    ElMessage.success('批量强制退出成功')
+  })
+}
+
+// init
+getList()
 </script>

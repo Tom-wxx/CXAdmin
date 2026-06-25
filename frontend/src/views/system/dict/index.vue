@@ -25,7 +25,7 @@
           />
           <el-table
             v-loading="typeLoading"
-            :data="filteredTypeList"
+            :data="typeList"
             highlight-current-row
             @current-change="handleTypeChange"
             style="width: 100%"
@@ -56,7 +56,7 @@
             </el-table-column>
           </el-table>
           <el-pagination
-            v-if="typeTotal > typeQueryParams.size"
+            v-if="typeTotal > typeQueryParams.size!"
             small
             layout="prev, pager, next"
             :total="typeTotal"
@@ -115,7 +115,7 @@
             </el-table-column>
           </el-table>
           <el-pagination
-            v-if="dataTotal > dataQueryParams.size"
+            v-if="dataTotal > dataQueryParams.size!"
             small
             layout="prev, pager, next"
             :total="dataTotal"
@@ -130,7 +130,7 @@
 
     <!-- 字典类型对话框 -->
     <el-dialog :title="typeDialogTitle" v-model="typeDialogVisible" width="600px">
-      <el-form ref="typeForm" :model="typeForm" :rules="typeRules" label-width="100px">
+      <el-form ref="typeFormRef" :model="typeForm" :rules="typeRules" label-width="100px">
         <el-form-item label="字典名称" prop="dictName">
           <el-input v-model="typeForm.dictName" placeholder="请输入字典名称" />
         </el-form-item>
@@ -155,7 +155,7 @@
 
     <!-- 字典数据对话框 -->
     <el-dialog :title="dataDialogTitle" v-model="dataDialogVisible" width="600px">
-      <el-form ref="dataForm" :model="dataForm" :rules="dataRules" label-width="100px">
+      <el-form ref="dataFormRef" :model="dataForm" :rules="dataRules" label-width="100px">
         <el-form-item label="字典类型">
           <el-input v-model="dataForm.dictType" disabled />
         </el-form-item>
@@ -199,261 +199,242 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { listDictType, getDictType, addDictType, updateDictType, delDictType } from '@/api/system/dict/type'
 import { listDictData, getDictData, addDictData, updateDictData, delDictData } from '@/api/system/dict/data'
-import DictTag from '@/components/DictTag'
+import type { DictType, DictTypeQuery, DictData, DictDataQuery } from '@/types/system/dict'
+import DictTag from '@/components/DictTag/index.vue'
+
+defineOptions({ name: 'Dict' })
 
 const STATUS_OPTIONS = [
   { value: '0', label: '正常', type: 'success' },
   { value: '1', label: '停用', type: 'danger' }
 ]
 
-export default {
-  name: 'Dict',
-  components: {
-    DictTag
-  },
-  data() {
-    return {
-      statusOptions: STATUS_OPTIONS,
-      // 字典类型
-      typeLoading: false,
-      typeList: [],
-      typeTotal: 0,
-      typeQuery: '',
-      typeQueryParams: {
-        current: 1,
-        size: 20
-      },
-      currentType: null,
-      typeDialogTitle: '',
-      typeDialogVisible: false,
-      typeForm: {},
-      typeRules: {
-        dictName: [
-          { required: true, message: '字典名称不能为空', trigger: 'blur' }
-        ],
-        dictType: [
-          { required: true, message: '字典类型不能为空', trigger: 'blur' }
-        ]
-      },
-      // 字典数据
-      dataLoading: false,
-      dataList: [],
-      dataTotal: 0,
-      dataQueryParams: {
-        current: 1,
-        size: 20,
-        dictType: ''
-      },
-      dataDialogTitle: '',
-      dataDialogVisible: false,
-      dataForm: {},
-      dataRules: {
-        dictLabel: [
-          { required: true, message: '字典标签不能为空', trigger: 'blur' }
-        ],
-        dictValue: [
-          { required: true, message: '字典键值不能为空', trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  computed: {
-    filteredTypeList() {
-      return this.typeList
-    }
-  },
-  created() {
-    this.getTypeList()
-  },
-  methods: {
-    /** 查询字典类型列表 */
-    getTypeList() {
-      this.typeLoading = true
-      const params = { ...this.typeQueryParams }
-      if (this.typeQuery) {
-        params.dictName = this.typeQuery
-      }
-      listDictType(params).then(response => {
-        this.typeList = response.rows
-        this.typeTotal = response.total
-        this.typeLoading = false
-      }).catch(() => {
-        this.typeLoading = false
-      })
-    },
-    /** 字典类型搜索 */
-    handleTypeSearch() {
-      this.typeQueryParams.current = 1
-      this.getTypeList()
-    },
-    /** 字典类型分页变化 */
-    handleTypePageChange(page) {
-      this.typeQueryParams.current = page
-      this.getTypeList()
-    },
-    /** 字典类型选择变化 */
-    handleTypeChange(row) {
-      this.currentType = row
-      if (row) {
-        // 切换字典类型时重置数据分页
-        this.dataQueryParams.current = 1
-        this.getDataList(row.dictType)
-      }
-    },
-    /** 查询字典数据列表 */
-    getDataList(dictType) {
-      this.dataLoading = true
-      this.dataQueryParams.dictType = dictType
-      listDictData(this.dataQueryParams).then(response => {
-        this.dataList = response.rows
-        this.dataTotal = response.total
-        this.dataLoading = false
-      }).catch(() => {
-        this.dataLoading = false
-      })
-    },
-    /** 字典数据分页变化 */
-    handleDataPageChange(page) {
-      this.dataQueryParams.current = page
-      this.getDataList(this.dataQueryParams.dictType)
-    },
-    /** 新增字典类型 */
-    handleAddType() {
-      this.resetTypeForm()
-      this.typeDialogTitle = '添加字典类型'
-      this.typeDialogVisible = true
-    },
-    /** 修改字典类型 */
-    handleEditType(row) {
-      this.resetTypeForm()
-      getDictType(row.dictId).then(response => {
-        this.typeForm = response.data
-        this.typeDialogTitle = '修改字典类型'
-        this.typeDialogVisible = true
-      })
-    },
-    /** 提交字典类型表单 */
-    submitTypeForm() {
-      this.$refs.typeForm.validate(valid => {
-        if (valid) {
-          if (this.typeForm.dictId) {
-            updateDictType(this.typeForm).then(() => {
-              this.$message.success('修改成功')
-              this.typeDialogVisible = false
-              this.getTypeList()
-            })
-          } else {
-            addDictType(this.typeForm).then(() => {
-              this.$message.success('新增成功')
-              this.typeDialogVisible = false
-              this.getTypeList()
-            })
-          }
-        }
-      })
-    },
-    /** 删除字典类型 */
-    handleDeleteType(row) {
-      this.$confirm('是否确认删除字典类型"' + row.dictName + '"？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delDictType(row.dictId)
-      }).then(() => {
-        this.getTypeList()
-        this.$message.success('删除成功')
-        if (this.currentType && this.currentType.dictId === row.dictId) {
-          this.currentType = null
-          this.dataList = []
-        }
-      })
-    },
-    /** 重置字典类型表单 */
-    resetTypeForm() {
-      this.typeForm = {
-        dictId: undefined,
-        dictName: undefined,
-        dictType: undefined,
-        status: '0',
-        remark: undefined
-      }
-      if (this.$refs.typeForm) {
-        this.$refs.typeForm.resetFields()
-      }
-    },
-    /** 新增字典数据 */
-    handleAddData() {
-      this.resetDataForm()
-      this.dataForm.dictType = this.currentType.dictType
-      this.dataDialogTitle = '添加字典数据'
-      this.dataDialogVisible = true
-    },
-    /** 修改字典数据 */
-    handleEditData(row) {
-      this.resetDataForm()
-      getDictData(row.dictCode).then(response => {
-        this.dataForm = response.data
-        this.dataDialogTitle = '修改字典数据'
-        this.dataDialogVisible = true
-      })
-    },
-    /** 提交字典数据表单 */
-    submitDataForm() {
-      this.$refs.dataForm.validate(valid => {
-        if (valid) {
-          if (this.dataForm.dictCode) {
-            updateDictData(this.dataForm).then(() => {
-              this.$message.success('修改成功')
-              this.dataDialogVisible = false
-              this.getDataList(this.currentType.dictType)
-            })
-          } else {
-            addDictData(this.dataForm).then(() => {
-              this.$message.success('新增成功')
-              this.dataDialogVisible = false
-              this.getDataList(this.currentType.dictType)
-            })
-          }
-        }
-      })
-    },
-    /** 删除字典数据 */
-    handleDeleteData(row) {
-      this.$confirm('是否确认删除字典数据"' + row.dictLabel + '"？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delDictData(row.dictCode)
-      }).then(() => {
-        this.getDataList(this.currentType.dictType)
-        this.$message.success('删除成功')
-      })
-    },
-    /** 重置字典数据表单 */
-    resetDataForm() {
-      this.dataForm = {
-        dictCode: undefined,
-        dictSort: 0,
-        dictLabel: undefined,
-        dictValue: undefined,
-        dictType: undefined,
-        cssClass: undefined,
-        listClass: undefined,
-        isDefault: 'N',
-        status: '0',
-        remark: undefined
-      }
-      if (this.$refs.dataForm) {
-        this.$refs.dataForm.resetFields()
-      }
-    }
+const statusOptions = STATUS_OPTIONS
+
+// ─── 字典类型 ───────────────────────────────────────────────
+const typeLoading = ref(false)
+const typeList = ref<DictType[]>([])
+const typeTotal = ref(0)
+const typeQuery = ref('')
+const typeQueryParams = reactive<DictTypeQuery>({ current: 1, size: 20 })
+const currentType = ref<DictType | null>(null)
+
+const typeDialogTitle = ref('')
+const typeDialogVisible = ref(false)
+const typeFormRef = ref<FormInstance>()
+
+const typeFormDefaults: DictType = {
+  dictId: undefined,
+  dictName: undefined,
+  dictType: undefined,
+  status: '0',
+  remark: undefined
+}
+const typeForm = reactive<DictType>({ ...typeFormDefaults })
+
+const typeRules = reactive<FormRules>({
+  dictName: [{ required: true, message: '字典名称不能为空', trigger: 'blur' }],
+  dictType: [{ required: true, message: '字典类型不能为空', trigger: 'blur' }]
+})
+
+function getTypeList() {
+  typeLoading.value = true
+  const params: DictTypeQuery = { ...typeQueryParams }
+  if (typeQuery.value) {
+    params.dictName = typeQuery.value
+  }
+  listDictType(params).then(response => {
+    typeList.value = response.rows
+    typeTotal.value = response.total
+    typeLoading.value = false
+  }).catch(() => {
+    typeLoading.value = false
+  })
+}
+
+function handleTypeSearch() {
+  typeQueryParams.current = 1
+  getTypeList()
+}
+
+function handleTypePageChange(page: number) {
+  typeQueryParams.current = page
+  getTypeList()
+}
+
+function handleTypeChange(row: DictType | null) {
+  currentType.value = row
+  if (row) {
+    dataQueryParams.current = 1
+    getDataList(row.dictType!)
   }
 }
+
+function handleAddType() {
+  resetTypeForm()
+  typeDialogTitle.value = '添加字典类型'
+  typeDialogVisible.value = true
+}
+
+function handleEditType(row: DictType) {
+  resetTypeForm()
+  getDictType(row.dictId!).then(response => {
+    Object.assign(typeForm, response.data)
+    typeDialogTitle.value = '修改字典类型'
+    typeDialogVisible.value = true
+  })
+}
+
+function submitTypeForm() {
+  typeFormRef.value?.validate(valid => {
+    if (valid) {
+      if (typeForm.dictId) {
+        updateDictType(typeForm).then(() => {
+          ElMessage.success('修改成功')
+          typeDialogVisible.value = false
+          getTypeList()
+        })
+      } else {
+        addDictType(typeForm).then(() => {
+          ElMessage.success('新增成功')
+          typeDialogVisible.value = false
+          getTypeList()
+        })
+      }
+    }
+  })
+}
+
+function handleDeleteType(row: DictType) {
+  ElMessageBox.confirm(
+    '是否确认删除字典类型"' + row.dictName + '"？',
+    '警告',
+    { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+  ).then(() => {
+    return delDictType(row.dictId!)
+  }).then(() => {
+    getTypeList()
+    ElMessage.success('删除成功')
+    if (currentType.value && currentType.value.dictId === row.dictId) {
+      currentType.value = null
+      dataList.value = []
+    }
+  }).catch(() => {})
+}
+
+function resetTypeForm() {
+  Object.assign(typeForm, typeFormDefaults)
+  typeFormRef.value?.resetFields()
+}
+
+// ─── 字典数据 ───────────────────────────────────────────────
+const dataLoading = ref(false)
+const dataList = ref<DictData[]>([])
+const dataTotal = ref(0)
+const dataQueryParams = reactive<DictDataQuery>({ current: 1, size: 20, dictType: '' })
+
+const dataDialogTitle = ref('')
+const dataDialogVisible = ref(false)
+const dataFormRef = ref<FormInstance>()
+
+const dataFormDefaults: DictData = {
+  dictCode: undefined,
+  dictSort: 0,
+  dictLabel: undefined,
+  dictValue: undefined,
+  dictType: undefined,
+  cssClass: undefined,
+  listClass: undefined,
+  isDefault: 'N',
+  status: '0',
+  remark: undefined
+}
+const dataForm = reactive<DictData>({ ...dataFormDefaults })
+
+const dataRules = reactive<FormRules>({
+  dictLabel: [{ required: true, message: '字典标签不能为空', trigger: 'blur' }],
+  dictValue: [{ required: true, message: '字典键值不能为空', trigger: 'blur' }]
+})
+
+function getDataList(dictType: string) {
+  dataLoading.value = true
+  dataQueryParams.dictType = dictType
+  listDictData(dataQueryParams).then(response => {
+    dataList.value = response.rows
+    dataTotal.value = response.total
+    dataLoading.value = false
+  }).catch(() => {
+    dataLoading.value = false
+  })
+}
+
+function handleDataPageChange(page: number) {
+  dataQueryParams.current = page
+  getDataList(dataQueryParams.dictType!)
+}
+
+function handleAddData() {
+  resetDataForm()
+  dataForm.dictType = currentType.value!.dictType
+  dataDialogTitle.value = '添加字典数据'
+  dataDialogVisible.value = true
+}
+
+function handleEditData(row: DictData) {
+  resetDataForm()
+  getDictData(row.dictCode!).then(response => {
+    Object.assign(dataForm, response.data)
+    dataDialogTitle.value = '修改字典数据'
+    dataDialogVisible.value = true
+  })
+}
+
+function submitDataForm() {
+  dataFormRef.value?.validate(valid => {
+    if (valid) {
+      if (dataForm.dictCode) {
+        updateDictData(dataForm).then(() => {
+          ElMessage.success('修改成功')
+          dataDialogVisible.value = false
+          getDataList(currentType.value!.dictType!)
+        })
+      } else {
+        addDictData(dataForm).then(() => {
+          ElMessage.success('新增成功')
+          dataDialogVisible.value = false
+          getDataList(currentType.value!.dictType!)
+        })
+      }
+    }
+  })
+}
+
+function handleDeleteData(row: DictData) {
+  ElMessageBox.confirm(
+    '是否确认删除字典数据"' + row.dictLabel + '"？',
+    '警告',
+    { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+  ).then(() => {
+    return delDictData(row.dictCode!)
+  }).then(() => {
+    getDataList(currentType.value!.dictType!)
+    ElMessage.success('删除成功')
+  }).catch(() => {})
+}
+
+function resetDataForm() {
+  Object.assign(dataForm, dataFormDefaults)
+  dataFormRef.value?.resetFields()
+}
+
+// 初始化加载字典类型
+getTypeList()
 </script>
 
 <style scoped>

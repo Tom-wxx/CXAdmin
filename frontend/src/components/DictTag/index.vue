@@ -4,7 +4,7 @@
       <el-tag
         v-for="item in matchedItems"
         :key="item.value"
-        :type="item.type || ''"
+        :type="tagType(item.type)"
         :effect="effect"
         :size="size"
         class="dict-tag__item"
@@ -14,7 +14,7 @@
     </template>
     <el-tag
       v-else-if="single"
-      :type="single.type || ''"
+      :type="tagType(single.type)"
       :effect="effect"
       :size="size"
     >
@@ -35,7 +35,13 @@ type TagType = '' | 'primary' | 'success' | 'info' | 'warning' | 'danger'
 interface DictTagOption {
   value: string | number
   label: string
-  type?: TagType
+  /** 字典 listClass 字符串；渲染时由 tagType() 收敛为 el-tag 的类型联合 */
+  type?: string
+}
+
+/** 把字典里的字符串样式收敛为 el-tag 接受的类型联合 */
+function tagType(t?: string): TagType {
+  return (t || '') as TagType
 }
 
 const props = withDefaults(defineProps<{

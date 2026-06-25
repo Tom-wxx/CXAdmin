@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { User, UserQuery, UserFormOptions } from '@/types/system/user'
 
 /** 分页查询用户列表 */
-export function listUser(query: UserQuery): Promise<Result<PageResult<User>>> {
+export function listUser(query: UserQuery): Promise<TableResponse<User>> {
   return request({
     url: '/system/user/list',
     method: 'get',

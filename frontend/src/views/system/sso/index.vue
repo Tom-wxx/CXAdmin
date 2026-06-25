@@ -28,7 +28,7 @@
       @pagination="getList" />
 
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="820px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="140px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="140px">
         <el-form-item label="标识" prop="code"><el-input v-model="form.code" :disabled="!!form.id" /></el-form-item>
         <el-form-item label="名称" prop="name"><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="类型" prop="type">
@@ -149,15 +149,31 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive, nextTick } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { listProviders, getProvider, addProvider, updateProvider, delProvider } from '@/api/system/sso'
+import type { SsoProvider, SsoProviderQuery } from '@/types/system/sso'
 import { listAllRole } from '@/api/system/role'
+import type { Role } from '@/types/system/role'
 import { treeSelect } from '@/api/system/dept'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
+import type { TreeOption } from '@/types/api'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
 
-const MAPPING_KEYS = [
+defineOptions({ name: 'Sso' })
+
+interface MappingRow {
+  key: string
+  desc: string
+  placeholder: string
+  required: boolean
+  value: string
+}
+
+const MAPPING_KEYS: Omit<MappingRow, 'value'>[] = [
   { key: 'id',       desc: 'IdP 唯一用户 ID', placeholder: 'GitHub: id / Google: sub', required: true },
   { key: 'username', desc: '账号名',           placeholder: 'GitHub: login / Google: email', required: false },
   { key: 'nickname', desc: '昵称',             placeholder: 'GitHub: name / Google: name',  required: false },
@@ -165,155 +181,181 @@ const MAPPING_KEYS = [
   { key: 'avatar',   desc: '头像 URL',         placeholder: 'GitHub: avatar_url / Google: picture', required: false }
 ]
 
-export default {
-  name: 'Sso',
-  components: { Pagination, SearchForm, TableToolbar },
-  data() {
-    return {
-      searchFields: [
-        { prop: 'code', label: '标识', type: 'input' },
-        { prop: 'name', label: '名称', type: 'input' }
-      ],
-      loading: true, dataList: [], total: 0,
-      queryParams: { current: 1, size: 10 },
-      dialogTitle: '', dialogVisible: false,
-      form: this.emptyForm(),
-      editingSecret: false,
-      scopeList: [],
-      mappingRows: this.emptyMappingRows(),
-      roleOptions: [],
-      deptOptions: [],
-      scopePresets: [
-        {
-          label: 'OIDC 通用',
-          options: ['openid', 'profile', 'email']
-        },
-        {
-          label: 'GitHub',
-          options: ['read:user', 'user:email', 'repo', 'read:org']
-        },
-        {
-          label: 'Google',
-          options: [
-            'https://www.googleapis.com/auth/userinfo.email',
-            'https://www.googleapis.com/auth/userinfo.profile'
-          ]
-        }
-      ],
-      rules: {
-        code: [{ required: true, message: '标识不能为空', trigger: 'blur' }],
-        name: [{ required: true, message: '名称不能为空', trigger: 'blur' }],
-        type: [{ required: true, message: '类型不能为空', trigger: 'change' }],
-        clientId: [{ required: true, message: 'client_id 不能为空', trigger: 'blur' }],
-        authorizationUri: [{ required: true, message: '授权端点不能为空', trigger: 'blur' }],
-        tokenUri: [{ required: true, message: 'Token 端点不能为空', trigger: 'blur' }],
-        userinfoUri: [{ required: true, message: 'UserInfo 端点不能为空', trigger: 'blur' }]
-      }
-    }
+const scopePresets = [
+  {
+    label: 'OIDC 通用',
+    options: ['openid', 'profile', 'email']
   },
-  created() {
-    this.getList()
-    this.loadRoleOptions()
-    this.loadDeptOptions()
+  {
+    label: 'GitHub',
+    options: ['read:user', 'user:email', 'repo', 'read:org']
   },
-  methods: {
-    emptyForm() {
-      return { id: null, code: '', name: '', type: 'OAUTH2_GENERIC', icon: '',
-               clientId: '', clientSecret: '',
-               authorizationUri: '', tokenUri: '', userinfoUri: '', emailsUri: '',
-               scope: '', enablePkce: 0, userFieldMapping: '',
-               defaultRoleId: null, defaultDeptId: null,
-               enabled: 1, orderNum: 0, remark: '' }
-    },
-    emptyMappingRows() {
-      return MAPPING_KEYS.map(k => ({ ...k, value: '' }))
-    },
-    loadRoleOptions() {
-      listAllRole().then(res => { this.roleOptions = (res.data || []).filter(r => r.status === '0' || r.status === 0) })
-    },
-    loadDeptOptions() {
-      treeSelect().then(res => { this.deptOptions = res.data || [] })
-    },
-    onScopeChange(val) {
-      this.form.scope = (val || []).join(' ')
-    },
-    /** form.scope 字符串 → scopeList 数组 */
-    syncScopeFromForm() {
-      this.scopeList = (this.form.scope || '').split(/\s+/).filter(Boolean)
-    },
-    /** form.userFieldMapping JSON → mappingRows */
-    syncMappingFromForm() {
-      const rows = this.emptyMappingRows()
-      if (this.form.userFieldMapping) {
-        try {
-          const obj = JSON.parse(this.form.userFieldMapping)
-          rows.forEach(r => { if (obj[r.key] != null) r.value = String(obj[r.key]) })
-        } catch (e) {
-          this.$message.warning('原字段映射 JSON 解析失败，已重置为空')
-        }
-      }
-      this.mappingRows = rows
-    },
-    /** mappingRows → form.userFieldMapping JSON */
-    buildMappingJson() {
-      const obj = {}
-      this.mappingRows.forEach(r => {
-        const v = (r.value || '').trim()
-        if (v) obj[r.key] = v
-      })
-      return Object.keys(obj).length ? JSON.stringify(obj) : ''
-    },
-    getList() {
-      this.loading = true
-      listProviders(this.queryParams).then(res => {
-        this.dataList = res.rows; this.total = res.total
-      }).finally(() => { this.loading = false })
-    },
-    handleQuery() { this.queryParams.current = 1; this.getList() },
-    resetQuery() { this.queryParams = { current: 1, size: 10 }; this.handleQuery() },
-    handleAdd() {
-      this.form = this.emptyForm()
-      this.editingSecret = true
-      this.scopeList = []
-      this.mappingRows = this.emptyMappingRows()
-      this.dialogTitle = '新增身份认证源'
-      this.dialogVisible = true
-      this.$nextTick(() => { if (this.$refs.form) this.$refs.form.clearValidate() })
-    },
-    handleEdit(row) {
-      getProvider(row.id).then(res => {
-        this.form = { ...this.emptyForm(), ...res.data, clientSecret: '' }
-        this.editingSecret = false
-        this.syncScopeFromForm()
-        this.syncMappingFromForm()
-        this.dialogTitle = '修改身份认证源'
-        this.dialogVisible = true
-      })
-    },
-    submitForm() {
-      this.$refs.form.validate(valid => {
-        if (!valid) return
-        const idRow = this.mappingRows.find(r => r.key === 'id')
-        if (!idRow.value || !idRow.value.trim()) {
-          this.$message.error('字段映射中的 id 为必填项')
-          return
-        }
-        this.form.userFieldMapping = this.buildMappingJson()
-        const op = this.form.id ? updateProvider : addProvider
-        op(this.form).then(() => {
-          this.$message.success(this.form.id ? '修改成功' : '新增成功')
-          this.dialogVisible = false; this.getList()
-        })
-      })
-    },
-    handleDelete(row) {
-      this.$confirm(`确认删除 "${row.name}"？删除后历史绑定不会被清除。`, '警告', {
-        confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'
-      }).then(() => delProvider(row.id))
-        .then(() => { this.getList(); this.$message.success('删除成功') })
-    }
+  {
+    label: 'Google',
+    options: [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
+    ]
+  }
+]
+
+const rules: FormRules = {
+  code: [{ required: true, message: '标识不能为空', trigger: 'blur' }],
+  name: [{ required: true, message: '名称不能为空', trigger: 'blur' }],
+  type: [{ required: true, message: '类型不能为空', trigger: 'change' }],
+  clientId: [{ required: true, message: 'client_id 不能为空', trigger: 'blur' }],
+  authorizationUri: [{ required: true, message: '授权端点不能为空', trigger: 'blur' }],
+  tokenUri: [{ required: true, message: 'Token 端点不能为空', trigger: 'blur' }],
+  userinfoUri: [{ required: true, message: 'UserInfo 端点不能为空', trigger: 'blur' }]
+}
+
+const searchFields = [
+  { prop: 'code', label: '标识', type: 'input' },
+  { prop: 'name', label: '名称', type: 'input' }
+]
+
+const loading = ref(true)
+const dataList = ref<SsoProvider[]>([])
+const total = ref(0)
+const queryParams = reactive<SsoProviderQuery>({ current: 1, size: 10 })
+const dialogTitle = ref('')
+const dialogVisible = ref(false)
+const editingSecret = ref(false)
+const scopeList = ref<string[]>([])
+const mappingRows = ref<MappingRow[]>([])
+const roleOptions = ref<Role[]>([])
+const deptOptions = ref<TreeOption[]>([])
+const formRef = ref<FormInstance>()
+
+function emptyForm(): SsoProvider {
+  return {
+    id: undefined, code: '', name: '', type: 'OAUTH2_GENERIC', icon: '',
+    clientId: '', clientSecret: '',
+    authorizationUri: '', tokenUri: '', userinfoUri: '', emailsUri: '',
+    scope: '', enablePkce: 0, userFieldMapping: '',
+    defaultRoleId: undefined, defaultDeptId: undefined,
+    enabled: 1, orderNum: 0, remark: ''
   }
 }
+
+function emptyMappingRows(): MappingRow[] {
+  return MAPPING_KEYS.map(k => ({ ...k, value: '' }))
+}
+
+const form = ref<SsoProvider>(emptyForm())
+
+function loadRoleOptions() {
+  listAllRole().then(res => {
+    roleOptions.value = (res.data || []).filter((r: Role) => r.status === '0' || (r.status as unknown) === 0)
+  })
+}
+
+function loadDeptOptions() {
+  treeSelect().then(res => { deptOptions.value = res.data || [] })
+}
+
+function onScopeChange(val: string[]) {
+  form.value.scope = (val || []).join(' ')
+}
+
+/** form.scope 字符串 → scopeList 数组 */
+function syncScopeFromForm() {
+  scopeList.value = (form.value.scope || '').split(/\s+/).filter(Boolean)
+}
+
+/** form.userFieldMapping JSON → mappingRows */
+function syncMappingFromForm() {
+  const rows = emptyMappingRows()
+  if (form.value.userFieldMapping) {
+    try {
+      const obj = JSON.parse(form.value.userFieldMapping) as Record<string, unknown>
+      rows.forEach(r => { if (obj[r.key] != null) r.value = String(obj[r.key]) })
+    } catch (e) {
+      ElMessage.warning('原字段映射 JSON 解析失败，已重置为空')
+    }
+  }
+  mappingRows.value = rows
+}
+
+/** mappingRows → form.userFieldMapping JSON */
+function buildMappingJson(): string {
+  const obj: Record<string, string> = {}
+  mappingRows.value.forEach(r => {
+    const v = (r.value || '').trim()
+    if (v) obj[r.key] = v
+  })
+  return Object.keys(obj).length ? JSON.stringify(obj) : ''
+}
+
+function getList() {
+  loading.value = true
+  listProviders(queryParams).then(res => {
+    dataList.value = res.rows
+    total.value = res.total
+  }).finally(() => { loading.value = false })
+}
+
+function handleQuery() {
+  queryParams['current'] = 1
+  getList()
+}
+
+function resetQuery() {
+  Object.keys(queryParams).forEach(k => delete (queryParams as Record<string, unknown>)[k])
+  Object.assign(queryParams, { current: 1, size: 10 })
+  handleQuery()
+}
+
+function handleAdd() {
+  form.value = emptyForm()
+  editingSecret.value = true
+  scopeList.value = []
+  mappingRows.value = emptyMappingRows()
+  dialogTitle.value = '新增身份认证源'
+  dialogVisible.value = true
+  nextTick(() => { formRef.value?.clearValidate() })
+}
+
+function handleEdit(row: SsoProvider) {
+  getProvider(row.id as number).then(res => {
+    form.value = { ...emptyForm(), ...res.data, clientSecret: '' }
+    editingSecret.value = false
+    syncScopeFromForm()
+    syncMappingFromForm()
+    dialogTitle.value = '修改身份认证源'
+    dialogVisible.value = true
+  })
+}
+
+function submitForm() {
+  formRef.value?.validate(valid => {
+    if (!valid) return
+    const idRow = mappingRows.value.find(r => r.key === 'id')
+    if (!idRow?.value || !idRow.value.trim()) {
+      ElMessage.error('字段映射中的 id 为必填项')
+      return
+    }
+    form.value.userFieldMapping = buildMappingJson()
+    const op = form.value.id ? updateProvider : addProvider
+    op(form.value).then(() => {
+      ElMessage.success(form.value.id ? '修改成功' : '新增成功')
+      dialogVisible.value = false
+      getList()
+    })
+  })
+}
+
+function handleDelete(row: SsoProvider) {
+  ElMessageBox.confirm(`确认删除 "${row.name}"？删除后历史绑定不会被清除。`, '警告', {
+    confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'
+  }).then(() => delProvider(row.id as number))
+    .then(() => { getList(); ElMessage.success('删除成功') })
+    .catch(() => { /* 用户取消 */ })
+}
+
+getList()
+loadRoleOptions()
+loadDeptOptions()
 </script>
 
 <style scoped>

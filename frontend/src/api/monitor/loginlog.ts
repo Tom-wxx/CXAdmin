@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { LoginLog, LoginLogQuery } from '@/types/monitor/log'
 
 /** 分页查询登录日志列表 */
-export function listLoginLog(query: LoginLogQuery): Promise<Result<PageResult<LoginLog>>> {
+export function listLoginLog(query: LoginLogQuery): Promise<TableResponse<LoginLog>> {
   return request({ url: '/system/loginlog/list', method: 'get', params: query })
 }
 

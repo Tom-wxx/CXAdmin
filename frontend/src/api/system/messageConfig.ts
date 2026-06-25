@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { MessageConfig, MessageConfigQuery, MessageTest } from '@/types/system/message'
 
 /** 分页查询消息配置列表 */
-export function listMessageConfig(query: MessageConfigQuery): Promise<Result<PageResult<MessageConfig>>> {
+export function listMessageConfig(query: MessageConfigQuery): Promise<TableResponse<MessageConfig>> {
   return request({ url: '/system/message/config/list', method: 'get', params: query })
 }
 

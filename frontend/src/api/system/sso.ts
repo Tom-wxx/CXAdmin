@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type {
   SsoProvider,
   SsoProviderQuery,
@@ -15,7 +15,7 @@ export function listEnabledProviders(): Promise<Result<SsoProviderPublic[]>> {
 }
 
 /** 管理：分页查询 IdP 列表 */
-export function listProviders(query: SsoProviderQuery): Promise<Result<PageResult<SsoProvider>>> {
+export function listProviders(query: SsoProviderQuery): Promise<TableResponse<SsoProvider>> {
   return request({ url: '/system/sso/list', method: 'get', params: query })
 }
 
@@ -55,6 +55,6 @@ export function startBind(code: string): Promise<Result<string>> {
 }
 
 /** 审计日志分页查询 */
-export function listSsoLogs(query: SsoLogQuery): Promise<Result<PageResult<SsoLoginLog>>> {
+export function listSsoLogs(query: SsoLogQuery): Promise<TableResponse<SsoLoginLog>> {
   return request({ url: '/system/sso/log/list', method: 'get', params: query })
 }

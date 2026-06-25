@@ -54,6 +54,7 @@ export interface NotificationTemplate extends BaseEntity {
 
 /** 通知模板查询参数 */
 export interface NotificationTemplateQuery extends PageQuery {
+  templateCode?: string
   templateName?: string
   type?: string
   status?: string

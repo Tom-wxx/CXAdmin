@@ -63,7 +63,7 @@
 
     <!-- 详细信息对话框 -->
     <el-dialog title="登录日志详细" v-model="detailVisible" width="700px" append-to-body>
-      <el-form ref="detailForm" :model="detailData" label-width="100px">
+      <el-form :model="detailData" label-width="100px">
         <el-row>
           <el-col :span="12">
             <el-form-item label="日志编号：">{{ detailData.infoId }}</el-form-item>
@@ -89,7 +89,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="登录时间：">{{ parseTime(detailData.loginTime) }}</el-form-item>
+            <el-form-item label="登录时间：">{{ parseTime(detailData.loginTime || '') }}</el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="提示消息：">
@@ -107,165 +107,143 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { listLoginLog, getLoginLog, delLoginLog, cleanLoginLog, exportLoginLog } from '@/api/monitor/loginlog'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+import { parseTime } from '@/utils'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+import type { LoginLog, LoginLogQuery } from '@/types/monitor/log'
+
+defineOptions({ name: 'LoginLog' })
 
 const STATUS_OPTIONS = [
   { value: '0', label: '成功', type: 'success' },
   { value: '1', label: '失败', type: 'danger' }
 ]
 
-export default {
-  name: 'LoginLog',
-  components: {
-    Pagination,
-    SearchForm,
-    TableToolbar,
-    DictTag
-  },
-  data() {
-    return {
-      // 搜索字段配置
-      searchFields: [
-        { prop: 'username', label: '用户账号', type: 'input', width: '180px' },
-        { prop: 'ipaddr', label: '登录地址', type: 'input', placeholder: '请输入登录IP地址', width: '180px' },
-        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '登录状态', width: '180px' },
-        { prop: 'dateRange', label: '登录时间', type: 'daterange' }
-      ],
-      statusOptions: STATUS_OPTIONS,
-      // 加载状态
-      loading: true,
-      // 登录日志列表
-      loginLogList: [],
-      // 总条数
-      total: 0,
-      // 查询参数
-      queryParams: {
-        current: 1,
-        size: 10,
-        username: undefined,
-        ipaddr: undefined,
-        status: undefined,
-        dateRange: [],
-        beginTime: undefined,
-        endTime: undefined
-      },
-      // 详细信息对话框
-      detailVisible: false,
-      detailData: {},
-      // 导出loading
-      exportLoading: false
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    /** 查询登录日志列表 */
-    getList() {
-      this.loading = true
-      const range = this.queryParams.dateRange
-      if (range && range.length === 2) {
-        this.queryParams.beginTime = range[0]
-        this.queryParams.endTime = range[1]
-      } else {
-        this.queryParams.beginTime = undefined
-        this.queryParams.endTime = undefined
-      }
-      listLoginLog(this.queryParams).then(response => {
-        this.loginLogList = response.rows
-        this.total = response.total
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    /** 重置按钮操作（SearchForm 已自动清字段，这里只做分页归位） */
-    resetQuery() {
-      this.queryParams.current = 1
-      this.queryParams.size = 10
-      this.handleQuery()
-    },
-    /** 详细按钮操作 */
-    handleView(row) {
-      getLoginLog(row.infoId).then(response => {
-        this.detailData = response.data
-        this.detailVisible = true
-      })
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      this.$confirm('是否确认删除日志编号为"' + row.infoId + '"的数据项？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delLoginLog(row.infoId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      })
-    },
-    /** 清空按钮操作 */
-    handleClean() {
-      this.$confirm('是否确认清空所有登录日志数据项？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return cleanLoginLog()
-      }).then(() => {
-        this.getList()
-        this.$message.success('清空成功')
-      })
-    },
-    /** 时间格式化 */
-    parseTime(time) {
-      if (!time) {
-        return ''
-      }
-      const date = new Date(time)
-      const year = date.getFullYear()
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const hour = date.getHours().toString().padStart(2, '0')
-      const minute = date.getMinutes().toString().padStart(2, '0')
-      const second = date.getSeconds().toString().padStart(2, '0')
-      return `${year}-${month}-${day} ${hour}:${minute}:${second}`
-    },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.$confirm('是否确认导出所有登录日志数据？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.exportLoading = true
-        return exportLoginLog(this.queryParams)
-      }).then(response => {
-        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-        const link = document.createElement('a')
-        link.href = URL.createObjectURL(blob)
-        link.download = '登录日志.xlsx'
-        link.click()
-        URL.revokeObjectURL(link.href)
-        this.exportLoading = false
-        this.$message.success('导出成功')
-      }).catch(() => {
-        this.exportLoading = false
-      })
-    }
+const statusOptions = STATUS_OPTIONS
+
+const searchFields = [
+  { prop: 'username', label: '用户账号', type: 'input', width: '180px' },
+  { prop: 'ipaddr', label: '登录地址', type: 'input', placeholder: '请输入登录IP地址', width: '180px' },
+  { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '登录状态', width: '180px' },
+  { prop: 'dateRange', label: '登录时间', type: 'daterange' }
+]
+
+const loading = ref(true)
+const loginLogList = ref<LoginLog[]>([])
+const total = ref(0)
+const queryParams = reactive<LoginLogQuery & { current: number; size: number; dateRange: string[]; beginTime?: string; endTime?: string }>({
+  current: 1,
+  size: 10,
+  username: undefined,
+  ipaddr: undefined,
+  status: undefined,
+  dateRange: [],
+  beginTime: undefined,
+  endTime: undefined
+})
+const detailVisible = ref(false)
+const detailData = ref<LoginLog>({})
+const exportLoading = ref(false)
+
+/** 查询登录日志列表 */
+function getList() {
+  loading.value = true
+  const range = queryParams.dateRange
+  if (range && range.length === 2) {
+    queryParams.beginTime = range[0]
+    queryParams.endTime = range[1]
+  } else {
+    queryParams.beginTime = undefined
+    queryParams.endTime = undefined
   }
+  listLoginLog(queryParams).then(res => {
+    loginLogList.value = res.rows
+    total.value = res.total
+  }).finally(() => {
+    loading.value = false
+  })
 }
+
+/** 搜索按钮操作 */
+function handleQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+/** 重置按钮操作（SearchForm 已自动清字段，这里只做分页归位） */
+function resetQuery() {
+  queryParams.current = 1
+  queryParams.size = 10
+  handleQuery()
+}
+
+/** 详细按钮操作 */
+function handleView(row: LoginLog) {
+  getLoginLog(row.infoId as number).then(res => {
+    detailData.value = res.data
+    detailVisible.value = true
+  })
+}
+
+/** 删除按钮操作 */
+function handleDelete(row: LoginLog) {
+  ElMessageBox.confirm('是否确认删除日志编号为"' + row.infoId + '"的数据项？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return delLoginLog(row.infoId as number)
+  }).then(() => {
+    getList()
+    ElMessage.success('删除成功')
+  })
+}
+
+/** 清空按钮操作 */
+function handleClean() {
+  ElMessageBox.confirm('是否确认清空所有登录日志数据项？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return cleanLoginLog()
+  }).then(() => {
+    getList()
+    ElMessage.success('清空成功')
+  })
+}
+
+/** 导出按钮操作 */
+function handleExport() {
+  ElMessageBox.confirm('是否确认导出所有登录日志数据？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    exportLoading.value = true
+    return exportLoginLog(queryParams)
+  }).then(response => {
+    const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = '登录日志.xlsx'
+    link.click()
+    URL.revokeObjectURL(link.href)
+    exportLoading.value = false
+    ElMessage.success('导出成功')
+  }).catch(() => {
+    exportLoading.value = false
+  })
+}
+
+// init
+getList()
 </script>
 
 <style scoped>

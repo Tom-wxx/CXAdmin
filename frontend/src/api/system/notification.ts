@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { Notification, NotificationQuery, NotificationSend } from '@/types/system/notification'
 
 /** 分页查询通知列表 */
-export function listNotification(query: NotificationQuery): Promise<Result<PageResult<Notification>>> {
+export function listNotification(query: NotificationQuery): Promise<TableResponse<Notification>> {
   return request({ url: '/system/notification/list', method: 'get', params: query })
 }
 

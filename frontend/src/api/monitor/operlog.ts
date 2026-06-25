@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type { Result, PageResult } from '@/types/api'
+import type { Result, TableResponse } from '@/types/api'
 import type { OperLog, OperLogQuery } from '@/types/monitor/log'
 
 /** 分页查询操作日志列表 */
-export function listOperLog(query: OperLogQuery): Promise<Result<PageResult<OperLog>>> {
+export function listOperLog(query: OperLogQuery): Promise<TableResponse<OperLog>> {
   return request({ url: '/system/operlog/list', method: 'get', params: query })
 }
 
