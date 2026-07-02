@@ -75,7 +75,7 @@
 
     <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
-      <el-form ref="roleForm" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="roleFormRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
             <el-form-item label="角色名称" prop="roleName">
@@ -145,7 +145,7 @@
           <el-checkbox v-model="menuNodeAll" @change="handleCheckedTreeNodeAll">全选/全不选</el-checkbox>
           <el-checkbox v-model="form.menuCheckStrictly">父子联动</el-checkbox>
           <el-tree
-            ref="menuTree"
+            ref="menuTreeRef"
             class="tree-border"
             :data="menuOptions"
             show-checkbox
@@ -164,344 +164,301 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive, nextTick } from 'vue'
+import { ElMessage, ElMessageBox, ElTree } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { listRole, getRole, addRole, updateRole, delRole, changeRoleStatus, getMenuIds, saveRoleMenus, exportRole } from '@/api/system/role'
 import { listMenu } from '@/api/system/menu'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
+import { useCrudTable } from '@/composables'
+import { parseTime } from '@/utils'
+import type { Role, RoleQuery } from '@/types/system/role'
+import type { Menu } from '@/types/system/menu'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+
+defineOptions({ name: 'Role' })
 
 const STATUS_OPTIONS = [
   { value: '0', label: '正常' },
   { value: '1', label: '停用' }
 ]
 
-export default {
-  name: 'Role',
-  components: {
-    Pagination,
-    SearchForm,
-    TableToolbar
-  },
-  data() {
-    return {
-      // 搜索字段配置
-      searchFields: [
-        { prop: 'roleName', label: '角色名称', type: 'input' },
-        { prop: 'roleKey', label: '权限字符', type: 'input' },
-        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '角色状态' }
-      ],
-      // 加载状态
-      loading: true,
-      // 角色列表
-      roleList: [],
-      // 总条数
-      total: 0,
-      // 查询参数
-      queryParams: {
-        current: 1,
-        size: 10,
-        roleName: undefined,
-        roleKey: undefined,
-        status: undefined
-      },
-      // 对话框标题
-      dialogTitle: '',
-      // 对话框显示状态
-      dialogVisible: false,
-      // 表单数据
-      form: {},
-      // 表单校验规则
-      rules: {
-        roleName: [
-          { required: true, message: '角色名称不能为空', trigger: 'blur' },
-          { max: 30, message: '角色名称长度不能超过30', trigger: 'blur' }
-        ],
-        roleKey: [
-          { required: true, message: '权限字符不能为空', trigger: 'blur' },
-          { max: 100, message: '权限字符长度不能超过100', trigger: 'blur' }
-        ],
-        roleSort: [
-          { required: true, message: '角色顺序不能为空', trigger: 'blur' }
-        ]
-      },
-      // 权限分配对话框
-      permissionDialogVisible: false,
-      // 当前角色
-      currentRole: {},
-      // 菜单列表
-      menuOptions: [],
-      // 菜单树节点属性
-      defaultProps: {
-        children: 'children',
-        label: 'menuName'
-      },
-      // 菜单展开状态
-      menuExpand: false,
-      // 菜单全选状态
-      menuNodeAll: false,
-      // 导出loading
-      exportLoading: false
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    /** 查询角色列表 */
-    getList() {
-      this.loading = true
-      listRole(this.queryParams).then(response => {
-        this.roleList = response.rows
-        this.total = response.total
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    /** 重置按钮操作 */
-    resetQuery() {
-      this.queryParams = {
-        current: 1,
-        size: 10,
-        roleName: undefined,
-        roleKey: undefined,
-        status: undefined
-      }
-      this.handleQuery()
-    },
-    /** 新增按钮操作 */
-    handleAdd() {
-      this.reset()
-      this.dialogTitle = '添加角色'
-      this.dialogVisible = true
-    },
-    /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.reset()
-      const roleId = row.roleId
-      getRole(roleId).then(response => {
-        this.form = response.data
-        this.dialogTitle = '修改角色'
-        this.dialogVisible = true
-      })
-    },
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs.roleForm.validate(valid => {
-        if (valid) {
-          if (this.form.roleId) {
-            updateRole(this.form).then(response => {
-              this.$message.success('修改成功')
-              this.dialogVisible = false
-              this.getList()
-            })
-          } else {
-            addRole(this.form).then(response => {
-              this.$message.success('新增成功')
-              this.dialogVisible = false
-              this.getList()
-            })
-          }
-        }
-      })
-    },
-    /** 取消按钮 */
-    cancel() {
-      this.dialogVisible = false
-      this.reset()
-    },
-    /** 表单重置 */
-    reset() {
-      this.form = {
-        roleId: undefined,
-        roleName: undefined,
-        roleKey: undefined,
-        roleSort: 0,
-        status: '0',
-        dataScope: '1',
-        menuCheckStrictly: true,
-        deptCheckStrictly: true,
-        menuIds: [],
-        deptIds: [],
-        remark: undefined
-      }
-      if (this.$refs.roleForm) {
-        this.$refs.roleForm.resetFields()
-      }
-    },
-    /** 角色状态修改 */
-    handleStatusChange(row) {
-      let text = row.status === '0' ? '启用' : '停用'
-      this.$confirm('确认要"' + text + '""' + row.roleName + '"角色吗？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return changeRoleStatus(row.roleId, row.status)
-      }).then(() => {
-        this.$message.success(text + '成功')
-      }).catch(() => {
-        row.status = row.status === '0' ? '1' : '0'
-      })
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      this.$confirm('是否确认删除角色"' + row.roleName + '"？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delRole(row.roleId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      })
-    },
-    /** 时间格式化 */
-    parseTime(time) {
-      if (!time) {
-        return ''
-      }
-      const date = new Date(time)
-      const year = date.getFullYear()
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const hour = date.getHours().toString().padStart(2, '0')
-      const minute = date.getMinutes().toString().padStart(2, '0')
-      const second = date.getSeconds().toString().padStart(2, '0')
-      return `${year}-${month}-${day} ${hour}:${minute}:${second}`
-    },
-    /** 权限分配按钮操作 */
-    handlePermission(row) {
-      this.reset()
-      this.currentRole = {
-        roleId: row.roleId,
-        roleName: row.roleName,
-        roleKey: row.roleKey
-      }
-      // 获取角色详情
-      getRole(row.roleId).then(response => {
-        this.form = response.data
-        this.permissionDialogVisible = true
-        // 获取菜单树
-        this.getMenuTreeselect()
-      })
-    },
-    /** 查询菜单树结构 */
-    getMenuTreeselect() {
-      listMenu({}).then(response => {
-        this.menuOptions = this.buildMenuTree(response.data)
-        // 获取角色已分配的菜单ID
-        return getMenuIds(this.currentRole.roleId)
-      }).then(response => {
-        // 设置选中的菜单节点
-        const checkedKeys = response.data
-        checkedKeys.forEach(menuId => {
-          this.$nextTick(() => {
-            this.$refs.menuTree.setChecked(menuId, true, false)
-          })
+const searchFields = [
+  { prop: 'roleName', label: '角色名称', type: 'input' },
+  { prop: 'roleKey', label: '权限字符', type: 'input' },
+  { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '角色状态' }
+]
+
+const { loading, list: roleList, total, queryParams, getList, handleQuery, resetQuery } =
+  useCrudTable<Role, RoleQuery>({
+    listApi: listRole,
+    defaultQuery: { roleName: undefined, roleKey: undefined, status: undefined }
+  })
+
+// 对话框
+const dialogTitle = ref('')
+const dialogVisible = ref(false)
+const roleFormRef = ref<FormInstance>()
+
+const formDefaults: Role = {
+  roleId: undefined,
+  roleName: undefined,
+  roleKey: undefined,
+  roleSort: 0,
+  status: '0',
+  dataScope: '1',
+  menuCheckStrictly: true,
+  deptCheckStrictly: true,
+  menuIds: [],
+  deptIds: [],
+  remark: undefined
+}
+
+const form = reactive<Role>({ ...formDefaults })
+
+const rules = reactive<FormRules>({
+  roleName: [
+    { required: true, message: '角色名称不能为空', trigger: 'blur' },
+    { max: 30, message: '角色名称长度不能超过30', trigger: 'blur' }
+  ],
+  roleKey: [
+    { required: true, message: '权限字符不能为空', trigger: 'blur' },
+    { max: 100, message: '权限字符长度不能超过100', trigger: 'blur' }
+  ],
+  roleSort: [
+    { required: true, message: '角色顺序不能为空', trigger: 'blur' }
+  ]
+})
+
+// 权限分配对话框
+const permissionDialogVisible = ref(false)
+const currentRole = reactive<Role>({})
+const menuOptions = ref<Menu[]>([])
+const defaultProps = {
+  children: 'children',
+  label: 'menuName'
+}
+const menuExpand = ref(false)
+const menuNodeAll = ref(false)
+const exportLoading = ref(false)
+const menuTreeRef = ref<InstanceType<typeof ElTree>>()
+
+/** 新增按钮操作 */
+function handleAdd() {
+  reset()
+  dialogTitle.value = '添加角色'
+  dialogVisible.value = true
+}
+
+/** 修改按钮操作 */
+function handleUpdate(row: Role) {
+  reset()
+  const roleId = row.roleId as number // 表格行数据，roleId 必然存在
+  getRole(roleId).then(response => {
+    Object.assign(form, response.data)
+    dialogTitle.value = '修改角色'
+    dialogVisible.value = true
+  })
+}
+
+/** 提交按钮 */
+function submitForm() {
+  roleFormRef.value?.validate(valid => {
+    if (valid) {
+      if (form.roleId) {
+        updateRole(form).then(() => {
+          ElMessage.success('修改成功')
+          dialogVisible.value = false
+          getList()
         })
-      })
-    },
-    /** 构建菜单树 */
-    buildMenuTree(menus) {
-      const tree = []
-      const map = {}
-
-      // 创建节点映射
-      menus.forEach(menu => {
-        map[menu.menuId] = { ...menu, children: [] }
-      })
-
-      // 构建树形结构
-      menus.forEach(menu => {
-        const node = map[menu.menuId]
-        if (menu.parentId === 0) {
-          tree.push(node)
-        } else {
-          if (map[menu.parentId]) {
-            map[menu.parentId].children.push(node)
-          }
-        }
-      })
-
-      // 删除空children
-      const removeEmptyChildren = (nodes) => {
-        nodes.forEach(node => {
-          if (node.children && node.children.length === 0) {
-            delete node.children
-          } else if (node.children) {
-            removeEmptyChildren(node.children)
-          }
+      } else {
+        addRole(form).then(() => {
+          ElMessage.success('新增成功')
+          dialogVisible.value = false
+          getList()
         })
       }
-      removeEmptyChildren(tree)
-
-      return tree
-    },
-    /** 树权限（展开/折叠）*/
-    handleCheckedTreeExpand(value) {
-      let treeList = this.menuOptions
-      for (let i = 0; i < treeList.length; i++) {
-        this.$refs.menuTree.store.nodesMap[treeList[i].menuId].expanded = value
-      }
-    },
-    /** 树权限（全选/全不选）*/
-    handleCheckedTreeNodeAll(value) {
-      this.$refs.menuTree.setCheckedNodes(value ? this.menuOptions : [])
-    },
-    /** 所有菜单节点数据 */
-    getMenuAllCheckedKeys() {
-      // 目前被选中的菜单节点
-      let checkedKeys = this.$refs.menuTree.getCheckedKeys()
-      // 半选中的菜单节点
-      let halfCheckedKeys = this.$refs.menuTree.getHalfCheckedKeys()
-      checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys)
-      return checkedKeys
-    },
-    /** 提交权限分配 */
-    submitPermission() {
-      const roleId = this.currentRole.roleId
-      const menuIds = this.getMenuAllCheckedKeys()
-      saveRoleMenus(roleId, menuIds).then(response => {
-        this.$message.success('权限分配成功')
-        this.permissionDialogVisible = false
-      })
-    },
-    /** 取消权限分配 */
-    cancelPermission() {
-      this.permissionDialogVisible = false
-      this.reset()
-    },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.$confirm('是否确认导出所有角色数据？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.exportLoading = true
-        return exportRole(this.queryParams)
-      }).then(response => {
-        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-        const link = document.createElement('a')
-        link.href = URL.createObjectURL(blob)
-        link.download = '角色数据.xlsx'
-        link.click()
-        URL.revokeObjectURL(link.href)
-        this.exportLoading = false
-        this.$message.success('导出成功')
-      }).catch(() => {
-        this.exportLoading = false
-      })
     }
+  })
+}
+
+/** 取消按钮 */
+function cancel() {
+  dialogVisible.value = false
+  reset()
+}
+
+/** 表单重置 */
+function reset() {
+  Object.assign(form, formDefaults, { menuIds: [], deptIds: [] })
+  roleFormRef.value?.resetFields()
+}
+
+/** 角色状态修改 */
+function handleStatusChange(row: Role) {
+  const text = row.status === '0' ? '启用' : '停用'
+  ElMessageBox.confirm('确认要"' + text + '""' + row.roleName + '"角色吗？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return changeRoleStatus(row.roleId as number, row.status as string) // 表格行数据，字段必然存在
+  }).then(() => {
+    ElMessage.success(text + '成功')
+  }).catch(() => {
+    row.status = row.status === '0' ? '1' : '0'
+  })
+}
+
+/** 删除按钮操作 */
+function handleDelete(row: Role) {
+  ElMessageBox.confirm('是否确认删除角色"' + row.roleName + '"？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return delRole(row.roleId as number) // 表格行数据，roleId 必然存在
+  }).then(() => {
+    getList()
+    ElMessage.success('删除成功')
+  })
+}
+
+/** 权限分配按钮操作 */
+function handlePermission(row: Role) {
+  reset()
+  Object.assign(currentRole, {
+    roleId: row.roleId,
+    roleName: row.roleName,
+    roleKey: row.roleKey
+  })
+  // 获取角色详情
+  getRole(row.roleId as number).then(response => {
+    Object.assign(form, response.data)
+    permissionDialogVisible.value = true
+    // 获取菜单树
+    getMenuTreeselect()
+  })
+}
+
+/** 查询菜单树结构 */
+function getMenuTreeselect() {
+  listMenu({}).then(response => {
+    menuOptions.value = buildMenuTree(response.data)
+    // 获取角色已分配的菜单ID
+    return getMenuIds(currentRole.roleId as number) // 进入本对话框前已赋值
+  }).then(response => {
+    // 设置选中的菜单节点
+    const checkedKeys = response.data
+    checkedKeys.forEach(menuId => {
+      nextTick(() => {
+        menuTreeRef.value?.setChecked(menuId, true, false)
+      })
+    })
+  })
+}
+
+/** 构建菜单树 */
+function buildMenuTree(menus: Menu[]): Menu[] {
+  const tree: Menu[] = []
+  const map: Record<number, Menu> = {}
+
+  // 创建节点映射
+  menus.forEach(menu => {
+    map[menu.menuId as number] = { ...menu, children: [] }
+  })
+
+  // 构建树形结构
+  menus.forEach(menu => {
+    const node = map[menu.menuId as number]
+    if (menu.parentId === 0) {
+      tree.push(node)
+    } else if (menu.parentId != null && map[menu.parentId]) {
+      map[menu.parentId].children!.push(node)
+    }
+  })
+
+  // 删除空children
+  function removeEmptyChildren(nodes: Menu[]) {
+    nodes.forEach(node => {
+      if (node.children && node.children.length === 0) {
+        delete node.children
+      } else if (node.children) {
+        removeEmptyChildren(node.children)
+      }
+    })
   }
+  removeEmptyChildren(tree)
+
+  return tree
+}
+
+/** 树权限（展开/折叠）*/
+function handleCheckedTreeExpand(value: unknown) {
+  const treeList = menuOptions.value
+  // el-tree 的 store.nodesMap 未在公开类型中暴露，此处直接访问其内部实现
+  const nodesMap = (menuTreeRef.value as any)?.store?.nodesMap
+  if (!nodesMap) return
+  for (let i = 0; i < treeList.length; i++) {
+    nodesMap[treeList[i].menuId as number].expanded = value
+  }
+}
+
+/** 树权限（全选/全不选）*/
+function handleCheckedTreeNodeAll(value: unknown) {
+  // el-tree 类型声明要求 Node[]，但运行时按 node-key 接受原始数据对象，与其内部实现一致
+  menuTreeRef.value?.setCheckedNodes((value ? menuOptions.value : []) as any)
+}
+
+/** 所有菜单节点数据 */
+function getMenuAllCheckedKeys(): number[] {
+  // 目前被选中的菜单节点
+  const checkedKeys = (menuTreeRef.value?.getCheckedKeys() ?? []) as number[]
+  // 半选中的菜单节点
+  const halfCheckedKeys = (menuTreeRef.value?.getHalfCheckedKeys() ?? []) as number[]
+  checkedKeys.unshift(...halfCheckedKeys)
+  return checkedKeys
+}
+
+/** 提交权限分配 */
+function submitPermission() {
+  const roleId = currentRole.roleId as number // 进入本对话框前已赋值
+  const menuIds = getMenuAllCheckedKeys()
+  saveRoleMenus(roleId, menuIds).then(() => {
+    ElMessage.success('权限分配成功')
+    permissionDialogVisible.value = false
+  })
+}
+
+/** 取消权限分配 */
+function cancelPermission() {
+  permissionDialogVisible.value = false
+  reset()
+}
+
+/** 导出按钮操作 */
+function handleExport() {
+  ElMessageBox.confirm('是否确认导出所有角色数据？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    exportLoading.value = true
+    return exportRole(queryParams)
+  }).then((response: Blob) => {
+    const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = '角色数据.xlsx'
+    link.click()
+    URL.revokeObjectURL(link.href)
+    exportLoading.value = false
+    ElMessage.success('导出成功')
+  }).catch(() => {
+    exportLoading.value = false
+  })
 }
 </script>
 

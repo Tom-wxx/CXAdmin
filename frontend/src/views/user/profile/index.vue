@@ -16,7 +16,7 @@
                   <el-icon><UserFilled /></el-icon>
                 </div>
                 <input
-                  ref="avatarInput"
+                  ref="avatarInputRef"
                   type="file"
                   accept="image/*"
                   style="display: none"
@@ -134,7 +134,7 @@
                 </span></template>
 
                 <div class="tab-content">
-                  <el-form :model="user" :rules="userRules" ref="userForm" label-width="100px" class="profile-form">
+                  <el-form :model="user" :rules="userRules" ref="userFormRef" label-width="100px" class="profile-form">
                     <el-row :gutter="20">
                       <el-col :span="12">
                         <el-form-item label="用户昵称" prop="nickname">
@@ -208,7 +208,7 @@
                 </span></template>
 
                 <div class="tab-content">
-                  <el-form :model="pwdForm" :rules="pwdRules" ref="pwdForm" label-width="100px" class="profile-form">
+                  <el-form :model="pwdForm" :rules="pwdRules" ref="pwdFormRef" label-width="100px" class="profile-form">
                     <el-alert
                       title="密码强度要求"
                       type="info"
@@ -358,241 +358,253 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { uploadAvatar } from '@/api/login'
 import { listMyBindings, unbindBinding, startBind, listEnabledProviders } from '@/api/system/sso'
+import { useStore, useUserStore } from '@/composables/store'
+import { getAvatarUrl } from '@/utils/avatar'
+import type { User } from '@/types/system/user'
+import type { SsoBinding, SsoProviderPublic } from '@/types/system/sso'
 
-export default {
-  name: 'Profile',
-  data() {
-    return {
-      loading: false,
-      uploadingAvatar: false,
-      activeTab: 'userinfo',
-      bindings: [],
-      enabledProviders: [],
-      bindingsLoading: false,
-      user: {
-        username: '',
-        nickname: '',
-        email: '',
-        phonenumber: '',
-        sex: '0',
-        avatar: '',
-        dept: null,
-        createTime: ''
-      },
-      pwdForm: {
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      },
-      userRules: {
-        nickname: [
-          { required: true, message: '请输入用户昵称', trigger: 'blur' }
-        ],
-        email: [
-          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-        ],
-        phonenumber: [
-          { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
-        ]
-      },
-      pwdRules: {
-        oldPassword: [
-          { required: true, message: '请输入旧密码', trigger: 'blur' }
-        ],
-        newPassword: [
-          { required: true, message: '请输入新密码', trigger: 'blur' },
-          { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
-        ],
-        confirmPassword: [
-          { required: true, message: '请再次输入新密码', trigger: 'blur' },
-          {
-            validator: (rule, value, callback) => {
-              if (value !== this.pwdForm.newPassword) {
-                callback(new Error('两次输入的密码不一致'))
-              } else {
-                callback()
-              }
-            },
-            trigger: 'blur'
-          }
-        ]
-      }
-    }
-  },
-  computed: {
-    unboundProviders() {
-      const boundCodes = new Set(this.bindings.map(b => b.providerCode))
-      return this.enabledProviders.filter(p => !boundCodes.has(p.code))
-    }
-  },
-  created() {
-    this.loadUserInfo()
-    this.loadBindings()
-    this.handleBindReturn()
-  },
-  methods: {
-    // 获取头像完整URL（兼容新旧格式）
-    getAvatarUrl(avatar) {
-      if (!avatar) return ''
+defineOptions({ name: 'Profile' })
 
-      // 如果已经是完整URL（http或https开头），直接返回
-      if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
-        return avatar
-      }
+const router = useRouter()
+const route = useRoute()
+const store = useStore()
+const { name, avatar } = useUserStore()
 
-      // 如果已经包含 /api 前缀（新格式），直接返回
-      if (avatar.startsWith('/api/')) {
-        return avatar
-      }
+/** 个人中心展示用的用户对象：在通用 User 之上附加部门信息（后端 profile 接口尚未接入，当前为本地 mock） */
+interface ProfileUser extends User {
+  dept: { deptName: string } | null
+}
 
-      // 如果是 /uploads 开头（旧格式），添加 /api 前缀
-      if (avatar.startsWith('/uploads/')) {
-        return '/api' + avatar
-      }
+const loading = ref(false)
+const uploadingAvatar = ref(false)
+const activeTab = ref('userinfo')
+const bindings = ref<SsoBinding[]>([])
+const enabledProviders = ref<SsoProviderPublic[]>([])
+const bindingsLoading = ref(false)
 
-      // 其他相对路径，拼接API地址
-      const baseURL = import.meta.env.VITE_APP_BASE_API || '/api'
-      return baseURL + avatar
-    },
-    loadUserInfo() {
-      this.loading = true
-      setTimeout(() => {
-        this.user = {
-          username: this.$store.state.user.name || 'admin',
-          nickname: this.$store.state.user.name || '管理员',
-          email: 'admin@example.com',
-          phonenumber: '13800138000',
-          sex: '0',
-          avatar: this.$store.state.user.avatar || '',
-          dept: { deptName: '研发部' },
-          createTime: new Date().toISOString()
-        }
-        this.loading = false
-      }, 300)
-    },
-    loadBindings() {
-      this.bindingsLoading = true
-      Promise.all([listMyBindings(), listEnabledProviders()])
-        .then(([bindRes, providerRes]) => {
-          this.bindings = bindRes.data || []
-          this.enabledProviders = providerRes.data || []
-        })
-        .finally(() => { this.bindingsLoading = false })
-    },
-    handleStartBind(code) {
-      startBind(code).then(res => {
-        if (res && res.data) {
-          window.location.href = res.data
+const userFormRef = ref<FormInstance>()
+const pwdFormRef = ref<FormInstance>()
+const avatarInputRef = ref<HTMLInputElement>()
+
+const user = reactive<ProfileUser>({
+  username: '',
+  nickname: '',
+  email: '',
+  phonenumber: '',
+  sex: '0',
+  avatar: '',
+  dept: null,
+  createTime: ''
+})
+
+const pwdForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const userRules: FormRules = {
+  nickname: [
+    { required: true, message: '请输入用户昵称', trigger: 'blur' }
+  ],
+  email: [
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ],
+  phonenumber: [
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+  ]
+}
+
+const pwdRules: FormRules = {
+  oldPassword: [
+    { required: true, message: '请输入旧密码', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    {
+      // 跨字段校验：闭包捕获 pwdForm（setup 中无 this，不能像 Options API 那样引用 this.pwdForm）
+      validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => {
+        if (value !== pwdForm.newPassword) {
+          callback(new Error('两次输入的密码不一致'))
         } else {
-          this.$message.error('发起绑定失败')
+          callback()
         }
-      })
-    },
-    handleUnbind(b) {
-      this.$confirm(`确认解除与 ${b.providerName}（${b.externalUsername || b.externalUserId}）的绑定？`, '解绑确认', {
-        confirmButtonText: '解绑', cancelButtonText: '取消', type: 'warning'
-      }).then(() => unbindBinding(b.id))
-        .then(() => {
-          this.$message.success('已解绑')
-          this.loadBindings()
-        }).catch(() => {})
-    },
-    handleBindReturn() {
-      const { tab, bind } = this.$route.query || {}
-      if (tab === 'bindings') {
-        this.activeTab = 'bindings'
-        if (bind === 'ok') {
-          this.$message.success('绑定成功')
-          // 清掉 query，避免刷新页面再次提示
-          this.$router.replace({ path: this.$route.path })
-        }
-      }
-    },
-    handleSave() {
-      this.$refs.userForm.validate((valid) => {
-        if (valid) {
-          this.$message({
-            message: '后端接口未实现，无法保存',
-            type: 'warning',
-            duration: 2000
-          })
-        }
-      })
-    },
-    handleReset() {
-      this.$refs.userForm.resetFields()
-      this.loadUserInfo()
-    },
-    handleChangePwd() {
-      this.$refs.pwdForm.validate((valid) => {
-        if (valid) {
-          this.$message({
-            message: '后端接口未实现，无法修改密码',
-            type: 'warning',
-            duration: 2000
-          })
-        }
-      })
-    },
-    handleResetPwd() {
-      this.$refs.pwdForm.resetFields()
-    },
-    handleUploadAvatar() {
-      this.$refs.avatarInput.click()
-    },
-    async handleAvatarChange(event) {
-      const file = event.target.files[0]
-      if (!file) return
+      },
+      trigger: 'blur'
+    }
+  ]
+}
 
-      // 验证文件类型
-      if (!file.type.startsWith('image/')) {
-        this.$message.error('只能上传图片文件')
-        return
-      }
+const unboundProviders = computed(() => {
+  const boundCodes = new Set(bindings.value.map(b => b.providerCode))
+  return enabledProviders.value.filter(p => !boundCodes.has(p.code))
+})
 
-      // 验证文件大小（2MB）
-      if (file.size > 2 * 1024 * 1024) {
-        this.$message.error('图片大小不能超过2MB')
-        return
-      }
+function loadUserInfo() {
+  loading.value = true
+  setTimeout(() => {
+    // reactive 对象不可整体重新赋值，用 Object.assign 合并
+    Object.assign(user, {
+      username: name.value || 'admin',
+      nickname: name.value || '管理员',
+      email: 'admin@example.com',
+      phonenumber: '13800138000',
+      sex: '0',
+      avatar: avatar.value || '',
+      dept: { deptName: '研发部' },
+      createTime: new Date().toISOString()
+    })
+    loading.value = false
+  }, 300)
+}
 
-      // 上传头像
-      this.uploadingAvatar = true
-      const formData = new FormData()
-      formData.append('file', file)
+function loadBindings() {
+  bindingsLoading.value = true
+  Promise.all([listMyBindings(), listEnabledProviders()])
+    .then(([bindRes, providerRes]) => {
+      bindings.value = bindRes.data || []
+      enabledProviders.value = providerRes.data || []
+    })
+    .finally(() => { bindingsLoading.value = false })
+}
 
-      try {
-        const res = await uploadAvatar(formData)
-        if (res.code === 200) {
-          // 更新本地头像
-          this.user.avatar = res.data.avatar
+function handleStartBind(code?: string) {
+  if (!code) return
+  startBind(code).then(res => {
+    if (res && res.data) {
+      window.location.href = res.data
+    } else {
+      ElMessage.error('发起绑定失败')
+    }
+  })
+}
 
-          // 更新Vuex中的用户信息
-          this.$store.commit('user/SET_AVATAR', res.data.avatar)
+function handleUnbind(b: SsoBinding) {
+  ElMessageBox.confirm(`确认解除与 ${b.providerName}（${b.externalUsername || b.externalUserId}）的绑定？`, '解绑确认', {
+    confirmButtonText: '解绑', cancelButtonText: '取消', type: 'warning'
+  }).then(() => unbindBinding(b.id!)) // 已加载的绑定记录必然携带 id
+    .then(() => {
+      ElMessage.success('已解绑')
+      loadBindings()
+    }).catch(() => {})
+}
 
-          this.$message.success('头像上传成功')
-        } else {
-          this.$message.error(res.message || '头像上传失败')
-        }
-      } catch (_) {
-        this.$message.error('头像上传失败，请稍后重试')
-      } finally {
-        this.uploadingAvatar = false
-        // 清空文件输入框
-        event.target.value = ''
-      }
-    },
-    handleBindPhone() {
-      this.$message.info('手机绑定功能待开发')
-    },
-    handleBindEmail() {
-      this.$message.info('邮箱绑定功能待开发')
+function handleBindReturn() {
+  const { tab, bind } = route.query || {}
+  if (tab === 'bindings') {
+    activeTab.value = 'bindings'
+    if (bind === 'ok') {
+      ElMessage.success('绑定成功')
+      // 清掉 query，避免刷新页面再次提示
+      router.replace({ path: route.path })
     }
   }
 }
+
+function handleSave() {
+  userFormRef.value?.validate((valid) => {
+    if (valid) {
+      ElMessage({
+        message: '后端接口未实现，无法保存',
+        type: 'warning',
+        duration: 2000
+      })
+    }
+  })
+}
+
+function handleReset() {
+  userFormRef.value?.resetFields()
+  loadUserInfo()
+}
+
+function handleChangePwd() {
+  pwdFormRef.value?.validate((valid) => {
+    if (valid) {
+      ElMessage({
+        message: '后端接口未实现，无法修改密码',
+        type: 'warning',
+        duration: 2000
+      })
+    }
+  })
+}
+
+function handleResetPwd() {
+  pwdFormRef.value?.resetFields()
+}
+
+function handleUploadAvatar() {
+  avatarInputRef.value?.click()
+}
+
+async function handleAvatarChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  // 验证文件类型
+  if (!file.type.startsWith('image/')) {
+    ElMessage.error('只能上传图片文件')
+    return
+  }
+
+  // 验证文件大小（2MB）
+  if (file.size > 2 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过2MB')
+    return
+  }
+
+  // 上传头像
+  uploadingAvatar.value = true
+  const formData = new FormData()
+  formData.append('file', file)
+
+  try {
+    const res = await uploadAvatar(formData)
+    if (res.code === 200) {
+      // 更新本地头像
+      user.avatar = res.data.imgUrl ?? ''
+
+      // 更新Vuex中的用户信息
+      store.commit('user/SET_AVATAR', user.avatar)
+
+      ElMessage.success('头像上传成功')
+    } else {
+      ElMessage.error(res.message || '头像上传失败')
+    }
+  } catch (_) {
+    ElMessage.error('头像上传失败，请稍后重试')
+  } finally {
+    uploadingAvatar.value = false
+    // 清空文件输入框
+    target.value = ''
+  }
+}
+
+function handleBindPhone() {
+  ElMessage.info('手机绑定功能待开发')
+}
+
+function handleBindEmail() {
+  ElMessage.info('邮箱绑定功能待开发')
+}
+
+// setup body（替代 created）
+loadUserInfo()
+loadBindings()
+handleBindReturn()
 </script>
 
 <style lang="scss" scoped>

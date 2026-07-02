@@ -100,112 +100,137 @@
   </div>
 </template>
 
-<script>
-import { getDashboardData } from '@/api/dashboard'
-import ChartCard from '@/components/Dashboard/ChartCard'
+<script setup lang="ts">
+import { ref, reactive, computed, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
+import { getDashboardData, type DashboardStatCard, type DashboardRecentLog, type DashboardChartSeries } from '@/api/dashboard'
+import { useUserStore } from '@/composables/store'
+import ChartCard from '@/components/Dashboard/ChartCard.vue'
 
-export default {
-  name: 'Dashboard',
-  components: { ChartCard },
-  data() {
-    return {
-      loading: false,
-      stats: {},
-      animatedValues: { totalUsers: 0, totalRoles: 0, onlineUsers: 0, totalNotices: 0 },
-      userTrendData: { labels: [], values: [] },
-      loginStatsData: { labels: [], values: [] },
-      deptDistributionData: { labels: [], values: [] },
-      recentLogs: [],
-      quickLinks: [
-        { path: '/system/user',    icon: 'el-icon-user',         label: '用户管理', color: '#13c2c2' },
-        { path: '/system/role',    icon: 'el-icon-s-custom',     label: '角色管理', color: '#5b6ef0' },
-        { path: '/system/sso',     icon: 'el-icon-link',         label: '身份认证', color: '#722ed1' },
-        { path: '/monitor/operlog',icon: 'el-icon-document',     label: '操作日志', color: '#fa8c16' },
-        { path: '/monitor/online', icon: 'el-icon-video-play',   label: '在线用户', color: '#52c41a' },
-        { path: '/monitor/job',    icon: 'el-icon-time',         label: '定时任务', color: '#eb2f96' },
-        { path: '/profile',        icon: 'el-icon-s-promotion',  label: '个人中心', color: '#f5222d' },
-        { path: '/system/dict',    icon: 'el-icon-collection',   label: '数据字典', color: '#1890ff' }
-      ]
+defineOptions({ name: 'Dashboard' })
+
+type TagType = 'success' | 'primary' | 'danger' | 'warning' | 'info'
+
+interface QuickLink {
+  path: string
+  icon: string
+  label: string
+  color: string
+}
+
+interface StatListItem {
+  key: string
+  title: string
+  value: number
+  icon: string
+  bg: string
+  color: string
+  footer: string
+  trend?: number
+}
+
+const EMPTY_CHART_SERIES: DashboardChartSeries = { labels: [], values: [] }
+const OPER_TAG_TYPE_MAP: Record<string, TagType> = {
+  '新增': 'success', '修改': 'primary', '删除': 'danger', '授权': 'warning',
+  '导出': 'info', '导入': 'info', '强退': 'danger', '清空': 'warning', '其他': 'info'
+}
+
+const { name: userNameFromStore } = useUserStore()
+
+const loading = ref(false)
+const stats = ref<DashboardStatCard>({})
+const animatedValues = reactive<Record<string, number>>({ totalUsers: 0, totalRoles: 0, onlineUsers: 0, totalNotices: 0 })
+const userTrendData = ref<DashboardChartSeries>({ labels: [], values: [] })
+const loginStatsData = ref<DashboardChartSeries>({ labels: [], values: [] })
+const deptDistributionData = ref<DashboardChartSeries>({ labels: [], values: [] })
+const recentLogs = ref<DashboardRecentLog[]>([])
+const quickLinks: QuickLink[] = [
+  { path: '/system/user',    icon: 'el-icon-user',         label: '用户管理', color: '#13c2c2' },
+  { path: '/system/role',    icon: 'el-icon-s-custom',     label: '角色管理', color: '#5b6ef0' },
+  { path: '/system/sso',     icon: 'el-icon-link',         label: '身份认证', color: '#722ed1' },
+  { path: '/monitor/operlog',icon: 'el-icon-document',     label: '操作日志', color: '#fa8c16' },
+  { path: '/monitor/online', icon: 'el-icon-video-play',   label: '在线用户', color: '#52c41a' },
+  { path: '/monitor/job',    icon: 'el-icon-time',         label: '定时任务', color: '#eb2f96' },
+  { path: '/profile',        icon: 'el-icon-s-promotion',  label: '个人中心', color: '#f5222d' },
+  { path: '/system/dict',    icon: 'el-icon-collection',   label: '数据字典', color: '#1890ff' }
+]
+
+const userName = computed(() => userNameFromStore.value || 'admin')
+
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 6) return '凌晨好'
+  if (h < 12) return '早上好'
+  if (h < 14) return '中午好'
+  if (h < 18) return '下午好'
+  return '晚上好'
+})
+
+const todayStr = computed(() => {
+  const d = new Date()
+  const w = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${w[d.getDay()]}`
+})
+
+const statList = computed<StatListItem[]>(() => {
+  const s = stats.value || {}
+  return [
+    { key: 'totalUsers',   title: '用户总数', value: s.totalUsers   || 0, icon: 'el-icon-user',       bg: '#e6fffb', color: '#13c2c2', footer: `今日新增 ${s.todayUsers || 0}`, trend: s.userTrend },
+    { key: 'totalRoles',   title: '角色数量', value: s.totalRoles   || 0, icon: 'el-icon-s-custom',   bg: '#eef0ff', color: '#5b6ef0', footer: `已配置角色`,                     trend: undefined },
+    { key: 'onlineUsers',  title: '在线用户', value: s.onlineUsers  || 0, icon: 'el-icon-video-play', bg: '#f6ffed', color: '#52c41a', footer: `活跃 ${s.activeUsers || s.onlineUsers || 0}`, trend: s.onlineTrend },
+    { key: 'totalNotices', title: '通知公告', value: s.totalNotices || 0, icon: 'el-icon-bell',       bg: '#fff7e6', color: '#fa8c16', footer: `待办 ${s.pendingTasks || 0}`,   trend: undefined }
+  ]
+})
+
+async function loadDashboardData() {
+  loading.value = true
+  try {
+    const response = await getDashboardData()
+    if (response.code === 200 && response.data) {
+      const data = response.data
+      stats.value = data.statCard || {}
+      userTrendData.value = data.userTrend || EMPTY_CHART_SERIES
+      loginStatsData.value = data.loginStats || EMPTY_CHART_SERIES
+      deptDistributionData.value = data.deptDistribution || EMPTY_CHART_SERIES
+      recentLogs.value = data.recentLogs || []
+      await nextTick()
+      animateNumbers()
     }
-  },
-  computed: {
-    userName() {
-      return this.$store.state.user.name || 'admin'
-    },
-    greeting() {
-      const h = new Date().getHours()
-      if (h < 6) return '凌晨好'
-      if (h < 12) return '早上好'
-      if (h < 14) return '中午好'
-      if (h < 18) return '下午好'
-      return '晚上好'
-    },
-    todayStr() {
-      const d = new Date()
-      const w = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${w[d.getDay()]}`
-    },
-    statList() {
-      const s = this.stats || {}
-      return [
-        { key: 'totalUsers',   title: '用户总数', value: s.totalUsers   || 0, icon: 'el-icon-user',       bg: '#e6fffb', color: '#13c2c2', footer: `今日新增 ${s.todayUsers || 0}`, trend: s.userTrend },
-        { key: 'totalRoles',   title: '角色数量', value: s.totalRoles   || 0, icon: 'el-icon-s-custom',   bg: '#eef0ff', color: '#5b6ef0', footer: `已配置角色`,                     trend: undefined },
-        { key: 'onlineUsers',  title: '在线用户', value: s.onlineUsers  || 0, icon: 'el-icon-video-play', bg: '#f6ffed', color: '#52c41a', footer: `活跃 ${s.activeUsers || s.onlineUsers || 0}`, trend: s.onlineTrend },
-        { key: 'totalNotices', title: '通知公告', value: s.totalNotices || 0, icon: 'el-icon-bell',       bg: '#fff7e6', color: '#fa8c16', footer: `待办 ${s.pendingTasks || 0}`,   trend: undefined }
-      ]
-    }
-  },
-  created() {
-    this.loadDashboardData()
-  },
-  methods: {
-    async loadDashboardData() {
-      this.loading = true
-      try {
-        const response = await getDashboardData()
-        if (response.code === 200 && response.data) {
-          const data = response.data
-          this.stats = data.statCard || {}
-          this.userTrendData = data.userTrend || { labels: [], values: [] }
-          this.loginStatsData = data.loginStats || { labels: [], values: [] }
-          this.deptDistributionData = data.deptDistribution || { labels: [], values: [] }
-          this.recentLogs = data.recentLogs || []
-          this.$nextTick(() => this.animateNumbers())
-        }
-      } catch (_) {
-        this.$message.error('加载仪表板数据失败')
-      } finally {
-        this.loading = false
-      }
-    },
-    /** 数字 count-up 动画：1000ms，requestAnimationFrame 驱动 */
-    animateNumbers() {
-      const targets = {
-        totalUsers:   this.stats.totalUsers   || 0,
-        totalRoles:   this.stats.totalRoles   || 0,
-        onlineUsers:  this.stats.onlineUsers  || 0,
-        totalNotices: this.stats.totalNotices || 0
-      }
-      const duration = 1000
-      const start = performance.now()
-      const easeOutCubic = t => 1 - Math.pow(1 - t, 3)
-      const tick = now => {
-        const p = Math.min(1, (now - start) / duration)
-        const e = easeOutCubic(p)
-        Object.keys(targets).forEach(k => {
-          this.animatedValues[k] = Math.round(targets[k] * e)
-        })
-        if (p < 1) requestAnimationFrame(tick)
-        else this.animatedValues = { ...targets }
-      }
-      requestAnimationFrame(tick)
-    },
-    operTagType(operType) {
-      const m = { '新增': 'success', '修改': 'primary', '删除': 'danger', '授权': 'warning', '导出': 'info', '导入': 'info', '强退': 'danger', '清空': 'warning', '其他': 'info' }
-      return m[operType] || 'info'
-    }
+  } catch {
+    ElMessage.error('加载仪表板数据失败')
+  } finally {
+    loading.value = false
   }
 }
+
+/** 数字 count-up 动画：1000ms，requestAnimationFrame 驱动 */
+function animateNumbers() {
+  const targets: Record<string, number> = {
+    totalUsers:   stats.value.totalUsers   || 0,
+    totalRoles:   stats.value.totalRoles   || 0,
+    onlineUsers:  stats.value.onlineUsers  || 0,
+    totalNotices: stats.value.totalNotices || 0
+  }
+  const duration = 1000
+  const start = performance.now()
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+  const tick = (now: number) => {
+    const p = Math.min(1, (now - start) / duration)
+    const e = easeOutCubic(p)
+    Object.keys(targets).forEach(k => {
+      animatedValues[k] = Math.round(targets[k] * e)
+    })
+    if (p < 1) requestAnimationFrame(tick)
+    else Object.assign(animatedValues, targets)
+  }
+  requestAnimationFrame(tick)
+}
+
+function operTagType(operType: string | undefined): TagType {
+  return operType ? (OPER_TAG_TYPE_MAP[operType] || 'info') : 'info'
+}
+
+loadDashboardData()
 </script>
 
 <style lang="scss" scoped>

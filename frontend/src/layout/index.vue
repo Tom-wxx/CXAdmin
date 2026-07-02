@@ -151,148 +151,138 @@
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex'
-import SidebarItem from './components/Sidebar/SidebarItem'
-import SidebarLogo from './components/Sidebar/Logo'
-import AppMain from './components/AppMain'
-import ThemeSettings from '@/components/ThemeSettings'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import SidebarItem from './components/Sidebar/SidebarItem.vue'
+import SidebarLogo from './components/Sidebar/Logo.vue'
+import AppMain from './components/AppMain.vue'
+import ThemeSettings from '@/components/ThemeSettings/index.vue'
 import logoUrl from '@/assets/logo.png'
+import { useAppStore, useUserStore, usePermissionStore, useSettingsStore } from '@/composables/store'
+import type { AppRouteRecord } from '@/types/route'
 
-export default {
-  name: 'Layout',
-  components: {
-    SidebarItem,
-    SidebarLogo,
-    AppMain,
-    ThemeSettings
-  },
-  data() {
-    return {
-      showThemeSettings: false,
-      activeTopMenuPath: ''
-    }
-  },
-  computed: {
-    ...mapState({
-      sidebar: state => state.app.sidebar,
-      name: state => state.user.name,
-      avatar: state => state.user.avatar,
-      routes: state => state.permission.routes,
-      addRoutes: state => state.permission.addRoutes,
-      title: state => state.settings.title,
-      sidebarColor: state => state.settings.sidebarColor,
-      sidebarPosition: state => state.settings.sidebarPosition
-    }),
-    activeMenu() {
-      const route = this.$route
-      const { meta, path } = route
-      if (meta.activeMenu) {
-        return meta.activeMenu
-      }
-      return path
-    },
-    isCollapse() {
-      return !this.sidebar.opened
-    },
-    textColor() {
-      return this.isLightColor(this.sidebarColor) ? '#303133' : 'rgba(255,255,255,0.65)'
-    },
-    activeTextColor() {
-      return '#13c2c2'
-    },
-    topMenuRoutes() {
-      return this.sidebarPosition === 'top' ? this.addRoutes : this.routes
-    },
-    activeTopMenu() {
-      if (this.sidebarPosition !== 'top') return ''
-      const currentPath = this.$route.path
-      const topRoute = this.topMenuRoutes.find(route => {
-        if (currentPath === route.path) return true
-        if (route.children) {
-          return route.children.some(child => {
-            const childPath = child.path.startsWith('/') ? child.path : `${route.path}/${child.path}`
-            return currentPath.startsWith(childPath)
-          })
-        }
-        return false
+defineOptions({ name: 'Layout' })
+
+const route = useRoute()
+const router = useRouter()
+
+const { sidebar, toggleSidebar } = useAppStore()
+const { name, avatar, logout: userLogout, fedLogout } = useUserStore()
+const { routes, addRoutes } = usePermissionStore()
+const { title, sidebarColor, sidebarPosition } = useSettingsStore()
+
+const showThemeSettings = ref(false)
+
+const activeMenu = computed(() => {
+  const { meta, path } = route
+  if (meta && meta.activeMenu) {
+    return meta.activeMenu as string
+  }
+  return path
+})
+
+const isCollapse = computed(() => !sidebar.value.opened)
+
+const textColor = computed(() => (isLightColor(sidebarColor.value) ? '#303133' : 'rgba(255,255,255,0.65)'))
+
+const activeTextColor = computed(() => '#13c2c2')
+
+const topMenuRoutes = computed<AppRouteRecord[]>(() => (sidebarPosition.value === 'top' ? addRoutes.value : routes.value))
+
+const activeTopMenu = computed(() => {
+  if (sidebarPosition.value !== 'top') return ''
+  const currentPath = route.path
+  const topRoute = topMenuRoutes.value.find(r => {
+    if (currentPath === r.path) return true
+    if (r.children) {
+      return r.children.some(child => {
+        const childPath = child.path.startsWith('/') ? child.path : `${r.path}/${child.path}`
+        return currentPath.startsWith(childPath)
       })
-      return topRoute ? topRoute.path : (this.topMenuRoutes[0]?.path || '')
-    },
-    currentTopMenuChildren() {
-      if (this.sidebarPosition !== 'top') return []
-      const currentTopRoute = this.topMenuRoutes.find(route => route.path === this.activeTopMenu)
-      if (!currentTopRoute || !currentTopRoute.children) return []
-      return currentTopRoute.children.filter(child => !child.hidden)
     }
-  },
-  methods: {
-    toggleSideBar() {
-      this.$store.dispatch('app/toggleSideBar')
-    },
-    goToProfile() {
-      this.$router.push('/profile')
-    },
-    getAvatarUrl(avatar) {
-      if (!avatar) {
-        return logoUrl
-      }
-      if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
-        return avatar
-      }
-      if (avatar.startsWith('/api/')) {
-        return avatar
-      }
-      if (avatar.startsWith('/uploads/')) {
-        return '/api' + avatar
-      }
-      const baseURL = import.meta.env.VITE_APP_BASE_API || '/api'
-      return baseURL + avatar
-    },
-    async logout() {
-      try {
-        await this.$store.dispatch('user/logout')
-      } catch (_) {
-        await this.$store.dispatch('user/fedLogout')
-      } finally {
-        this.$router.push('/login').catch(() => {})
-      }
-    },
-    isLightColor(color) {
-      if (!color) return false
-      const hex = color.replace('#', '')
-      const r = parseInt(hex.substr(0, 2), 16)
-      const g = parseInt(hex.substr(2, 2), 16)
-      const b = parseInt(hex.substr(4, 2), 16)
-      const brightness = (r * 299 + g * 587 + b * 114) / 1000
-      return brightness > 155
-    },
-    getChildBasePath(childPath) {
-      if (childPath.startsWith('/')) {
-        return childPath
-      }
-      const parentPath = this.activeTopMenu
-      if (parentPath.endsWith('/')) {
-        return parentPath + childPath
-      }
-      return parentPath + '/' + childPath
-    },
-    handleTopMenuSelect(index) {
-      const selectedRoute = this.topMenuRoutes.find(route => route.path === index)
-      if (!selectedRoute) return
-      if (selectedRoute.children && selectedRoute.children.length > 0) {
-        const firstChild = selectedRoute.children.find(child => !child.hidden)
-        if (firstChild) {
-          const childPath = firstChild.path.startsWith('/')
-            ? firstChild.path
-            : `${selectedRoute.path}/${firstChild.path}`
-          this.$router.push(childPath).catch(err => {})
-          return
-        }
-      }
-      this.$router.push(index).catch(err => {})
+    return false
+  })
+  return topRoute ? topRoute.path : (topMenuRoutes.value[0]?.path || '')
+})
+
+const currentTopMenuChildren = computed<AppRouteRecord[]>(() => {
+  if (sidebarPosition.value !== 'top') return []
+  const currentTopRoute = topMenuRoutes.value.find(r => r.path === activeTopMenu.value)
+  if (!currentTopRoute || !currentTopRoute.children) return []
+  return currentTopRoute.children.filter(child => !child.hidden)
+})
+
+function toggleSideBar(): void {
+  toggleSidebar()
+}
+
+function goToProfile(): void {
+  router.push('/profile')
+}
+
+function getAvatarUrl(avatar?: string): string {
+  if (!avatar) {
+    return logoUrl
+  }
+  if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+    return avatar
+  }
+  if (avatar.startsWith('/api/')) {
+    return avatar
+  }
+  if (avatar.startsWith('/uploads/')) {
+    return '/api' + avatar
+  }
+  const baseURL = import.meta.env.VITE_APP_BASE_API || '/api'
+  return baseURL + avatar
+}
+
+async function logout(): Promise<void> {
+  try {
+    await userLogout()
+  } catch (_) {
+    await fedLogout()
+  } finally {
+    router.push('/login').catch(() => {})
+  }
+}
+
+function isLightColor(color?: string): boolean {
+  if (!color) return false
+  const hex = color.replace('#', '')
+  const r = parseInt(hex.substr(0, 2), 16)
+  const g = parseInt(hex.substr(2, 2), 16)
+  const b = parseInt(hex.substr(4, 2), 16)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+  return brightness > 155
+}
+
+function getChildBasePath(childPath: string): string {
+  if (childPath.startsWith('/')) {
+    return childPath
+  }
+  const parentPath = activeTopMenu.value
+  if (parentPath.endsWith('/')) {
+    return parentPath + childPath
+  }
+  return parentPath + '/' + childPath
+}
+
+function handleTopMenuSelect(index: string): void {
+  const selectedRoute = topMenuRoutes.value.find(r => r.path === index)
+  if (!selectedRoute) return
+  if (selectedRoute.children && selectedRoute.children.length > 0) {
+    const firstChild = selectedRoute.children.find(child => !child.hidden)
+    if (firstChild) {
+      const childPath = firstChild.path.startsWith('/')
+        ? firstChild.path
+        : `${selectedRoute.path}/${firstChild.path}`
+      router.push(childPath).catch(() => {})
+      return
     }
   }
+  router.push(index).catch(() => {})
 }
 </script>
 
