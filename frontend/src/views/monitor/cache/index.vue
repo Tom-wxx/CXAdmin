@@ -156,7 +156,7 @@
                   </div>
                   <div class="info-row">
                     <span class="info-label">类型：</span>
-                    <el-tag size="small" :type="getKeyTypeColor(cacheValue.keyType)">
+                    <el-tag size="small" :type="getKeyTypeColor(cacheValue.keyType as string)">
                       {{ cacheValue.keyType }}
                     </el-tag>
                   </div>
@@ -235,7 +235,9 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getCacheList,
   getKeyList,
@@ -244,278 +246,283 @@ import {
   batchDeleteCache,
   clearAllCache
 } from '@/api/monitor/cache'
+import type { CacheInfo, CacheValue } from '@/types/monitor/cache'
 
-export default {
-  name: 'CacheMonitor',
-  data() {
-    return {
-      cacheListLoading: false,
-      keyListLoading: false,
-      valueLoading: false,
-      cacheList: [],
-      keyList: [],
-      cacheValue: null,
-      selectedCache: null,
-      selectedKey: null,
-      keywordFilter: ''
+defineOptions({ name: 'CacheMonitor' })
+
+// ── 状态 ──────────────────────────────────────────────────────────────────────
+const cacheListLoading = ref(false)
+const keyListLoading = ref(false)
+const valueLoading = ref(false)
+
+const cacheList = ref<CacheInfo[]>([])
+
+// 后端实际返回的键列表项是对象（含 keyName/keyType/ttl），
+// 但 API 类型声明为 string[] ── 此处用 any[] 保留运行时字段访问
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const keyList = ref<any[]>([])
+
+const cacheValue = ref<CacheValue | null>(null)
+const selectedCache = ref<string | null>(null)
+const selectedKey = ref<string | null>(null)
+const keywordFilter = ref('')
+
+// ── 数据加载 ──────────────────────────────────────────────────────────────────
+
+/** 加载缓存列表 */
+async function loadCacheList() {
+  cacheListLoading.value = true
+  try {
+    const response = await getCacheList()
+    if (response.code === 200) {
+      cacheList.value = response.data || []
     }
-  },
-  created() {
-    this.loadCacheList()
-  },
-  methods: {
-    /** 加载缓存列表 */
-    async loadCacheList() {
-      this.cacheListLoading = true
-      try {
-        const response = await getCacheList()
-        if (response.code === 200) {
-          this.cacheList = response.data || []
-        }
-      } catch (error) {
+  } catch {
+    ElMessage.error('获取缓存列表失败')
+  } finally {
+    cacheListLoading.value = false
+  }
+}
 
-        this.$message.error('获取缓存列表失败')
-      } finally {
-        this.cacheListLoading = false
+/** 加载键名列表 */
+async function loadKeyList(cacheName?: string | null, keyword?: string) {
+  keyListLoading.value = true
+  try {
+    const params: Record<string, string> = {}
+    if (cacheName) params.cacheName = cacheName
+    if (keyword) params.keyword = keyword
+    const response = await getKeyList(params)
+    if (response.code === 200) {
+      keyList.value = (response.data as unknown as any[]) || []
+    }
+  } catch {
+    ElMessage.error('获取键名列表失败')
+  } finally {
+    keyListLoading.value = false
+  }
+}
+
+/** 加载缓存内容 */
+async function loadCacheValue(key: string) {
+  valueLoading.value = true
+  try {
+    const response = await getCacheValue(key)
+    if (response.code === 200) {
+      cacheValue.value = response.data
+    } else {
+      ElMessage.error(response.message || '获取缓存内容失败')
+      cacheValue.value = null
+    }
+  } catch {
+    ElMessage.error('获取缓存内容失败')
+    cacheValue.value = null
+  } finally {
+    valueLoading.value = false
+  }
+}
+
+// ── 事件处理 ──────────────────────────────────────────────────────────────────
+
+/** 选择缓存 */
+function handleCacheSelect(cache: CacheInfo) {
+  selectedCache.value = cache.cacheName ?? null
+  selectedKey.value = null
+  cacheValue.value = null
+  keywordFilter.value = ''
+  loadKeyList(cache.cacheName)
+}
+
+/** 选择键 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleKeySelect(keyItem: any) {
+  selectedKey.value = keyItem.keyName as string
+  loadCacheValue(keyItem.keyName as string)
+}
+
+/** 搜索键名 */
+function handleKeySearch() {
+  loadKeyList(selectedCache.value, keywordFilter.value)
+}
+
+/** 删除键 */
+function handleDeleteKey() {
+  ElMessageBox.confirm('确定要删除该缓存吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      const response = await deleteCache(selectedKey.value!)
+      if (response.code === 200) {
+        ElMessage.success('删除成功')
+        selectedKey.value = null
+        cacheValue.value = null
+        loadKeyList(selectedCache.value)
+        loadCacheList()
+      } else {
+        ElMessage.error(response.message || '删除失败')
       }
-    },
-    /** 加载键名列表 */
-    async loadKeyList(cacheName, keyword) {
-      this.keyListLoading = true
-      try {
-        const params = {}
-        if (cacheName) {
-          params.cacheName = cacheName
-        }
-        if (keyword) {
-          params.keyword = keyword
-        }
-        const response = await getKeyList(params)
-        if (response.code === 200) {
-          this.keyList = response.data || []
-        }
-      } catch (error) {
+    } catch {
+      ElMessage.error('删除失败')
+    }
+  }).catch(() => {})
+}
 
-        this.$message.error('获取键名列表失败')
-      } finally {
-        this.keyListLoading = false
+/** 清空所有缓存 */
+function handleClearAll() {
+  ElMessageBox.confirm('确定要清空所有缓存吗？此操作不可恢复！', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      const response = await clearAllCache()
+      if (response.code === 200) {
+        ElMessage.success('清空成功')
+        selectedCache.value = null
+        selectedKey.value = null
+        cacheValue.value = null
+        keyList.value = []
+        loadCacheList()
+      } else {
+        ElMessage.error(response.message || '清空失败')
       }
-    },
-    /** 加载缓存内容 */
-    async loadCacheValue(key) {
-      this.valueLoading = true
-      try {
-        const response = await getCacheValue(key)
-        if (response.code === 200) {
-          this.cacheValue = response.data
-        } else {
-          this.$message.error(response.message || '获取缓存内容失败')
-          this.cacheValue = null
-        }
-      } catch (error) {
+    } catch {
+      ElMessage.error('清空失败')
+    }
+  }).catch(() => {})
+}
 
-        this.$message.error('获取缓存内容失败')
-        this.cacheValue = null
-      } finally {
-        this.valueLoading = false
-      }
-    },
-    /** 选择缓存 */
-    handleCacheSelect(cache) {
-      this.selectedCache = cache.cacheName
-      this.selectedKey = null
-      this.cacheValue = null
-      this.keywordFilter = ''
-      this.loadKeyList(cache.cacheName)
-    },
-    /** 选择键 */
-    handleKeySelect(keyItem) {
-      this.selectedKey = keyItem.keyName
-      this.loadCacheValue(keyItem.keyName)
-    },
-    /** 搜索键名 */
-    handleKeySearch() {
-      this.loadKeyList(this.selectedCache, this.keywordFilter)
-    },
-    /** 删除键 */
-    handleDeleteKey() {
-      this.$confirm('确定要删除该缓存吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        try {
-          const response = await deleteCache(this.selectedKey)
-          if (response.code === 200) {
-            this.$message.success('删除成功')
-            this.selectedKey = null
-            this.cacheValue = null
-            // 重新加载数据
-            this.loadKeyList(this.selectedCache)
-            this.loadCacheList()
-          } else {
-            this.$message.error(response.message || '删除失败')
-          }
-        } catch (error) {
+/** 清空所有缓存（缓存列表面板按钮） */
+function handleClearAllCache() {
+  handleClearAll()
+}
 
-          this.$message.error('删除失败')
-        }
-      }).catch(() => {})
-    },
-    /** 清空所有缓存 */
-    handleClearAll() {
-      this.$confirm('确定要清空所有缓存吗？此操作不可恢复！', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        try {
-          const response = await clearAllCache()
-          if (response.code === 200) {
-            this.$message.success('清空成功')
-            this.selectedCache = null
-            this.selectedKey = null
-            this.cacheValue = null
-            this.keyList = []
-            this.loadCacheList()
-          } else {
-            this.$message.error(response.message || '清空失败')
-          }
-        } catch (error) {
+/** 清空当前缓存分类 */
+function handleClearCacheByPrefix() {
+  if (!selectedCache.value) {
+    ElMessage.warning('请先选择缓存分类')
+    return
+  }
 
-          this.$message.error('清空失败')
-        }
-      }).catch(() => {})
-    },
-    /** 清空所有缓存（缓存列表面板按钮） */
-    handleClearAllCache() {
-      this.handleClearAll()
-    },
-    /** 清空当前缓存分类 */
-    handleClearCacheByPrefix() {
-      if (!this.selectedCache) {
-        this.$message.warning('请先选择缓存分类')
+  ElMessageBox.confirm(
+    `确定要清空缓存分类"${selectedCache.value}"下的所有键吗？此操作不可恢复！`,
+    '警告',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(async () => {
+    try {
+      if (keyList.value.length === 0) {
+        ElMessage.warning('当前缓存分类下没有键')
         return
       }
 
-      this.$confirm(
-        `确定要清空缓存分类"${this.selectedCache}"下的所有键吗？此操作不可恢复！`,
-        '警告',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      ).then(async () => {
-        try {
-          // 获取当前缓存分类下的所有键名
-          if (this.keyList.length === 0) {
-            this.$message.warning('当前缓存分类下没有键')
-            return
-          }
+      const keys: string[] = keyList.value.map((item: any) => item.keyName as string)
+      const response = await batchDeleteCache(keys)
 
-          const keys = this.keyList.map(item => item.keyName)
-          const response = await batchDeleteCache(keys)
-
-          if (response.code === 200) {
-            this.$message.success(`已清空${response.data.success}个键`)
-            this.selectedKey = null
-            this.cacheValue = null
-            this.keyList = []
-            // 重新加载缓存列表
-            this.loadCacheList()
-          } else {
-            this.$message.error(response.message || '清空失败')
-          }
-        } catch (error) {
-
-          this.$message.error('清空失败')
-        }
-      }).catch(() => {})
-    },
-    /** 刷新所有 */
-    refreshAll() {
-      this.loadCacheList()
-      if (this.selectedCache) {
-        this.loadKeyList(this.selectedCache, this.keywordFilter)
+      if (response.code === 200) {
+        // response.data 实际含 success 字段；API 声明为 void，故用 as any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ElMessage.success(`已清空${(response.data as any)?.success ?? ''}个键`)
+        selectedKey.value = null
+        cacheValue.value = null
+        keyList.value = []
+        loadCacheList()
+      } else {
+        ElMessage.error(response.message || '清空失败')
       }
-      if (this.selectedKey) {
-        this.loadCacheValue(this.selectedKey)
-      }
-    },
-    /** 获取键类型图标 */
-    getKeyIcon(type) {
-      const iconMap = {
-        'string': 'el-icon-document',
-        'hash': 'el-icon-collection',
-        'list': 'el-icon-menu',
-        'set': 'el-icon-files',
-        'zset': 'el-icon-data-line'
-      }
-      return iconMap[type] || 'el-icon-document'
-    },
-    /** 获取键类型颜色 */
-    getKeyTypeColor(type) {
-      const colorMap = {
-        'string': 'success',
-        'hash': 'warning',
-        'list': 'primary',
-        'set': 'info',
-        'zset': 'danger'
-      }
-      return colorMap[type] || ''
-    },
-    /** 格式化值 */
-    formatValue(value) {
-      if (typeof value === 'object') {
-        return JSON.stringify(value, null, 2)
-      }
-      return value
-    },
-    /** 格式化Hash值 */
-    formatHashValue(value) {
-      if (!value || typeof value !== 'object') {
-        return []
-      }
-      return Object.entries(value).map(([key, val]) => ({
-        key,
-        value: typeof val === 'object' ? JSON.stringify(val) : val
-      }))
-    },
-    /** 格式化List值 */
-    formatListValue(value) {
-      if (!Array.isArray(value)) {
-        return []
-      }
-      return value.map((item, index) => ({
-        index,
-        value: typeof item === 'object' ? JSON.stringify(item) : item
-      }))
-    },
-    /** 格式化Set值 */
-    formatSetValue(value) {
-      if (Array.isArray(value)) {
-        return value
-      }
-      if (value && typeof value === 'object') {
-        return Array.from(value)
-      }
-      return []
-    },
-    /** 格式化ZSet值 */
-    formatZSetValue(value) {
-      if (!Array.isArray(value)) {
-        return []
-      }
-      return value.map(item => {
-        if (typeof item === 'object' && item.member !== undefined) {
-          return item
-        }
-        return { member: item, score: 0 }
-      })
+    } catch {
+      ElMessage.error('清空失败')
     }
+  }).catch(() => {})
+}
+
+/** 刷新所有 */
+function refreshAll() {
+  loadCacheList()
+  if (selectedCache.value) {
+    loadKeyList(selectedCache.value, keywordFilter.value)
+  }
+  if (selectedKey.value) {
+    loadCacheValue(selectedKey.value)
   }
 }
+
+// ── 格式化工具函数 ─────────────────────────────────────────────────────────────
+
+/** 获取键类型图标 */
+function getKeyIcon(type: string): string {
+  const iconMap: Record<string, string> = {
+    'string': 'el-icon-document',
+    'hash': 'el-icon-collection',
+    'list': 'el-icon-menu',
+    'set': 'el-icon-files',
+    'zset': 'el-icon-data-line'
+  }
+  return iconMap[type] || 'el-icon-document'
+}
+
+/** 获取键类型颜色 */
+function getKeyTypeColor(type: string): string {
+  const colorMap: Record<string, string> = {
+    'string': 'success',
+    'hash': 'warning',
+    'list': 'primary',
+    'set': 'info',
+    'zset': 'danger'
+  }
+  return colorMap[type] || ''
+}
+
+/** 格式化 string 值（Redis value 可为任意类型，用 unknown） */
+function formatValue(value: unknown): string {
+  if (typeof value === 'object' && value !== null) {
+    return JSON.stringify(value, null, 2)
+  }
+  return String(value ?? '')
+}
+
+/** 格式化 Hash 值 → [{key, value}] */
+function formatHashValue(value: unknown): Array<{ key: string; value: string }> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return []
+  return Object.entries(value as Record<string, unknown>).map(([key, val]) => ({
+    key,
+    value: typeof val === 'object' ? JSON.stringify(val) : String(val)
+  }))
+}
+
+/** 格式化 List 值 → [{index, value}] */
+function formatListValue(value: unknown): Array<{ index: number; value: string }> {
+  if (!Array.isArray(value)) return []
+  return value.map((item: unknown, index: number) => ({
+    index,
+    value: typeof item === 'object' ? JSON.stringify(item) : String(item)
+  }))
+}
+
+/** 格式化 Set 值 → string[] */
+function formatSetValue(value: unknown): string[] {
+  if (Array.isArray(value)) return value as string[]
+  if (value && typeof value === 'object') return Array.from(value as Iterable<string>)
+  return []
+}
+
+/** 格式化 ZSet 值 → [{member, score}] */
+function formatZSetValue(value: unknown): Array<{ member: unknown; score: number }> {
+  if (!Array.isArray(value)) return []
+  return (value as unknown[]).map((item: unknown) => {
+    if (typeof item === 'object' && item !== null && 'member' in item) {
+      return item as { member: unknown; score: number }
+    }
+    return { member: item, score: 0 }
+  })
+}
+
+// ── 初始化（替代 created） ──────────────────────────────────────────────────────
+loadCacheList()
 </script>
 
 <style lang="scss" scoped>

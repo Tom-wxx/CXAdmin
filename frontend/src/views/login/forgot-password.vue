@@ -12,7 +12,7 @@
         <template v-if="!sent">
           <h2 class="form-title">找回密码</h2>
           <p class="form-subtitle">输入注册邮箱，发送重置链接</p>
-          <el-form ref="form" :model="form" :rules="rules" class="login-form">
+          <el-form ref="formRef" :model="form" :rules="rules" class="login-form">
             <el-form-item prop="email">
               <el-input v-model="form.email" placeholder="注册邮箱" prefix-icon="Message" @keyup.enter="handleSubmit" />
             </el-form-item>
@@ -31,45 +31,51 @@
           </div>
         </template>
         <div class="form-footer">
-          <el-link @click="$router.push('/login')">返回登录</el-link>
+          <el-link @click="router.push('/login')">返回登录</el-link>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import type { FormInstance, FormRules } from 'element-plus'
 import { forgotPassword } from '@/api/register'
+import type { ForgotPasswordBody } from '@/types/auth'
 
-export default {
-  name: 'ForgotPassword',
-  data() {
-    return {
-      form: { email: '' },
-      rules: {
-        email: [
-          { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
-        ]
-      },
-      loading: false,
-      sent: false
-    }
-  },
-  methods: {
-    handleSubmit() {
-      this.$refs.form.validate(valid => {
-        if (valid) {
-          this.loading = true
-          forgotPassword({ email: this.form.email }).then(() => {
-            this.sent = true
-          }).finally(() => {
-            this.loading = false
-          })
-        }
+defineOptions({ name: 'ForgotPassword' })
+
+const router = useRouter()
+
+const formRef = ref<FormInstance>()
+
+const form = reactive<ForgotPasswordBody>({
+  email: ''
+})
+
+const rules: FormRules = {
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+  ]
+}
+
+const loading = ref(false)
+const sent = ref(false)
+
+function handleSubmit() {
+  formRef.value?.validate(valid => {
+    if (valid) {
+      loading.value = true
+      forgotPassword({ email: form.email }).then(() => {
+        sent.value = true
+      }).finally(() => {
+        loading.value = false
       })
     }
-  }
+  })
 }
 </script>
 

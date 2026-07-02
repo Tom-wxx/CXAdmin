@@ -16,7 +16,7 @@
       <div class="login-form-wrapper">
         <h2 class="form-title">注册账号</h2>
         <p class="form-subtitle">创建您的管理账号</p>
-        <el-form ref="registerForm" :model="form" :rules="rules" class="login-form">
+        <el-form ref="registerFormRef" :model="form" :rules="rules" class="login-form">
           <el-form-item prop="username">
             <el-input v-model="form.username" placeholder="用户名（2-20个字符）" prefix-icon="User" />
           </el-form-item>
@@ -47,80 +47,101 @@
           </el-form-item>
         </el-form>
         <div class="form-footer">
-          <el-link @click="$router.push('/login')">已有账号，去登录</el-link>
+          <el-link @click="router.push('/login')">已有账号，去登录</el-link>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { getCaptcha } from '@/api/login'
 import { registerUser } from '@/api/register'
+import type { RegisterBody } from '@/types/auth'
 
-export default {
-  name: 'Register',
-  data() {
-    const validateConfirmPassword = (rule, value, callback) => {
-      if (value !== this.form.password) {
-        callback(new Error('两次输入的密码不一致'))
-      } else {
-        callback()
-      }
-    }
-    return {
-      form: { username: '', nickname: '', email: '', password: '', confirmPassword: '', code: '', uuid: '' },
-      rules: {
-        username: [
-          { required: true, message: '请输入用户名', trigger: 'blur' },
-          { min: 2, max: 20, message: '用户名长度2-20个字符', trigger: 'blur' }
-        ],
-        nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
-        email: [
-          { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
-        ],
-        password: [
-          { required: true, message: '请输入密码', trigger: 'blur' },
-          { min: 6, max: 20, message: '密码长度6-20个字符', trigger: 'blur' }
-        ],
-        confirmPassword: [
-          { required: true, message: '请确认密码', trigger: 'blur' },
-          { validator: validateConfirmPassword, trigger: 'blur' }
-        ],
-        code: [{ required: true, message: '请输入验证码', trigger: 'change' }]
-      },
-      loading: false,
-      codeUrl: ''
-    }
-  },
-  created() {
-    this.getCode()
-  },
-  methods: {
-    getCode() {
-      getCaptcha().then(res => {
-        this.codeUrl = res.data.img
-        this.form.uuid = res.data.uuid
-      })
-    },
-    handleRegister() {
-      this.$refs.registerForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          const { confirmPassword, ...data } = this.form
-          registerUser(data).then(() => {
-            this.$message.success('注册成功，请登录')
-            this.$router.push('/login')
-          }).catch(() => {
-            this.loading = false
-            this.getCode()
-          })
-        }
-      })
-    }
+defineOptions({ name: 'Register' })
+
+const router = useRouter()
+
+const registerFormRef = ref<FormInstance>()
+
+interface RegisterForm extends RegisterBody {
+  nickname: string
+  confirmPassword: string
+}
+
+const form = reactive<RegisterForm>({
+  username: '',
+  nickname: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  code: '',
+  uuid: ''
+})
+
+const validateConfirmPassword = (_rule: unknown, value: string, callback: (e?: Error) => void) => {
+  if (value !== form.password) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
   }
 }
+
+const rules: FormRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 20, message: '用户名长度2-20个字符', trigger: 'blur' }
+  ],
+  nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '密码长度6-20个字符', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
+  ],
+  code: [{ required: true, message: '请输入验证码', trigger: 'change' }]
+}
+
+const loading = ref(false)
+const codeUrl = ref('')
+
+function getCode() {
+  getCaptcha().then(res => {
+    codeUrl.value = res.data.img ?? ''
+    form.uuid = res.data.uuid ?? ''
+  })
+}
+
+function handleRegister() {
+  registerFormRef.value?.validate(valid => {
+    if (valid) {
+      loading.value = true
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { confirmPassword, ...data } = form
+      registerUser(data as RegisterBody).then(() => {
+        ElMessage.success('注册成功，请登录')
+        router.push('/login')
+      }).catch(() => {
+        loading.value = false
+        getCode()
+      })
+    }
+  })
+}
+
+// setup body (replaces created)
+getCode()
 </script>
 
 <style lang="scss" scoped>

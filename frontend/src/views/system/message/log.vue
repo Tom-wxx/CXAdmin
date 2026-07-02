@@ -8,7 +8,7 @@
       </el-col>
     </TableToolbar>
 
-    <el-table v-loading="loading" :data="logList">
+    <el-table v-loading="loading" :data="list">
       <el-table-column label="日志ID" align="center" prop="logId" width="80" />
       <el-table-column label="消息类型" align="center" prop="messageType" width="100">
         <template #default="scope">
@@ -32,7 +32,7 @@
       </el-table-column>
     </el-table>
 
-    <pagination
+    <Pagination
       v-show="total > 0"
       :total="total"
       v-model:page="queryParams.current"
@@ -67,12 +67,18 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { listMessageLog, getMessageLog, delMessageLog, cleanMessageLog } from '@/api/system/messageLog'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+import { useCrudTable } from '@/composables'
+import type { MessageLog, MessageLogQuery } from '@/types/system/message'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+
+defineOptions({ name: 'MessageLog' })
 
 const MESSAGE_TYPE_OPTIONS = [
   { value: '1', label: '邮件', type: 'success' },
@@ -86,84 +92,54 @@ const SEND_STATUS_OPTIONS = [
   { value: '2', label: '发送中', type: 'warning' }
 ]
 
-export default {
-  name: 'MessageLog',
-  components: { Pagination, SearchForm, TableToolbar, DictTag },
-  data() {
-    return {
-      searchFields: [
-        { prop: 'messageType', label: '消息类型', type: 'select', options: MESSAGE_TYPE_OPTIONS, placeholder: '请选择消息类型' },
-        { prop: 'receiver', label: '接收者', type: 'input', placeholder: '请输入接收者' },
-        { prop: 'sendStatus', label: '发送状态', type: 'select', options: SEND_STATUS_OPTIONS, placeholder: '请选择发送状态' }
-      ],
-      messageTypeOptions: MESSAGE_TYPE_OPTIONS,
-      sendStatusOptions: SEND_STATUS_OPTIONS,
-      loading: true,
-      total: 0,
-      logList: [],
-      open: false,
-      detail: {},
-      queryParams: {
-        current: 1,
-        size: 10,
-        messageType: null,
-        receiver: null,
-        sendStatus: null,
-        startTime: null,
-        endTime: null
-      }
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    getList() {
-      this.loading = true
-      listMessageLog(this.queryParams).then(response => {
-        this.logList = response.rows
-        this.total = response.total
-        this.loading = false
-      })
-    },
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    resetQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    handleView(row) {
-      getMessageLog(row.logId).then(response => {
-        this.detail = response.data
-        this.open = true
-      })
-    },
-    handleDelete(row) {
-      this.$confirm('是否确认删除该日志？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delMessageLog(row.logId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      })
-    },
-    handleClean() {
-      this.$confirm('是否确认清空所有日志？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return cleanMessageLog()
-      }).then(() => {
-        this.getList()
-        this.$message.success('清空成功')
-      })
-    }
-  }
+const messageTypeOptions = MESSAGE_TYPE_OPTIONS
+const sendStatusOptions = SEND_STATUS_OPTIONS
+
+const searchFields = [
+  { prop: 'messageType', label: '消息类型', type: 'select', options: MESSAGE_TYPE_OPTIONS, placeholder: '请选择消息类型' },
+  { prop: 'receiver', label: '接收者', type: 'input', placeholder: '请输入接收者' },
+  { prop: 'sendStatus', label: '发送状态', type: 'select', options: SEND_STATUS_OPTIONS, placeholder: '请选择发送状态' }
+]
+
+const { loading, list, total, queryParams, getList, handleQuery, resetQuery } =
+  useCrudTable<MessageLog, MessageLogQuery>({
+    listApi: listMessageLog,
+    defaultQuery: { messageType: undefined, receiver: undefined, sendStatus: undefined } as Partial<MessageLogQuery>
+  })
+
+const open = ref(false)
+const detail = reactive<MessageLog>({})
+
+function handleView(row: MessageLog) {
+  getMessageLog(row.logId as number).then(response => {
+    Object.assign(detail, response.data)
+    open.value = true
+  })
+}
+
+function handleDelete(row: MessageLog) {
+  ElMessageBox.confirm('是否确认删除该日志？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return delMessageLog(row.logId as number)
+  }).then(() => {
+    getList()
+    ElMessage.success('删除成功')
+  }).catch(() => { /* 用户取消 */ })
+}
+
+function handleClean() {
+  ElMessageBox.confirm('是否确认清空所有日志？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return cleanMessageLog()
+  }).then(() => {
+    getList()
+    ElMessage.success('清空成功')
+  }).catch(() => { /* 用户取消 */ })
 }
 </script>

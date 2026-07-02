@@ -4,7 +4,7 @@
 
     <TableToolbar show-add @add="handleAdd" />
 
-    <el-table v-loading="loading" :data="configList">
+    <el-table v-loading="loading" :data="list">
       <el-table-column label="配置ID" align="center" prop="configId" width="80" />
       <el-table-column label="配置名称" align="center" prop="configName" />
       <el-table-column label="消息类型" align="center" prop="messageType" width="100">
@@ -43,7 +43,7 @@
       </el-table-column>
     </el-table>
 
-    <pagination
+    <Pagination
       v-show="total > 0"
       :total="total"
       v-model:page="queryParams.current"
@@ -52,7 +52,7 @@
     />
 
     <el-dialog :title="title" v-model="open" width="600px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="配置名称" prop="configName">
           <el-input v-model="form.configName" placeholder="请输入配置名称" />
         </el-form-item>
@@ -157,7 +157,7 @@
     </el-dialog>
 
     <el-dialog title="测试发送" v-model="testOpen" width="500px" append-to-body>
-      <el-form ref="testForm" :model="testForm" label-width="100px">
+      <el-form ref="testFormRef" :model="testForm" label-width="100px">
         <el-form-item label="接收者">
           <el-input v-model="testForm.receiver" placeholder="邮箱或手机号" />
         </el-form-item>
@@ -176,12 +176,22 @@
   </div>
 </template>
 
-<script>
-import { listMessageConfig, getMessageConfig, addMessageConfig, updateMessageConfig, delMessageConfig, changeConfigStatus, setDefaultConfig, testSendMessage } from '@/api/system/messageConfig'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import {
+  listMessageConfig, getMessageConfig, addMessageConfig, updateMessageConfig,
+  delMessageConfig, changeConfigStatus, setDefaultConfig, testSendMessage
+} from '@/api/system/messageConfig'
+import { useCrudTable } from '@/composables'
+import type { MessageConfig, MessageConfigQuery, MessageTest } from '@/types/system/message'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+
+defineOptions({ name: 'MessageConfig' })
 
 const MESSAGE_TYPE_OPTIONS = [
   { value: '1', label: '邮件', type: 'success' },
@@ -194,213 +204,181 @@ const IS_DEFAULT_OPTIONS = [
   { value: '0', label: '否', type: 'info' }
 ]
 
-export default {
-  name: 'MessageConfig',
-  components: { Pagination, SearchForm, TableToolbar, DictTag },
-  data() {
-    return {
-      searchFields: [
-        { prop: 'configName', label: '配置名称', type: 'input', placeholder: '请输入配置名称' },
-        { prop: 'messageType', label: '消息类型', type: 'select', options: MESSAGE_TYPE_OPTIONS, placeholder: '请选择消息类型' }
-      ],
-      messageTypeOptions: MESSAGE_TYPE_OPTIONS,
-      isDefaultOptions: IS_DEFAULT_OPTIONS,
-      loading: true,
-      total: 0,
-      configList: [],
-      title: '',
-      open: false,
-      testOpen: false,
-      queryParams: {
-        current: 1,
-        size: 10,
-        configName: null,
-        messageType: null,
-        status: null
-      },
-      form: {},
-      testForm: {},
-      emailConfig: {
-        host: '',
-        port: '587',
-        from: '',
-        username: '',
-        password: '',
-        fromName: '系统通知',
-        ssl: true
-      },
-      smsConfig: {
-        provider: 'aliyun',
-        accessKeyId: '',
-        accessKeySecret: '',
-        signName: '',
-        templateCode: ''
-      },
-      systemConfig: {
-        expireDays: '30',
-        pushEnabled: true
-      },
-      wechatConfig: {
-        appId: '',
-        appSecret: '',
-        templateId: ''
-      },
-      rules: {
-        configName: [{ required: true, message: '配置名称不能为空', trigger: 'blur' }],
-        messageType: [{ required: true, message: '消息类型不能为空', trigger: 'change' }]
-      }
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    getList() {
-      this.loading = true
-      listMessageConfig(this.queryParams).then(response => {
-        this.configList = response.rows
-        this.total = response.total
-        this.loading = false
-      })
-    },
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    resetQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    cancel() {
-      this.open = false
-      this.reset()
-    },
-    reset() {
-      this.form = {
-        configId: null,
-        configName: null,
-        messageType: '1',
-        configData: null,
-        isDefault: '0',
-        status: '0',
-        remark: null
-      }
-      this.emailConfig = { host: '', port: '587', from: '', username: '', password: '', fromName: '系统通知', ssl: true }
-      this.smsConfig = { provider: 'aliyun', accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '' }
-      this.systemConfig = { expireDays: '30', pushEnabled: true }
-      this.wechatConfig = { appId: '', appSecret: '', templateId: '' }
-      this.$refs['form'] && this.$refs['form'].resetFields()
-    },
-    handleTypeChange() {
-      this.emailConfig = { host: '', port: '587', from: '', username: '', password: '', fromName: '系统通知', ssl: true }
-      this.smsConfig = { provider: 'aliyun', accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '' }
-      this.systemConfig = { expireDays: '30', pushEnabled: true }
-      this.wechatConfig = { appId: '', appSecret: '', templateId: '' }
-    },
-    handleAdd() {
-      this.reset()
-      this.open = true
-      this.title = '添加消息配置'
-    },
-    handleUpdate(row) {
-      this.reset()
-      getMessageConfig(row.configId).then(response => {
-        this.form = response.data
-        if (this.form.configData) {
-          try {
-            const config = JSON.parse(this.form.configData)
-            if (this.form.messageType === '1') this.emailConfig = { ...this.emailConfig, ...config }
-            else if (this.form.messageType === '2') this.smsConfig = { ...this.smsConfig, ...config }
-            else if (this.form.messageType === '3') this.systemConfig = { ...this.systemConfig, ...config }
-            else if (this.form.messageType === '4') this.wechatConfig = { ...this.wechatConfig, ...config }
-          } catch (_) { /* 配置非 JSON，忽略 */ }
-        }
-        this.open = true
-        this.title = '修改消息配置'
-      })
-    },
-    submitForm() {
-      this.$refs['form'].validate(valid => {
-        if (valid) {
-          let configData = {}
-          if (this.form.messageType === '1') configData = this.emailConfig
-          else if (this.form.messageType === '2') configData = this.smsConfig
-          else if (this.form.messageType === '3') configData = this.systemConfig
-          else if (this.form.messageType === '4') configData = this.wechatConfig
-          this.form.configData = JSON.stringify(configData)
+const messageTypeOptions = MESSAGE_TYPE_OPTIONS
+const isDefaultOptions = IS_DEFAULT_OPTIONS
 
-          if (this.form.configId != null) {
-            updateMessageConfig(this.form).then(() => {
-              this.$message.success('修改成功')
-              this.open = false
-              this.getList()
-            })
-          } else {
-            addMessageConfig(this.form).then(() => {
-              this.$message.success('新增成功')
-              this.open = false
-              this.getList()
-            })
-          }
-        }
-      })
-    },
-    handleDelete(row) {
-      this.$confirm('是否确认删除该配置？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delMessageConfig(row.configId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      })
-    },
-    handleStatusChange(row) {
-      let text = row.status === '0' ? '启用' : '停用'
-      this.$confirm('确认要"' + text + '""' + row.configName + '"吗?', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return changeConfigStatus({ configId: row.configId, status: row.status })
-      }).then(() => {
-        this.$message.success(text + '成功')
-      }).catch(() => {
-        row.status = row.status === '0' ? '1' : '0'
-      })
-    },
-    handleSetDefault(row) {
-      this.$confirm('确认要将"' + row.configName + '"设为默认配置吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'info'
-      }).then(() => {
-        return setDefaultConfig(row.configId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('设置成功')
-      })
-    },
-    handleTest(row) {
-      this.testForm = {
-        configId: row.configId,
-        messageType: row.messageType,
-        receiver: '',
-        subject: '',
-        content: '这是一条测试消息'
-      }
-      this.testOpen = true
-    },
-    submitTest() {
-      testSendMessage(this.testForm).then(() => {
-        this.$message.success('发送成功')
-        this.testOpen = false
-      }).catch(() => {
-        this.$message.error('发送失败')
-      })
+const searchFields = [
+  { prop: 'configName', label: '配置名称', type: 'input', placeholder: '请输入配置名称' },
+  { prop: 'messageType', label: '消息类型', type: 'select', options: MESSAGE_TYPE_OPTIONS, placeholder: '请选择消息类型' }
+]
+
+const { loading, list, total, queryParams, getList, handleQuery, resetQuery } =
+  useCrudTable<MessageConfig, MessageConfigQuery>({
+    listApi: listMessageConfig,
+    defaultQuery: { configName: undefined, messageType: undefined, status: undefined } as Partial<MessageConfigQuery>
+  })
+
+const title = ref('')
+const open = ref(false)
+const testOpen = ref(false)
+const formRef = ref<FormInstance>()
+const testFormRef = ref<FormInstance>()
+
+// Sub-config reactive objects (reassigned via Object.assign on reset/type-change)
+const emailConfig = reactive({ host: '', port: '587', from: '', username: '', password: '', fromName: '系统通知', ssl: true })
+const smsConfig = reactive({ provider: 'aliyun', accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '' })
+const systemConfig = reactive({ expireDays: '30', pushEnabled: true })
+const wechatConfig = reactive({ appId: '', appSecret: '', templateId: '' })
+
+const defaultForm = (): MessageConfig => ({
+  configId: undefined,
+  configName: undefined,
+  messageType: '1',
+  configData: undefined,
+  isDefault: '0',
+  status: '0',
+  remark: undefined
+})
+const form = reactive<MessageConfig>(defaultForm())
+
+const testForm = reactive<MessageTest>({ configId: undefined, messageType: undefined, receiver: '', subject: '', content: '' })
+
+const rules: FormRules = {
+  configName: [{ required: true, message: '配置名称不能为空', trigger: 'blur' }],
+  messageType: [{ required: true, message: '消息类型不能为空', trigger: 'change' }]
+}
+
+function resetSubConfigs() {
+  Object.assign(emailConfig, { host: '', port: '587', from: '', username: '', password: '', fromName: '系统通知', ssl: true })
+  Object.assign(smsConfig, { provider: 'aliyun', accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '' })
+  Object.assign(systemConfig, { expireDays: '30', pushEnabled: true })
+  Object.assign(wechatConfig, { appId: '', appSecret: '', templateId: '' })
+}
+
+function reset() {
+  Object.assign(form, defaultForm())
+  resetSubConfigs()
+  formRef.value?.resetFields()
+}
+
+function cancel() {
+  open.value = false
+  reset()
+}
+
+function handleTypeChange() {
+  resetSubConfigs()
+}
+
+function handleAdd() {
+  reset()
+  open.value = true
+  title.value = '添加消息配置'
+}
+
+function handleUpdate(row: MessageConfig) {
+  reset()
+  getMessageConfig(row.configId as number).then(response => {
+    Object.assign(form, response.data)
+    if (form.configData) {
+      try {
+        const config = JSON.parse(form.configData)
+        if (form.messageType === '1') Object.assign(emailConfig, config)
+        else if (form.messageType === '2') Object.assign(smsConfig, config)
+        else if (form.messageType === '3') Object.assign(systemConfig, config)
+        else if (form.messageType === '4') Object.assign(wechatConfig, config)
+      } catch (_) { /* 配置非 JSON，忽略 */ }
     }
-  }
+    open.value = true
+    title.value = '修改消息配置'
+  })
+}
+
+function submitForm() {
+  formRef.value?.validate(valid => {
+    if (valid) {
+      let configData: Record<string, unknown> = {}
+      if (form.messageType === '1') configData = { ...emailConfig }
+      else if (form.messageType === '2') configData = { ...smsConfig }
+      else if (form.messageType === '3') configData = { ...systemConfig }
+      else if (form.messageType === '4') configData = { ...wechatConfig }
+      form.configData = JSON.stringify(configData)
+
+      if (form.configId != null) {
+        updateMessageConfig(form).then(() => {
+          ElMessage.success('修改成功')
+          open.value = false
+          getList()
+        })
+      } else {
+        addMessageConfig(form).then(() => {
+          ElMessage.success('新增成功')
+          open.value = false
+          getList()
+        })
+      }
+    }
+  })
+}
+
+function handleDelete(row: MessageConfig) {
+  ElMessageBox.confirm('是否确认删除该配置？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return delMessageConfig(row.configId as number)
+  }).then(() => {
+    getList()
+    ElMessage.success('删除成功')
+  }).catch(() => { /* 用户取消 */ })
+}
+
+function handleStatusChange(row: MessageConfig) {
+  const text = row.status === '0' ? '启用' : '停用'
+  ElMessageBox.confirm('确认要"' + text + '""' + row.configName + '"吗?', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return changeConfigStatus({ configId: row.configId!, status: row.status! })
+  }).then(() => {
+    ElMessage.success(text + '成功')
+  }).catch(() => {
+    row.status = row.status === '0' ? '1' : '0'
+  })
+}
+
+function handleSetDefault(row: MessageConfig) {
+  ElMessageBox.confirm('确认要将"' + row.configName + '"设为默认配置吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'info'
+  }).then(() => {
+    return setDefaultConfig(row.configId as number)
+  }).then(() => {
+    getList()
+    ElMessage.success('设置成功')
+  }).catch(() => { /* 用户取消 */ })
+}
+
+function handleTest(row: MessageConfig) {
+  Object.assign(testForm, {
+    configId: row.configId,
+    messageType: row.messageType,
+    receiver: '',
+    subject: '',
+    content: '这是一条测试消息'
+  })
+  testOpen.value = true
+}
+
+function submitTest() {
+  testSendMessage(testForm).then(() => {
+    ElMessage.success('发送成功')
+    testOpen.value = false
+  }).catch(() => {
+    ElMessage.error('发送失败')
+  })
 }
 </script>
