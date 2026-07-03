@@ -198,6 +198,11 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  # spring.mail 未配置真实账号（占位符）时，邮件健康检查每次轮询都会真实登录 SMTP 并失败，
+  # 导致整体 health DOWN + 日志刷 WARN。开发环境关闭该项；配置真实授权码后可移除此开关。
+  health:
+    mail:
+      enabled: false
   info:
     env:
       enabled: true
