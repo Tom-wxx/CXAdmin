@@ -99,13 +99,3 @@ export function formatTime(time, option) {
     )
   }
 }
-
-/**
- * 重置表单
- * @param {string} refName
- */
-export function resetForm(refName) {
-  if (this.$refs[refName]) {
-    this.$refs[refName].resetFields()
-  }
-}
