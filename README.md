@@ -13,10 +13,11 @@
 | 连接池 / 监控 | Druid 1.2.28 |
 | 缓存 | Redis |
 | API 文档 | springdoc-openapi 3.0（OpenAPI 3.1） |
-| 前端框架 | Vue 3.5 |
+| 前端框架 | Vue 3.5（Composition API，全量 `<script setup lang="ts">`） |
 | UI 组件 | Element Plus 2.14 |
 | 路由 / 状态管理 | Vue Router 4 / Vuex 4 |
-| 构建工具 | Maven / @vue/cli 5（Webpack） |
+| 前端语言 / 构建 | TypeScript（strict） / Vite 6 |
+| 后端构建 | Maven 多模块（`admin-common` ← `admin-system` ← `admin-framework` ← `admin-boot`） |
 
 ## 功能模块
 
@@ -46,7 +47,7 @@
 
 - JDK 17+（Spring Boot 4 要求 17+）
 - Maven 3.6+
-- Node.js 18+（Vue 3 / @vue/cli 5）
+- Node.js 18+（Vite 6 / TypeScript；建议 20.19+ 以便未来升级 Vite 7+）
 - MySQL 8.0
 - Redis
 
@@ -62,9 +63,12 @@ mysql -u root -p admin_system < database/init.sql
 
 ### 2. 启动后端
 
+后端为多模块 Maven 工程，只有 `admin-boot` 是可执行 jar。从聚合根构建依赖并运行：
+
 ```bash
 cd backend
-mvn spring-boot:run
+mvn -pl admin-boot -am spring-boot:run
+# 打包：mvn clean package -DskipTests  →  backend/admin-boot/target/admin-system.jar
 ```
 
 后端启动地址：http://localhost:8080/api
@@ -73,8 +77,9 @@ mvn spring-boot:run
 
 ```bash
 cd frontend
-npm install
-npm run dev
+npm install            # 如遇 peer 冲突：npm install --legacy-peer-deps
+npm run dev            # Vite 开发服务器
+# 可选：npm run type-check（vue-tsc 严格类型检查）、npm run build（vite 构建）
 ```
 
 前端访问地址：http://localhost:8081
@@ -91,35 +96,28 @@ npm run dev
 
 ```
 CXAdmin/
-├── backend/                # 后端 Spring Boot 项目
-│   ├── src/main/java/      # Java 源码
-│   │   └── com/admin/system/
-│   │       ├── common/     # 公共模块（Result、BaseEntity、异常处理）
-│   │       ├── config/     # 配置类（Security、Redis、MyBatis、CORS）
-│   │       ├── security/   # 安全认证（JWT 过滤器、用户认证）
-│   │       ├── controller/ # REST 接口层
-│   │       ├── service/    # 业务逻辑层
-│   │       ├── mapper/     # 数据访问层
-│   │       ├── entity/     # 数据实体
-│   │       ├── dto/        # 请求参数对象
-│   │       └── vo/         # 响应视图对象
-│   └── src/main/resources/ # 配置文件与 Mapper XML
-├── frontend/               # 前端 Vue 项目
+├── backend/                      # 后端：多模块 Maven 工程（聚合父 pom，依赖 common ← system ← framework ← boot）
+│   ├── admin-common/             # com.admin.common —— Result / BaseEntity / 工具类 / 安全基类（无内部依赖）
+│   ├── admin-system/             # com.admin.system —— 领域层：controller/service/mapper/entity/dto/vo、SSO、Quartz、代码生成
+│   ├── admin-framework/          # com.admin.framework —— 配置 / 安全 / AOP 切面 / 全局异常处理
+│   └── admin-boot/               # com.admin —— 唯一可执行 jar（AdminApplication + application.yml）
+├── frontend/                     # 前端：Vue 3 + TypeScript + Vite
 │   └── src/
-│       ├── api/            # 接口请求
-│       ├── views/          # 页面组件
-│       ├── components/     # 公共组件
-│       ├── router/         # 路由配置
-│       ├── store/          # 状态管理
-│       └── utils/          # 工具函数
-└── database/               # 数据库脚本
+│       ├── api/                  # 接口请求（.ts，按 Result<T> / TableResponse<T> 类型化）
+│       ├── types/                # 领域 / API / store 类型定义
+│       ├── composables/          # 组合式逻辑（useCrudTable / useDict / useECharts / 类型化 store）
+│       ├── views/                # 页面组件（<script setup lang="ts">）
+│       ├── components/           # 公共组件
+│       ├── router/ store/ utils/ # 路由 / Vuex / 工具
+│       └── main.ts               # 入口
+└── database/                     # 数据库脚本（init.sql 单文件聚合）
 ```
 
 ## 配置说明
 
 ### 数据库配置
 
-编辑 `backend/src/main/resources/application.yml`：
+编辑 `backend/admin-boot/src/main/resources/application.yml`：
 
 ```yaml
 spring:
