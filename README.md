@@ -14,7 +14,6 @@
 
 - [技术栈](#技术栈)
 - [功能模块](#功能模块)
-- [界面预览](#界面预览)
 - [快速开始](#快速开始)
 - [项目结构](#项目结构)
 - [配置说明](#配置说明)
@@ -59,15 +58,6 @@
 - **数据统计** - 系统数据可视化统计
 - **单点登录 (SSO)** - 通用 OAuth2 / OIDC 适配器：动态配置 IdP（GitHub / Google 等），首次登录自动注册并绑定，已登录用户可从个人中心管理第三方账号绑定。client_secret AES-GCM 加密入库
 - **个人中心** - 查看 / 修改个人信息、修改密码、头像上传、SSO 账号绑定管理
-
-## 界面预览
-
-> 截图占位 —— 将实际运行截图放入 `frontend/public/screenshots/` 后在此引用，例如：
->
-> ```markdown
-> ![登录](frontend/public/screenshots/login.png)
-> ![工作台](frontend/public/screenshots/dashboard.png)
-> ```
 
 ## 快速开始
 
