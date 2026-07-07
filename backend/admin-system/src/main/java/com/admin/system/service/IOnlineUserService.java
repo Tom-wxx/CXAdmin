@@ -18,6 +18,11 @@ public interface IOnlineUserService {
     List<OnlineUserVO> selectOnlineUserList(String username, String ipaddr);
 
     /**
+     * Count active online user sessions.
+     */
+    long countOnlineUsers();
+
+    /**
      * 查询在线用户列表（分页）
      */
     PageResult<OnlineUserVO> selectOnlineUserListPage(String username, String ipaddr, Integer current, Integer size);

@@ -65,6 +65,38 @@ public class SysUserController {
     }
 
     /**
+     * Query current logged-in user profile.
+     */
+    @Operation(summary = "查询当前用户个人信息")
+    @GetMapping("/profile")
+    public Result<UserVO> profile() {
+        return Result.success(userService.selectCurrentUserProfile());
+    }
+
+    /**
+     * Update current logged-in user profile.
+     */
+    @Log(title = "个人中心", businessType = Log.BusinessType.UPDATE)
+    @Operation(summary = "修改当前用户个人信息")
+    @PutMapping("/profile")
+    public Result<Void> updateProfile(@RequestBody UserDTO userDTO) {
+        userService.updateCurrentUserProfile(userDTO);
+        return Result.success("修改个人信息成功");
+    }
+
+    /**
+     * Update current logged-in user password.
+     */
+    @Log(title = "个人中心", businessType = Log.BusinessType.UPDATE)
+    @Operation(summary = "修改当前用户密码")
+    @PutMapping("/profile/updatePwd")
+    public Result<Void> updateProfilePassword(@RequestBody Map<String, String> body) {
+        String oldPassword = body == null ? null : body.get("oldPassword");
+        String newPassword = body == null ? null : body.get("newPassword");
+        userService.updateCurrentUserPassword(oldPassword, newPassword);
+        return Result.success("修改密码成功");
+    }
+    /**
      * 根据用户ID查询详细信息
      */
     @Operation(summary = "查询用户详情")

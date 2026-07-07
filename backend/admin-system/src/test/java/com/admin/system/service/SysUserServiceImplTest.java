@@ -5,7 +5,11 @@ import com.admin.system.datascope.DataScopeChecker;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
+import com.admin.system.security.LoginUser;
+import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.impl.SysUserServiceImpl;
+import com.admin.system.vo.UserVO;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,8 +17,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,6 +62,11 @@ class SysUserServiceImplTest {
         existingUser = new SysUser();
         existingUser.setUserId(1L);
         existingUser.setUsername("admin");
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     // ==================== selectUserByUsername Tests ====================
@@ -541,5 +553,133 @@ class SysUserServiceImplTest {
         ServiceException ex = assertThrows(ServiceException.class,
                 () -> userService.selectUserById(2L));
         assertTrue(ex.getMessage().contains("权限"));
+    }
+
+    // ==================== current user profile Tests ====================
+
+    @Test
+    @DisplayName("current profile uses authenticated user id")
+    void selectCurrentUserProfile_shouldUseAuthenticatedUserId() {
+        setAuthentication(7L, "profileUser");
+        UserVO profile = new UserVO();
+        profile.setUserId(7L);
+        profile.setUsername("profileUser");
+        when(dataScopeChecker.countUserInScope(any())).thenReturn(1L);
+        when(userMapper.selectUserVOById(7L)).thenReturn(profile);
+
+        UserVO result = userService.selectCurrentUserProfile();
+
+        assertEquals(7L, result.getUserId());
+        verify(userMapper).selectUserVOById(7L);
+    }
+
+    @Test
+    @DisplayName("current profile update only writes allowed fields")
+    void updateCurrentUserProfile_shouldOnlyUpdateAllowedFieldsForAuthenticatedUser() {
+        setAuthentication(7L, "profileUser");
+        UserDTO dto = new UserDTO();
+        dto.setUserId(99L);
+        dto.setUsername("attacker");
+        dto.setNickname("New Nick");
+        dto.setEmail("new@example.com");
+        dto.setPhone("13800138002");
+        dto.setGender("1");
+        dto.setStatus("1");
+        dto.setRoleIds(new Long[]{1L});
+        dto.setPostIds(new Long[]{2L});
+
+        when(userMapper.checkPhoneUnique("13800138002")).thenReturn(null);
+        when(userMapper.checkEmailUnique("new@example.com")).thenReturn(null);
+        when(userMapper.updateById(any(SysUser.class))).thenReturn(1);
+
+        userService.updateCurrentUserProfile(dto);
+
+        verify(userMapper).updateById(argThat((SysUser user) -> {
+            assertEquals(7L, user.getUserId());
+            assertNull(user.getUsername());
+            assertEquals("New Nick", user.getNickname());
+            assertEquals("new@example.com", user.getEmail());
+            assertEquals("13800138002", user.getPhonenumber());
+            assertEquals("1", user.getSex());
+            assertNull(user.getStatus());
+            assertNull(user.getRoleIds());
+            assertNull(user.getPostIds());
+            assertNull(user.getPassword());
+            return true;
+        }));
+    }
+
+    @Test
+    @DisplayName("current profile update rejects duplicate phone")
+    void updateCurrentUserProfile_duplicatePhoneShouldThrow() {
+        setAuthentication(7L, "profileUser");
+        UserDTO dto = new UserDTO();
+        dto.setNickname("New Nick");
+        dto.setPhone("13800138002");
+
+        SysUser other = new SysUser();
+        other.setUserId(8L);
+        when(userMapper.checkPhoneUnique("13800138002")).thenReturn(other);
+
+        assertThrows(ServiceException.class, () -> userService.updateCurrentUserProfile(dto));
+        verify(userMapper, never()).updateById(any(SysUser.class));
+    }
+
+    @Test
+    @DisplayName("current password update rejects wrong old password")
+    void updateCurrentUserPassword_wrongOldPasswordShouldThrow() {
+        setAuthentication(7L, "profileUser");
+        SysUser current = new SysUser();
+        current.setUserId(7L);
+        current.setPassword(SecurityUtils.encryptPassword("correctPass"));
+        when(userMapper.selectById(7L)).thenReturn(current);
+
+        assertThrows(ServiceException.class,
+                () -> userService.updateCurrentUserPassword("wrongPass", "newPass123"));
+
+        verify(userMapper, never()).updateById(any(SysUser.class));
+    }
+
+    @Test
+    @DisplayName("current password update rejects short new password")
+    void updateCurrentUserPassword_shortNewPasswordShouldThrow() {
+        setAuthentication(7L, "profileUser");
+
+        assertThrows(ServiceException.class,
+                () -> userService.updateCurrentUserPassword("oldPass123", "short"));
+
+        verify(userMapper, never()).selectById(anyLong());
+        verify(userMapper, never()).updateById(any(SysUser.class));
+    }
+
+    @Test
+    @DisplayName("current password update stores new hash")
+    void updateCurrentUserPassword_successShouldStoreHash() {
+        setAuthentication(7L, "profileUser");
+        SysUser current = new SysUser();
+        current.setUserId(7L);
+        current.setPassword(SecurityUtils.encryptPassword("oldPass123"));
+        when(userMapper.selectById(7L)).thenReturn(current);
+        when(userMapper.updateById(any(SysUser.class))).thenReturn(1);
+
+        userService.updateCurrentUserPassword("oldPass123", "newPass123");
+
+        verify(userMapper).updateById(argThat((SysUser user) -> {
+            assertEquals(7L, user.getUserId());
+            assertNotNull(user.getPassword());
+            assertTrue(SecurityUtils.matchesPassword("newPass123", user.getPassword()));
+            return true;
+        }));
+    }
+
+    private void setAuthentication(Long userId, String username) {
+        SysUser user = new SysUser();
+        user.setUserId(userId);
+        user.setUsername(username);
+        user.setStatus("0");
+        LoginUser loginUser = new LoginUser(user, Collections.emptySet());
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }

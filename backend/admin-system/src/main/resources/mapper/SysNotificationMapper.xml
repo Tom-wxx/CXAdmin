@@ -35,6 +35,14 @@
     </select>
 
     <!-- 批量标记消息为已读 -->
+    <!-- Count unread todo and approval notifications for dashboard pending tasks. -->
+    <select id="countPendingTasks" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM sys_notification
+        WHERE status = 'unread'
+          AND type IN ('todo', 'approval')
+          AND deleted = 0
+    </select>
     <update id="batchMarkAsRead">
         UPDATE sys_notification
         SET status = 'read',

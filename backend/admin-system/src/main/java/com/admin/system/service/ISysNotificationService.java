@@ -47,6 +47,12 @@ public interface ISysNotificationService extends IService<SysNotification> {
      * @return 未读消息数量
      */
     Long getUnreadCount(Long userId);
+    /**
+     * Count unread todo and approval notifications.
+     *
+     * @return pending task count
+     */
+    Long countPendingTasks();
 
     /**
      * 标记消息为已读

@@ -75,6 +75,18 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      * 查询在线用户列表（分页）
      */
     @Override
+    public long countOnlineUsers() {
+        Set<String> keys = redisTemplate.keys(SystemConstants.LOGIN_TOKEN_KEY + "*");
+        if (keys == null || keys.isEmpty()) {
+            return 0L;
+        }
+
+        return keys.stream()
+                .map(redisUtil::get)
+                .filter(LoginUser.class::isInstance)
+                .count();
+    }
+    @Override
     public PageResult<OnlineUserVO> selectOnlineUserListPage(String username, String ipaddr, Integer current, Integer size) {
         // 获取全部在线用户
         List<OnlineUserVO> allUsers = selectOnlineUserList(username, ipaddr);

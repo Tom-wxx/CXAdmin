@@ -34,6 +34,11 @@ public interface ISysUserService extends IService<SysUser> {
     UserVO selectUserById(Long userId);
 
     /**
+     * Query current logged-in user profile.
+     */
+    UserVO selectCurrentUserProfile();
+
+    /**
      * 新增用户
      */
     void insertUser(UserDTO userDTO);
@@ -42,6 +47,11 @@ public interface ISysUserService extends IService<SysUser> {
      * 修改用户
      */
     void updateUser(UserDTO userDTO);
+
+    /**
+     * Update current logged-in user profile.
+     */
+    void updateCurrentUserProfile(UserDTO userDTO);
 
     /**
      * 删除用户
@@ -57,6 +67,11 @@ public interface ISysUserService extends IService<SysUser> {
      * 重置密码
      */
     void resetPassword(Long userId, String newPassword);
+
+    /**
+     * Update current logged-in user password.
+     */
+    void updateCurrentUserPassword(String oldPassword, String newPassword);
 
     /**
      * 修改用户状态

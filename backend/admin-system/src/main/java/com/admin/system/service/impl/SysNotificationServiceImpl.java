@@ -94,6 +94,11 @@ public class SysNotificationServiceImpl extends ServiceImpl<SysNotificationMappe
     }
 
     @Override
+    public Long countPendingTasks() {
+        Long count = notificationMapper.countPendingTasks();
+        return count == null ? 0L : count;
+    }
+    @Override
     @Transactional
     public boolean markAsRead(Long id, Long userId) {
         LambdaUpdateWrapper<SysNotification> updateWrapper = new LambdaUpdateWrapper<>();

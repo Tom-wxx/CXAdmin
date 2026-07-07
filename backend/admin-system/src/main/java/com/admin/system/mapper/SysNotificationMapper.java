@@ -18,6 +18,12 @@ public interface SysNotificationMapper extends BaseMapper<SysNotification> {
      * @return 未读消息数量
      */
     Long countUnreadByUserId(@Param("userId") Long userId);
+    /**
+     * Count unread todo and approval notifications.
+     *
+     * @return pending task count
+     */
+    Long countPendingTasks();
 
     /**
      * 批量标记消息为已读

@@ -32,6 +32,7 @@ public class DashboardServiceImpl implements IDashboardService {
     private final ISysDeptService deptService;
     private final ISysOperLogService operLogService;
     private final ISysLoginLogService loginLogService;
+    private final ISysNotificationService notificationService;
 
     @Override
     public DashboardVO getDashboardData() {
@@ -79,15 +80,15 @@ public class DashboardServiceImpl implements IDashboardService {
         statCard.setTotalRoles(totalRoles);
 
         // 在线用户数
-        long onlineUsers = onlineUserService.selectOnlineUserList(null, null).size();
+        long onlineUsers = onlineUserService.countOnlineUsers();
         statCard.setOnlineUsers(onlineUsers);
 
         // 通知公告数
         long totalNotices = noticeService.count();
         statCard.setTotalNotices(totalNotices);
 
-        // 待办任务数（暂时设为0，后续可以扩展）
-        statCard.setPendingTasks(0L);
+        // 待办任务数
+        statCard.setPendingTasks(notificationService.countPendingTasks());
 
         return statCard;
     }

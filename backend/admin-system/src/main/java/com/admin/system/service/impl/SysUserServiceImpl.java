@@ -62,6 +62,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return userMapper.selectUserVOById(userId);
     }
 
+    @Override
+    public UserVO selectCurrentUserProfile() {
+        return selectUserById(requireCurrentUserId());
+    }
+
     /**
      * 新增用户
      */
@@ -161,6 +166,35 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
+     * Update current logged-in user profile.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateCurrentUserProfile(UserDTO userDTO) {
+        Long currentUserId = requireCurrentUserId();
+        if (userDTO == null) {
+            throw new ServiceException("Profile data cannot be empty");
+        }
+        if (!StringUtils.hasText(userDTO.getNickname())) {
+            throw new ServiceException("Nickname cannot be empty");
+        }
+        if (StringUtils.hasText(userDTO.getPhone()) && !checkPhoneUnique(userDTO.getPhone(), currentUserId)) {
+            throw new ServiceException("Phone already exists");
+        }
+        if (StringUtils.hasText(userDTO.getEmail()) && !checkEmailUnique(userDTO.getEmail(), currentUserId)) {
+            throw new ServiceException("Email already exists");
+        }
+
+        SysUser user = new SysUser();
+        user.setUserId(currentUserId);
+        user.setNickname(userDTO.getNickname());
+        user.setEmail(userDTO.getEmail());
+        user.setPhonenumber(userDTO.getPhone());
+        user.setSex(userDTO.getGender());
+        userMapper.updateById(user);
+    }
+
+    /**
      * 删除用户
      */
     @Override
@@ -220,6 +254,36 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
+     * Update current logged-in user password.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateCurrentUserPassword(String oldPassword, String newPassword) {
+        Long currentUserId = requireCurrentUserId();
+        if (!StringUtils.hasText(oldPassword)) {
+            throw new ServiceException("Old password cannot be empty");
+        }
+        if (!StringUtils.hasText(newPassword)) {
+            throw new ServiceException("New password cannot be empty");
+        }
+        if (newPassword.length() < 6 || newPassword.length() > 20) {
+            throw new ServiceException("Password length must be between 6 and 20 characters");
+        }
+
+        SysUser currentUser = userMapper.selectById(currentUserId);
+        if (currentUser == null) {
+            throw new ServiceException("Current user does not exist");
+        }
+        if (!SecurityUtils.matchesPassword(oldPassword, currentUser.getPassword())) {
+            throw new ServiceException("Old password is incorrect");
+        }
+
+        SysUser user = new SysUser();
+        user.setUserId(currentUserId);
+        user.setPassword(SecurityUtils.encryptPassword(newPassword));
+        userMapper.updateById(user);
+    }
+    /**
      * 修改用户状态
      */
     @Override
@@ -240,6 +304,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setUserId(userId);
         user.setStatus(status);
         userMapper.updateById(user);
+    }
+
+    private Long requireCurrentUserId() {
+        Long userId = SecurityUtils.getUserId();
+        if (userId == null) {
+            throw new ServiceException("Current user is not logged in");
+        }
+        return userId;
     }
 
     /**

@@ -387,7 +387,7 @@ INSERT INTO `sys_menu` VALUES (109, '在线用户', 2, 1, 'online', 'monitor/onl
 INSERT INTO `sys_menu` VALUES (110, '定时任务', 2, 2, 'job', 'monitor/job/index', '', 1, 0, 'C', '0', '0', 'monitor:job:list', 'time', '2025-11-25 11:11:39', 1, NULL, NULL, '定时任务菜单', 0);
 INSERT INTO `sys_menu` VALUES (111, 'Druid监控', 2, 3, 'druid', 'monitor/druid/index', '', 1, 0, 'C', '0', '0', 'monitor:druid:list', 'data-analysis', '2025-11-25 11:11:39', 1, NULL, NULL, '数据监控菜单', 0);
 INSERT INTO `sys_menu` VALUES (112, '服务监控', 2, 4, 'server', 'monitor/server/index', '', 1, 0, 'C', '0', '0', 'monitor:server:list', 'cpu', '2025-11-25 11:11:39', 1, NULL, NULL, '服务监控菜单', 0);
-INSERT INTO `sys_menu` VALUES (113, '表单构建', 3, 1, 'build', 'tool/build/index', '', 1, 0, 'C', '1', '0', 'tool:build:list', 'edit-outline', '2025-11-25 11:11:39', 1, NULL, NULL, '表单构建菜单(暂未实现)', 0);
+INSERT INTO `sys_menu` VALUES (113, '表单构建', 3, 1, 'build', 'tool/build/index', '', 1, 0, 'C', '1', '0', 'tool:build:list', 'edit-outline', '2025-11-25 11:11:39', 1, NULL, NULL, '表单构建菜单', 0);
 INSERT INTO `sys_menu` VALUES (114, '代码生成', 3, 2, 'generator', 'tool/generator/index', '', 1, 0, 'C', '0', '0', 'tool:generator:list', 'tickets', '2025-11-25 11:11:39', 1, NULL, NULL, '代码生成菜单', 0);
 INSERT INTO `sys_menu` VALUES (115, '系统接口', 2, 6, 'swagger', 'monitor/swagger/index', '', 1, 0, 'C', '0', '0', 'monitor:swagger:list', 'document', '2025-11-25 11:11:39', 1, NULL, NULL, '系统接口菜单（Swagger）', 0);
 INSERT INTO `sys_menu` VALUES (500, '操作日志', 108, 1, 'operlog', 'monitor/operlog/index', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list', 'notebook-2', '2025-11-25 11:11:39', 1, NULL, NULL, '操作日志菜单', 0);

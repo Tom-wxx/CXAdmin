@@ -2,6 +2,7 @@ package com.admin.system.service.impl;
 
 import com.admin.system.entity.*;
 import com.admin.system.mapper.*;
+import com.admin.system.service.IOnlineUserService;
 import com.admin.system.service.IStatisticsService;
 import com.admin.system.vo.StatisticsVO;
 import com.admin.system.vo.SystemOverviewVO;
@@ -30,6 +31,7 @@ public class StatisticsServiceImpl implements IStatisticsService {
     private final SysDeptMapper deptMapper;
     private final SysLoginLogMapper loginLogMapper;
     private final SysOperLogMapper operLogMapper;
+    private final IOnlineUserService onlineUserService;
 
     @Autowired(required = false)
     private SysNotificationMapper notificationMapper;
@@ -91,8 +93,8 @@ public class StatisticsServiceImpl implements IStatisticsService {
             overview.setUnreadNotifications(0L);
         }
 
-        // 在线用户数（简化实现，可以后续通过 Redis 统计）
-        overview.setOnlineUserCount(0L);
+        // 在线用户数
+        overview.setOnlineUserCount(onlineUserService.countOnlineUsers());
 
         return overview;
     }
