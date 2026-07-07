@@ -1,6 +1,24 @@
 # CXAdmin - 企业级后台管理系统
 
-基于 **Spring Boot + Vue** 的企业级后台管理系统，采用前后端分离架构，内置 RBAC 权限管理、JWT 认证、动态路由、系统监控等功能，开箱即用。
+![Java](https://img.shields.io/badge/Java-17-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-6DB33F?logo=springboot&logoColor=white)
+![Vue](https://img.shields.io/badge/Vue-3.5-4FC08D?logo=vuedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
+![Element Plus](https://img.shields.io/badge/Element%20Plus-2.14-409EFF)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
+基于 **Spring Boot 4 + Vue 3（TypeScript）** 的企业级后台管理系统，采用前后端分离架构，内置 RBAC 权限管理、JWT-in-Redis 认证、动态路由、OAuth2/OIDC 单点登录、Quartz 调度与系统监控等功能，开箱即用。前端全量 Composition API + 严格类型，后端为多模块 Maven 工程。
+
+## 目录
+
+- [技术栈](#技术栈)
+- [功能模块](#功能模块)
+- [界面预览](#界面预览)
+- [快速开始](#快速开始)
+- [项目结构](#项目结构)
+- [配置说明](#配置说明)
+- [API 文档](#api-文档)
 
 ## 技术栈
 
@@ -40,6 +58,16 @@
 - **缓存监控** - Redis 缓存状态监控
 - **数据统计** - 系统数据可视化统计
 - **单点登录 (SSO)** - 通用 OAuth2 / OIDC 适配器：动态配置 IdP（GitHub / Google 等），首次登录自动注册并绑定，已登录用户可从个人中心管理第三方账号绑定。client_secret AES-GCM 加密入库
+- **个人中心** - 查看 / 修改个人信息、修改密码、头像上传、SSO 账号绑定管理
+
+## 界面预览
+
+> 截图占位 —— 将实际运行截图放入 `frontend/public/screenshots/` 后在此引用，例如：
+>
+> ```markdown
+> ![登录](frontend/public/screenshots/login.png)
+> ![工作台](frontend/public/screenshots/dashboard.png)
+> ```
 
 ## 快速开始
 
