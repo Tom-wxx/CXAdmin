@@ -1,13 +1,13 @@
 <template>
   <el-select
-    :value="value"
+    :model-value="modelValue"
     :placeholder="placeholder"
     :clearable="clearable"
     :multiple="multiple"
     :disabled="disabled"
     :size="size"
-    :style="{ width: width }"
-    @input="onInput"
+    :style="{ width }"
+    @update:model-value="onUpdate"
     @change="onChange"
   >
     <el-option
@@ -20,50 +20,49 @@
   </el-select>
 </template>
 
-<script>
-export default {
-  name: 'DictSelect',
-  props: {
-    value: {
-      type: [String, Number, Array],
-      default: ''
-    },
-    options: {
-      type: Array,
-      default: () => []
-    },
-    placeholder: {
-      type: String,
-      default: '请选择'
-    },
-    clearable: {
-      type: Boolean,
-      default: true
-    },
-    multiple: {
-      type: Boolean,
-      default: false
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    size: {
-      type: String,
-      default: 'small'
-    },
-    width: {
-      type: String,
-      default: '200px'
-    }
-  },
-  methods: {
-    onInput(val) {
-      this.$emit('input', val)
-    },
-    onChange(val) {
-      this.$emit('change', val)
-    }
-  }
+<script setup lang="ts">
+import type { ComponentSize } from 'element-plus'
+
+defineOptions({ name: 'DictSelect' })
+
+type SelectValue = string | number | Array<string | number>
+
+interface DictSelectOption {
+  value: string | number
+  label: string
+  disabled?: boolean
+}
+
+withDefaults(defineProps<{
+  modelValue?: SelectValue
+  options?: DictSelectOption[]
+  placeholder?: string
+  clearable?: boolean
+  multiple?: boolean
+  disabled?: boolean
+  size?: ComponentSize
+  width?: string
+}>(), {
+  modelValue: '',
+  options: () => [],
+  placeholder: '请选择',
+  clearable: true,
+  multiple: false,
+  disabled: false,
+  size: 'small',
+  width: '200px'
+})
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: SelectValue): void
+  (e: 'change', val: SelectValue): void
+}>()
+
+function onUpdate(val: SelectValue) {
+  emit('update:modelValue', val)
+}
+
+function onChange(val: SelectValue) {
+  emit('change', val)
 }
 </script>

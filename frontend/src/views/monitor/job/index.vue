@@ -67,7 +67,7 @@
 
     <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px" append-to-body>
-      <el-form ref="jobForm" :model="form" :rules="rules" label-width="120px">
+      <el-form ref="jobFormRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="任务名称" prop="jobName">
           <el-input v-model="form.jobName" placeholder="请输入任务名称" maxlength="64" />
         </el-form-item>
@@ -110,11 +110,20 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { listJob, getJob, addJob, updateJob, delJob, changeJobStatus, runJob } from '@/api/monitor/job'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
+import type { Job, JobQuery } from '@/types/monitor/job'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+
+defineOptions({ name: 'Job' })
+
+const router = useRouter()
 
 const JOB_GROUP_OPTIONS = [
   { value: 'DEFAULT', label: '默认' },
@@ -125,190 +134,183 @@ const STATUS_OPTIONS = [
   { value: '1', label: '暂停' }
 ]
 
-export default {
-  name: 'Job',
-  components: {
-    Pagination,
-    SearchForm,
-    TableToolbar
-  },
-  data() {
-    return {
-      // 搜索字段配置
-      searchFields: [
-        { prop: 'jobName', label: '任务名称', type: 'input' },
-        { prop: 'jobGroup', label: '任务组名', type: 'select', options: JOB_GROUP_OPTIONS, placeholder: '任务组名' },
-        { prop: 'status', label: '任务状态', type: 'select', options: STATUS_OPTIONS, placeholder: '任务状态' }
-      ],
-      // 加载状态
-      loading: true,
-      // 任务列表
-      jobList: [],
-      // 总条数
-      total: 0,
-      // 查询参数
-      queryParams: {
-        current: 1,
-        size: 10,
-        jobName: undefined,
-        jobGroup: undefined,
-        status: undefined
-      },
-      // 对话框标题
-      dialogTitle: '',
-      // 对话框显示状态
-      dialogVisible: false,
-      // 表单数据
-      form: {},
-      // 表单校验规则
-      rules: {
-        jobName: [
-          { required: true, message: '任务名称不能为空', trigger: 'blur' },
-          { max: 64, message: '任务名称长度不能超过64个字符', trigger: 'blur' }
-        ],
-        jobGroup: [
-          { required: true, message: '任务组名不能为空', trigger: 'change' }
-        ],
-        invokeTarget: [
-          { required: true, message: '调用目标不能为空', trigger: 'blur' },
-          { max: 500, message: '调用目标长度不能超过500个字符', trigger: 'blur' }
-        ],
-        cronExpression: [
-          { required: true, message: 'Cron表达式不能为空', trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    /** 查询定时任务列表 */
-    getList() {
-      this.loading = true
-      listJob(this.queryParams).then(response => {
-        this.jobList = response.rows
-        this.total = response.total
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    /** 重置按钮操作（SearchForm 已自动清字段） */
-    resetQuery() {
-      this.queryParams.current = 1
-      this.queryParams.size = 10
-      this.handleQuery()
-    },
-    /** 新增按钮操作 */
-    handleAdd() {
-      this.reset()
-      this.dialogTitle = '添加定时任务'
-      this.dialogVisible = true
-    },
-    /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.reset()
-      const jobId = row.jobId
-      getJob(jobId).then(response => {
-        this.form = response.data
-        this.dialogTitle = '修改定时任务'
-        this.dialogVisible = true
-      })
-    },
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs.jobForm.validate(valid => {
-        if (valid) {
-          if (this.form.jobId) {
-            updateJob(this.form).then(response => {
-              this.$message.success('修改成功')
-              this.dialogVisible = false
-              this.getList()
-            })
-          } else {
-            addJob(this.form).then(response => {
-              this.$message.success('新增成功')
-              this.dialogVisible = false
-              this.getList()
-            })
-          }
-        }
-      })
-    },
-    /** 取消按钮 */
-    cancel() {
-      this.dialogVisible = false
-      this.reset()
-    },
-    /** 表单重置 */
-    reset() {
-      this.form = {
-        jobId: undefined,
-        jobName: undefined,
-        jobGroup: 'DEFAULT',
-        invokeTarget: undefined,
-        cronExpression: undefined,
-        misfirePolicy: '3',
-        concurrent: '1',
-        status: '1',
-        remark: undefined
-      }
-      if (this.$refs.jobForm) {
-        this.$refs.jobForm.resetFields()
-      }
-    },
-    /** 任务状态修改 */
-    handleStatusChange(row) {
-      let text = row.status === '0' ? '启用' : '停用'
-      this.$confirm('确认要"' + text + '""' + row.jobName + '"任务吗？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return changeJobStatus(row)
-      }).then(() => {
-        this.$message.success(text + '成功')
-      }).catch(() => {
-        row.status = row.status === '0' ? '1' : '0'
-      })
-    },
-    /** 立即执行按钮操作 */
-    handleRun(row) {
-      this.$confirm('确认要立即执行一次"' + row.jobName + '"任务吗？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return runJob(row)
-      }).then(() => {
-        this.$message.success('执行成功')
-      })
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      this.$confirm('是否确认删除任务名称为"' + row.jobName + '"的数据项？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delJob(row.jobId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      })
-    },
-    /** 任务日志按钮操作 */
-    handleJobLog() {
-      this.$router.push('/monitor/jobLog')
-    }
-  }
+const searchFields = [
+  { prop: 'jobName', label: '任务名称', type: 'input' },
+  { prop: 'jobGroup', label: '任务组名', type: 'select', options: JOB_GROUP_OPTIONS, placeholder: '任务组名' },
+  { prop: 'status', label: '任务状态', type: 'select', options: STATUS_OPTIONS, placeholder: '任务状态' }
+]
+
+const loading = ref(true)
+const jobList = ref<Job[]>([])
+const total = ref(0)
+
+const queryParams = reactive<JobQuery>({
+  current: 1,
+  size: 10,
+  jobName: undefined,
+  jobGroup: undefined,
+  status: undefined
+})
+
+const dialogTitle = ref('')
+const dialogVisible = ref(false)
+const jobFormRef = ref<FormInstance>()
+
+const emptyForm = (): Job => ({
+  jobId: undefined,
+  jobName: undefined,
+  jobGroup: 'DEFAULT',
+  invokeTarget: undefined,
+  cronExpression: undefined,
+  misfirePolicy: '3',
+  concurrent: '1',
+  status: '1',
+  remark: undefined
+})
+
+const form = ref<Job>(emptyForm())
+
+const rules: FormRules = {
+  jobName: [
+    { required: true, message: '任务名称不能为空', trigger: 'blur' },
+    { max: 64, message: '任务名称长度不能超过64个字符', trigger: 'blur' }
+  ],
+  jobGroup: [
+    { required: true, message: '任务组名不能为空', trigger: 'change' }
+  ],
+  invokeTarget: [
+    { required: true, message: '调用目标不能为空', trigger: 'blur' },
+    { max: 500, message: '调用目标长度不能超过500个字符', trigger: 'blur' }
+  ],
+  cronExpression: [
+    { required: true, message: 'Cron表达式不能为空', trigger: 'blur' }
+  ]
 }
+
+/** 查询定时任务列表 */
+function getList() {
+  loading.value = true
+  listJob(queryParams).then(res => {
+    jobList.value = res.rows
+    total.value = res.total
+    loading.value = false
+  }).catch(() => {
+    loading.value = false
+  })
+}
+
+/** 搜索按钮操作 */
+function handleQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+/** 重置按钮操作（SearchForm 已自动清字段） */
+function resetQuery() {
+  queryParams.current = 1
+  queryParams.size = 10
+  handleQuery()
+}
+
+/** 表单重置 */
+function reset() {
+  form.value = emptyForm()
+  jobFormRef.value?.resetFields()
+}
+
+/** 新增按钮操作 */
+function handleAdd() {
+  reset()
+  dialogTitle.value = '添加定时任务'
+  dialogVisible.value = true
+}
+
+/** 修改按钮操作 */
+function handleUpdate(row: Job) {
+  reset()
+  getJob(row.jobId as number).then(res => {
+    form.value = res.data
+    dialogTitle.value = '修改定时任务'
+    dialogVisible.value = true
+  })
+}
+
+/** 提交按钮 */
+function submitForm() {
+  jobFormRef.value?.validate(valid => {
+    if (valid) {
+      if (form.value.jobId) {
+        updateJob(form.value).then(() => {
+          ElMessage.success('修改成功')
+          dialogVisible.value = false
+          getList()
+        })
+      } else {
+        addJob(form.value).then(() => {
+          ElMessage.success('新增成功')
+          dialogVisible.value = false
+          getList()
+        })
+      }
+    }
+  })
+}
+
+/** 取消按钮 */
+function cancel() {
+  dialogVisible.value = false
+  reset()
+}
+
+/** 任务状态修改 */
+function handleStatusChange(row: Job) {
+  const text = row.status === '0' ? '启用' : '停用'
+  ElMessageBox.confirm('确认要"' + text + '""' + row.jobName + '"任务吗？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => changeJobStatus({ jobId: row.jobId as number, status: row.status as string }))
+    .then(() => {
+      ElMessage.success(text + '成功')
+    })
+    .catch(() => {
+      row.status = row.status === '0' ? '1' : '0'
+    })
+}
+
+/** 立即执行按钮操作 */
+function handleRun(row: Job) {
+  ElMessageBox.confirm('确认要立即执行一次"' + row.jobName + '"任务吗？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => runJob({ jobId: row.jobId as number, jobGroup: row.jobGroup }))
+    .then(() => {
+      ElMessage.success('执行成功')
+    })
+    .catch(() => { /* 用户取消 */ })
+}
+
+/** 删除按钮操作 */
+function handleDelete(row: Job) {
+  ElMessageBox.confirm('是否确认删除任务名称为"' + row.jobName + '"的数据项？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => delJob(row.jobId as number))
+    .then(() => {
+      getList()
+      ElMessage.success('删除成功')
+    })
+    .catch(() => { /* 用户取消 */ })
+}
+
+/** 任务日志按钮操作 */
+function handleJobLog() {
+  router.push('/monitor/jobLog')
+}
+
+getList()
 </script>
 
 <style scoped>

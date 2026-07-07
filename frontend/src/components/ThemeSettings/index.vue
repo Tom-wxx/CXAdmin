@@ -54,85 +54,77 @@
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useSettingsStore } from '@/composables/store'
 
-export default {
-  name: 'ThemeSettings',
-  props: {
-    modelValue: {
-      type: Boolean,
-      default: false
-    }
-  },
-  emits: ['update:modelValue'],
-  data() {
-    return {
-      selectedColor: '',
-      sidebarPosition: 'left',
-      themes: [
-        { name: '暗夜蓝', color: '#001529' },
-        { name: '经典灰', color: '#304156' },
-        { name: '深灰', color: '#2c3e50' },
-        { name: '深黑', color: '#1f2d3d' },
-        { name: '科技蓝', color: '#1e3a8a' },
-        { name: '暗紫', color: '#5b21b6' },
-        { name: '墨绿', color: '#065f46' },
-        { name: '纯白', color: '#ffffff' }
-      ],
-      predefineColors: [
-        '#001529', '#304156', '#2c3e50', '#1f2d3d',
-        '#1e3a8a', '#5b21b6', '#065f46', '#ffffff'
-      ]
-    }
-  },
-  computed: {
-    drawerVisible: {
-      get() {
-        return this.modelValue
-      },
-      set(val) {
-        this.$emit('update:modelValue', val)
-      }
-    },
-    ...mapState({
-      currentColor: state => state.settings.sidebarColor,
-      currentPosition: state => state.settings.sidebarPosition
-    })
-  },
-  watch: {
-    currentColor: {
-      immediate: true,
-      handler(val) {
-        this.selectedColor = val
-      }
-    },
-    currentPosition: {
-      immediate: true,
-      handler(val) {
-        this.sidebarPosition = val
-      }
-    }
-  },
-  methods: {
-    handleColorChange(color) {
-      this.$store.dispatch('settings/setSidebarColor', color)
-    },
-    handlePositionChange(position) {
-      this.$store.dispatch('settings/setSidebarPosition', position)
-    },
-    selectTheme(theme) {
-      this.selectedColor = theme.color
-      this.$store.dispatch('settings/setSidebarColor', theme.color)
-    },
-    resetTheme() {
-      this.selectedColor = '#001529'
-      this.sidebarPosition = 'left'
-      this.$store.dispatch('settings/setSidebarColor', '#001529')
-      this.$store.dispatch('settings/setSidebarPosition', 'left')
-      this.$message.success('已恢复默认')
-    }
-  }
+defineOptions({ name: 'ThemeSettings' })
+
+interface ThemeOption {
+  name: string
+  color: string
+}
+
+const props = withDefaults(defineProps<{ modelValue?: boolean }>(), {
+  modelValue: false
+})
+
+const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
+
+const { sidebarColor: currentColor, sidebarPosition: currentPosition, setSidebarColor, setSidebarPosition } = useSettingsStore()
+
+const drawerVisible = computed({
+  get: () => props.modelValue,
+  set: (val: boolean) => emit('update:modelValue', val)
+})
+
+const selectedColor = ref('')
+const sidebarPosition = ref('left')
+
+const themes: ThemeOption[] = [
+  { name: '暗夜蓝', color: '#001529' },
+  { name: '经典灰', color: '#304156' },
+  { name: '深灰', color: '#2c3e50' },
+  { name: '深黑', color: '#1f2d3d' },
+  { name: '科技蓝', color: '#1e3a8a' },
+  { name: '暗紫', color: '#5b21b6' },
+  { name: '墨绿', color: '#065f46' },
+  { name: '纯白', color: '#ffffff' }
+]
+
+const predefineColors: string[] = [
+  '#001529', '#304156', '#2c3e50', '#1f2d3d',
+  '#1e3a8a', '#5b21b6', '#065f46', '#ffffff'
+]
+
+watch(currentColor, val => {
+  selectedColor.value = val
+}, { immediate: true })
+
+watch(currentPosition, val => {
+  sidebarPosition.value = val
+}, { immediate: true })
+
+function handleColorChange(color: string): void {
+  setSidebarColor(color)
+}
+
+function handlePositionChange(position: string): void {
+  setSidebarPosition(position)
+}
+
+function selectTheme(theme: ThemeOption): void {
+  selectedColor.value = theme.color
+  setSidebarColor(theme.color)
+}
+
+function resetTheme(): void {
+  selectedColor.value = '#001529'
+  sidebarPosition.value = 'left'
+  setSidebarColor('#001529')
+  setSidebarPosition('left')
+  ElMessage.success('已恢复默认')
 }
 </script>
 

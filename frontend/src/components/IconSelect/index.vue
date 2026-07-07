@@ -22,40 +22,41 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import * as ElementPlusIcons from '@element-plus/icons-vue'
 
-// Element Plus 全量图标组件名（PascalCase），均已在 main.js 全局注册
-const ICON_NAMES = Object.keys(ElementPlusIcons)
+defineOptions({ name: 'IconSelect' })
 
-export default {
-  name: 'IconSelect',
-  data() {
-    return {
-      filterText: '',
-      selectedIcon: '',
-      iconList: ICON_NAMES
-    }
-  },
-  computed: {
-    filteredIcons() {
-      const kw = this.filterText.trim().toLowerCase()
-      if (!kw) return this.iconList
-      return this.iconList.filter(name => name.toLowerCase().includes(kw))
-    }
-  },
-  methods: {
-    selectIcon(name) {
-      this.selectedIcon = name
-      // 直接存储 Element Plus 组件名（PascalCase）
-      this.$emit('selected', name)
-    },
-    reset() {
-      this.filterText = ''
-      this.selectedIcon = ''
-    }
-  }
+// Element Plus 全量图标组件名（PascalCase），均已在 main.js 全局注册
+const ICON_NAMES: string[] = Object.keys(ElementPlusIcons)
+
+const emit = defineEmits<{
+  (e: 'selected', name: string): void
+}>()
+
+const filterText = ref('')
+const selectedIcon = ref('')
+const iconList = ref<string[]>(ICON_NAMES)
+
+const filteredIcons = computed(() => {
+  const kw = filterText.value.trim().toLowerCase()
+  if (!kw) return iconList.value
+  return iconList.value.filter(name => name.toLowerCase().includes(kw))
+})
+
+function selectIcon(name: string) {
+  selectedIcon.value = name
+  // 直接存储 Element Plus 组件名（PascalCase）
+  emit('selected', name)
 }
+
+function reset() {
+  filterText.value = ''
+  selectedIcon.value = ''
+}
+
+defineExpose({ reset })
 </script>
 
 <style scoped lang="scss">

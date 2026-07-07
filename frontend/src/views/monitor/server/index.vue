@@ -371,96 +371,112 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { getServerInfo } from '@/api/monitor/server'
 
-export default {
-  name: 'ServerMonitor',
-  data() {
-    return {
-      loading: false,
-      activeTab: 'server',
-      autoRefresh: false,
-      refreshInterval: null,
-      serverInfo: {
-        cpu: {},
-        mem: {},
-        jvm: {},
-        diskList: []
-      },
-      redisInfo: {},
-      dbInfo: {}
+defineOptions({ name: 'ServerMonitor' })
+
+const router = useRouter()
+
+const loading = ref(false)
+const activeTab = ref('server')
+const autoRefresh = ref(false)
+
+// 后端基于 Oshi 探测的服务器/Redis/Druid 连接池信息层级深、字段动态，
+// 组件按原逻辑做可选链访问，这里用 any 承接，避免逐字段建模
+const serverInfo = ref<Record<string, any>>({
+  cpu: {},
+  mem: {},
+  jvm: {},
+  diskList: []
+})
+const redisInfo = ref<Record<string, any>>({})
+const dbInfo = ref<Record<string, any>>({})
+
+let timer: ReturnType<typeof setInterval> | null = null
+
+/** 加载服务器信息 */
+async function loadServerInfo() {
+  loading.value = true
+  try {
+    const response = await getServerInfo()
+    if (response.code === 200 && response.data) {
+      // response.data 实际为 { server, redis, database } 容器，ServerInfo 类型仅声明了顶层动态字段，
+      // 此处按接口真实形状做窄化转换
+      const data = response.data as unknown as {
+        server?: Record<string, unknown>
+        redis?: Record<string, unknown>
+        database?: Record<string, unknown>
+      }
+      serverInfo.value = data.server || { cpu: {}, mem: {}, jvm: {}, diskList: [] }
+      redisInfo.value = data.redis || {}
+      dbInfo.value = data.database || {}
     }
-  },
-  created() {
-    this.loadServerInfo()
-  },
-  beforeUnmount() {
-    this.stopAutoRefresh()
-  },
-  methods: {
-    /** 加载服务器信息 */
-    async loadServerInfo() {
-      this.loading = true
-      try {
-        const response = await getServerInfo()
-        if (response.code === 200 && response.data) {
-          this.serverInfo = response.data.server || {}
-          this.redisInfo = response.data.redis || {}
-          this.dbInfo = response.data.database || {}
-        }
-      } catch (_) {
-        this.$message.error('获取服务器信息失败')
-      } finally {
-        this.loading = false
-      }
-    },
-    /** 获取进度条颜色 */
-    getProgressColor(percentage) {
-      const percent = parseFloat(percentage)
-      if (percent < 60) {
-        return '#67C23A'
-      } else if (percent < 80) {
-        return '#E6A23C'
-      } else {
-        return '#F56C6C'
-      }
-    },
-    /** 自动刷新切换 */
-    handleAutoRefreshChange(val) {
-      if (val) {
-        this.startAutoRefresh()
-      } else {
-        this.stopAutoRefresh()
-      }
-    },
-    /** 开始自动刷新 */
-    startAutoRefresh() {
-      this.refreshInterval = setInterval(() => {
-        this.loadServerInfo()
-      }, 5000) // 每5秒刷新一次
-    },
-    /** 停止自动刷新 */
-    stopAutoRefresh() {
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval)
-        this.refreshInterval = null
-      }
-    },
-    /** 跳转到缓存监控 */
-    goCacheMonitor() {
-      this.$router.push('/monitor/cache')
-    },
-    /** 格式化时间戳 */
-    formatTimestamp(timestamp) {
-      if (!timestamp || timestamp === '0') {
-        return '从未保存'
-      }
-      const date = new Date(parseInt(timestamp) * 1000)
-      return date.toLocaleString('zh-CN')
-    }
+  } catch {
+    ElMessage.error('获取服务器信息失败')
+  } finally {
+    loading.value = false
   }
 }
+
+/** 获取进度条颜色 */
+function getProgressColor(percentage: number | string | undefined) {
+  const percent = parseFloat(String(percentage))
+  if (percent < 60) {
+    return '#67C23A'
+  } else if (percent < 80) {
+    return '#E6A23C'
+  } else {
+    return '#F56C6C'
+  }
+}
+
+/** 自动刷新切换 */
+function handleAutoRefreshChange(val: boolean) {
+  if (val) {
+    startAutoRefresh()
+  } else {
+    stopAutoRefresh()
+  }
+}
+
+/** 开始自动刷新 */
+function startAutoRefresh() {
+  timer = setInterval(() => {
+    loadServerInfo()
+  }, 5000) // 每5秒刷新一次
+}
+
+/** 停止自动刷新 */
+function stopAutoRefresh() {
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
+}
+
+/** 跳转到缓存监控 */
+function goCacheMonitor() {
+  router.push('/monitor/cache')
+}
+
+/** 格式化时间戳 */
+function formatTimestamp(timestamp: string | number | undefined) {
+  if (!timestamp || timestamp === '0') {
+    return '从未保存'
+  }
+  const date = new Date(parseInt(String(timestamp)) * 1000)
+  return date.toLocaleString('zh-CN')
+}
+
+loadServerInfo()
+
+onBeforeUnmount(() => {
+  stopAutoRefresh()
+})
 </script>
 
 <style lang="scss" scoped>

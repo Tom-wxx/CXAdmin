@@ -75,7 +75,7 @@
     </el-dialog>
 
     <el-dialog title="生成配置" v-model="configDialogVisible" width="600px" append-to-body>
-      <el-form ref="configForm" :model="configForm" :rules="configRules" label-width="120px">
+      <el-form ref="configFormRef" :model="configForm" :rules="configRules" label-width="120px">
         <el-form-item label="表名" prop="tableName">
           <el-input v-model="configForm.tableName" disabled />
         </el-form-item>
@@ -110,139 +110,189 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { listTable, getTable, generateCode } from '@/api/tool/generator'
 import { listMenu } from '@/api/system/menu'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
+import type { GenTable, GenTableQuery } from '@/types/tool/generator'
+import type { Menu } from '@/types/system/menu'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
 
-export default {
-  name: 'Generator',
-  components: { SearchForm, TableToolbar },
-  data() {
-    return {
-      searchFields: [
-        { prop: 'tableName', label: '表名称', type: 'input', placeholder: '请输入表名称' }
-      ],
-      loading: true,
-      tableList: [],
-      total: 0,
-      selectedTables: [],
-      queryParams: {
-        tableName: undefined,
-        current: 1,
-        size: 10
-      },
-      previewDialogVisible: false,
-      tableInfo: null,
-      configDialogVisible: false,
-      menuOptions: [],
-      configForm: {
-        tableName: '',
-        packageName: 'com.admin.system',
-        moduleName: '',
-        author: 'Admin',
-        tablePrefix: 'sys_',
-        parentMenuId: 0
-      },
-      configRules: {
-        tableName: [{ required: true, message: '表名不能为空', trigger: 'blur' }],
-        packageName: [{ required: true, message: '包名不能为空', trigger: 'blur' }],
-        moduleName: [{ required: true, message: '模块名不能为空', trigger: 'blur' }],
-        author: [{ required: true, message: '作者不能为空', trigger: 'blur' }]
-      }
-    }
-  },
-  created() {
-    this.getList()
-    this.getMenuTree()
-  },
-  methods: {
-    getList() {
-      this.loading = true
-      listTable(this.queryParams).then(response => {
-        this.tableList = response.rows
-        this.total = response.total
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    getMenuTree() {
-      listMenu().then(response => {
-        const menus = response.data || []
-        this.menuOptions = [{ menuId: 0, menuName: '主目录', children: this.buildMenuTree(menus) }]
-      })
-    },
-    buildMenuTree(menus) {
-      const menuMap = {}
-      const tree = []
-      menus.forEach(menu => { menuMap[menu.menuId] = { ...menu, children: [] } })
-      menus.forEach(menu => {
-        if (menu.parentId === 0) tree.push(menuMap[menu.menuId])
-        else if (menuMap[menu.parentId]) menuMap[menu.parentId].children.push(menuMap[menu.menuId])
-      })
-      return tree
-    },
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    resetQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    handleSizeChange(size) {
-      this.queryParams.size = size
-      this.queryParams.current = 1
-      this.getList()
-    },
-    handleCurrentChange(current) {
-      this.queryParams.current = current
-      this.getList()
-    },
-    handleSelectionChange(selection) {
-      this.selectedTables = selection.map(item => item.tableName)
-    },
-    handlePreview(row) {
-      getTable(row.tableName).then(response => {
-        this.tableInfo = response.data
-        this.previewDialogVisible = true
-      }).catch(() => {
-        this.$message.error('获取表信息失败')
-      })
-    },
-    handleAdd() {
-      this.$router.push('/tool/generator/edit')
-    },
-    handleEdit(row) {
-      this.$router.push({ path: '/tool/generator/edit', query: { tableName: row.tableName } })
-    },
-    handleGenerate(row) {
-      this.configForm.tableName = row.tableName
-      this.configForm.moduleName = ''
-      this.configDialogVisible = true
-    },
-    submitGenerate() {
-      this.$refs['configForm'].validate(valid => {
-        if (valid) {
-          generateCode(this.configForm).then(response => {
-            this.downloadFile(response, this.configForm.tableName + '.zip')
-            this.$message.success('生成成功')
-            this.configDialogVisible = false
-          })
-        }
-      })
-    },
-    downloadFile(data, fileName) {
-      const blob = new Blob([data], { type: 'application/zip' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = fileName
-      link.click()
-      window.URL.revokeObjectURL(url)
-    }
-  }
+defineOptions({ name: 'Generator' })
+
+/** 表结构预览列（GenTable 索引签名较宽松，弹窗渲染需要的字段在此收窄） */
+interface GenTablePreviewColumn {
+  columnName?: string
+  columnType?: string
+  columnComment?: string
+  javaType?: string
+  propertyName?: string
+  isPrimaryKey?: boolean
+  isRequired?: boolean
 }
+
+/** 表结构预览详情 */
+interface GenTablePreview extends GenTable {
+  primaryKey?: GenTablePreviewColumn
+  columns?: GenTablePreviewColumn[]
+}
+
+/** 生成配置表单 */
+interface ConfigForm {
+  tableName: string
+  packageName: string
+  moduleName: string
+  author: string
+  tablePrefix: string
+  parentMenuId: number
+}
+
+const router = useRouter()
+
+const searchFields = [
+  { prop: 'tableName', label: '表名称', type: 'input', placeholder: '请输入表名称' }
+]
+
+const loading = ref(true)
+const tableList = ref<GenTable[]>([])
+const total = ref(0)
+const selectedTables = ref<string[]>([])
+const queryParams = reactive<GenTableQuery & { current: number; size: number }>({
+  tableName: undefined,
+  current: 1,
+  size: 10
+})
+
+const previewDialogVisible = ref(false)
+const tableInfo = ref<GenTablePreview | null>(null)
+
+const configDialogVisible = ref(false)
+const menuOptions = ref<Menu[]>([])
+const configFormRef = ref<FormInstance>()
+const configForm = reactive<ConfigForm>({
+  tableName: '',
+  packageName: 'com.admin.system',
+  moduleName: '',
+  author: 'Admin',
+  tablePrefix: 'sys_',
+  parentMenuId: 0
+})
+
+const configRules = reactive<FormRules>({
+  tableName: [{ required: true, message: '表名不能为空', trigger: 'blur' }],
+  packageName: [{ required: true, message: '包名不能为空', trigger: 'blur' }],
+  moduleName: [{ required: true, message: '模块名不能为空', trigger: 'blur' }],
+  author: [{ required: true, message: '作者不能为空', trigger: 'blur' }]
+})
+
+function getList() {
+  loading.value = true
+  listTable(queryParams).then(response => {
+    tableList.value = response.rows
+    total.value = response.total
+    loading.value = false
+  }).catch(() => {
+    loading.value = false
+  })
+}
+
+function getMenuTree() {
+  listMenu().then(response => {
+    const menus = response.data || []
+    menuOptions.value = [{ menuId: 0, menuName: '主目录', children: buildMenuTree(menus) }]
+  })
+}
+
+function buildMenuTree(menus: Menu[]): Menu[] {
+  const menuMap: Record<number, Menu> = {}
+  const tree: Menu[] = []
+  menus.forEach(menu => {
+    menuMap[menu.menuId as number] = { ...menu, children: [] } // menuId 由后端返回，保证非空
+  })
+  menus.forEach(menu => {
+    if (menu.parentId === 0) {
+      tree.push(menuMap[menu.menuId as number])
+    } else if (menu.parentId !== undefined && menuMap[menu.parentId]) {
+      menuMap[menu.parentId].children!.push(menuMap[menu.menuId as number])
+    }
+  })
+  return tree
+}
+
+function handleQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+function resetQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+function handleSizeChange(size: number) {
+  queryParams.size = size
+  queryParams.current = 1
+  getList()
+}
+
+function handleCurrentChange(current: number) {
+  queryParams.current = current
+  getList()
+}
+
+function handleSelectionChange(selection: GenTable[]) {
+  selectedTables.value = selection.map(item => item.tableName as string) // 列表行 tableName 必有
+}
+
+function handlePreview(row: GenTable) {
+  getTable(row.tableName as string).then(response => {
+    tableInfo.value = response.data as GenTablePreview
+    previewDialogVisible.value = true
+  }).catch(() => {
+    ElMessage.error('获取表信息失败')
+  })
+}
+
+function handleAdd() {
+  router.push('/tool/generator/edit')
+}
+
+function handleEdit(row: GenTable) {
+  router.push({ path: '/tool/generator/edit', query: { tableName: row.tableName as string } })
+}
+
+function handleGenerate(row: GenTable) {
+  configForm.tableName = row.tableName as string
+  configForm.moduleName = ''
+  configDialogVisible.value = true
+}
+
+function submitGenerate() {
+  configFormRef.value?.validate(valid => {
+    if (valid) {
+      generateCode(configForm).then(response => {
+        downloadFile(response, configForm.tableName + '.zip')
+        ElMessage.success('生成成功')
+        configDialogVisible.value = false
+      })
+    }
+  })
+}
+
+function downloadFile(data: Blob, fileName: string) {
+  const blob = new Blob([data], { type: 'application/zip' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  window.URL.revokeObjectURL(url)
+}
+
+getList()
+getMenuTree()
 </script>

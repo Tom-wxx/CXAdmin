@@ -68,7 +68,7 @@
               <el-option label="30天" :value="30"></el-option>
             </el-select>
           </div></template>
-          <div id="userGrowthChart" style="height: 300px;"></div>
+          <div ref="userGrowthChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
 
@@ -83,7 +83,7 @@
               <el-option label="30天" :value="30"></el-option>
             </el-select>
           </div></template>
-          <div id="loginChart" style="height: 300px;"></div>
+          <div ref="loginChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -95,7 +95,7 @@
           <template #header><div>
             <span>部门人员分布</span>
           </div></template>
-          <div id="deptDistributionChart" style="height: 300px;"></div>
+          <div ref="deptDistributionChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
 
@@ -105,7 +105,7 @@
           <template #header><div>
             <span>角色人员分布</span>
           </div></template>
-          <div id="roleDistributionChart" style="height: 300px;"></div>
+          <div ref="roleDistributionChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -122,7 +122,7 @@
               <el-option label="30天" :value="30"></el-option>
             </el-select>
           </div></template>
-          <div id="operationChart" style="height: 300px;"></div>
+          <div ref="operationChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
 
@@ -132,15 +132,18 @@
           <template #header><div>
             <span>操作类型分布</span>
           </div></template>
-          <div id="operationTypeChart" style="height: 300px;"></div>
+          <div ref="operationTypeChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
     </el-row>
   </div>
 </template>
 
-<script>
-import * as echarts from 'echarts'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { EChartsOption } from 'echarts'
+import { useECharts } from '@/composables/useECharts'
 import {
   getSystemOverview,
   getUserGrowthTrend,
@@ -150,240 +153,198 @@ import {
   getOperationStatistics,
   getOperationTypeStatistics
 } from '@/api/statistics'
+import type { SystemOverview, NameValue } from '@/types/statistics'
 
-export default {
-  name: 'Statistics',
-  data() {
-    return {
-      overview: {},
-      userGrowthDays: 30,
-      loginDays: 30,
-      operationDays: 30,
-      charts: {}
-    }
-  },
-  mounted() {
-    this.loadData()
-  },
-  beforeUnmount() {
-    // 销毁图表实例
-    Object.values(this.charts).forEach(chart => {
-      if (chart) {
-        chart.dispose()
-      }
-    })
-  },
-  methods: {
-    async loadData() {
-      await this.loadSystemOverview()
-      await this.loadUserGrowthTrend()
-      await this.loadLoginStatistics()
-      await this.loadDeptDistribution()
-      await this.loadRoleDistribution()
-      await this.loadOperationStatistics()
-      await this.loadOperationTypeStatistics()
-    },
+defineOptions({ name: 'Statistics' })
 
-    async loadSystemOverview() {
-      try {
-        const response = await getSystemOverview()
-        this.overview = response.data
-      } catch (error) {
-        this.$message.error('加载系统概览失败')
-      }
-    },
+const overview = ref<SystemOverview>({})
+const userGrowthDays = ref(30)
+const loginDays = ref(30)
+const operationDays = ref(30)
 
-    async loadUserGrowthTrend() {
-      try {
-        const response = await getUserGrowthTrend(this.userGrowthDays)
-        const data = response.data
+const userGrowthChartRef = ref<HTMLElement>()
+const loginChartRef = ref<HTMLElement>()
+const deptDistributionChartRef = ref<HTMLElement>()
+const roleDistributionChartRef = ref<HTMLElement>()
+const operationChartRef = ref<HTMLElement>()
+const operationTypeChartRef = ref<HTMLElement>()
 
-        const dates = data.map(item => item.date)
-        const values = data.map(item => item.value)
+const { setOption: setUserGrowthOption } = useECharts(userGrowthChartRef)
+const { setOption: setLoginOption } = useECharts(loginChartRef)
+const { setOption: setDeptDistributionOption } = useECharts(deptDistributionChartRef)
+const { setOption: setRoleDistributionOption } = useECharts(roleDistributionChartRef)
+const { setOption: setOperationOption } = useECharts(operationChartRef)
+const { setOption: setOperationTypeOption } = useECharts(operationTypeChartRef)
 
-        this.renderLineChart('userGrowthChart', '用户增长', dates, values, '#409EFF')
-      } catch (error) {
-        this.$message.error('加载用户增长趋势失败')
-      }
-    },
+async function loadData() {
+  await loadSystemOverview()
+  await loadUserGrowthTrend()
+  await loadLoginStatistics()
+  await loadDeptDistribution()
+  await loadRoleDistribution()
+  await loadOperationStatistics()
+  await loadOperationTypeStatistics()
+}
 
-    async loadLoginStatistics() {
-      try {
-        const response = await getLoginStatistics(this.loginDays)
-        const data = response.data
-
-        const dates = data.map(item => item.date)
-        const values = data.map(item => item.value)
-
-        this.renderLineChart('loginChart', '登录次数', dates, values, '#67C23A')
-      } catch (error) {
-        this.$message.error('加载登录统计失败')
-      }
-    },
-
-    async loadDeptDistribution() {
-      try {
-        const response = await getDeptUserDistribution()
-        const data = response.data
-
-        const chartData = data.map(item => ({
-          name: item.name,
-          value: item.value
-        }))
-
-        this.renderPieChart('deptDistributionChart', chartData)
-      } catch (error) {
-        this.$message.error('加载部门分布失败')
-      }
-    },
-
-    async loadRoleDistribution() {
-      try {
-        const response = await getRoleUserDistribution()
-        const data = response.data
-
-        const chartData = data.map(item => ({
-          name: item.name,
-          value: item.value
-        }))
-
-        this.renderPieChart('roleDistributionChart', chartData)
-      } catch (error) {
-        this.$message.error('加载角色分布失败')
-      }
-    },
-
-    async loadOperationStatistics() {
-      try {
-        const response = await getOperationStatistics(this.operationDays)
-        const data = response.data
-
-        const dates = data.map(item => item.date)
-        const values = data.map(item => item.value)
-
-        this.renderLineChart('operationChart', '操作次数', dates, values, '#E6A23C')
-      } catch (error) {
-        this.$message.error('加载操作统计失败')
-      }
-    },
-
-    async loadOperationTypeStatistics() {
-      try {
-        const response = await getOperationTypeStatistics()
-        const data = response.data
-
-        const chartData = data.map(item => ({
-          name: item.name,
-          value: item.value
-        }))
-
-        this.renderPieChart('operationTypeChart', chartData)
-      } catch (error) {
-        this.$message.error('加载操作类型统计失败')
-      }
-    },
-
-    renderLineChart(chartId, seriesName, xData, yData, color) {
-      const chartDom = document.getElementById(chartId)
-      if (!chartDom) return
-
-      if (this.charts[chartId]) {
-        this.charts[chartId].dispose()
-      }
-
-      const chart = echarts.init(chartDom)
-      this.charts[chartId] = chart
-
-      const option = {
-        tooltip: {
-          trigger: 'axis'
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: xData
-        },
-        yAxis: {
-          type: 'value'
-        },
-        series: [
-          {
-            name: seriesName,
-            type: 'line',
-            smooth: true,
-            data: yData,
-            itemStyle: {
-              color: color
-            },
-            areaStyle: {
-              color: {
-                type: 'linear',
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  { offset: 0, color: color + '80' },
-                  { offset: 1, color: color + '20' }
-                ]
-              }
-            }
-          }
-        ]
-      }
-
-      chart.setOption(option)
-      window.addEventListener('resize', () => chart.resize())
-    },
-
-    renderPieChart(chartId, data) {
-      const chartDom = document.getElementById(chartId)
-      if (!chartDom) return
-
-      if (this.charts[chartId]) {
-        this.charts[chartId].dispose()
-      }
-
-      const chart = echarts.init(chartDom)
-      this.charts[chartId] = chart
-
-      const option = {
-        tooltip: {
-          trigger: 'item',
-          formatter: '{a} <br/>{b}: {c} ({d}%)'
-        },
-        legend: {
-          orient: 'vertical',
-          left: 'left'
-        },
-        series: [
-          {
-            name: '人员分布',
-            type: 'pie',
-            radius: '50%',
-            data: data,
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
-              }
-            }
-          }
-        ]
-      }
-
-      chart.setOption(option)
-      window.addEventListener('resize', () => chart.resize())
-    }
+async function loadSystemOverview() {
+  try {
+    const response = await getSystemOverview()
+    overview.value = response.data
+  } catch {
+    ElMessage.error('加载系统概览失败')
   }
 }
+
+async function loadUserGrowthTrend() {
+  try {
+    const response = await getUserGrowthTrend(userGrowthDays.value)
+    const data = response.data
+
+    const dates = data.map(item => item.date ?? '')
+    const values = data.map(item => item.value ?? 0)
+
+    setUserGrowthOption(buildLineOption('用户增长', dates, values, '#409EFF'))
+  } catch {
+    ElMessage.error('加载用户增长趋势失败')
+  }
+}
+
+async function loadLoginStatistics() {
+  try {
+    const response = await getLoginStatistics(loginDays.value)
+    const data = response.data
+
+    const dates = data.map(item => item.date ?? '')
+    const values = data.map(item => item.value ?? 0)
+
+    setLoginOption(buildLineOption('登录次数', dates, values, '#67C23A'))
+  } catch {
+    ElMessage.error('加载登录统计失败')
+  }
+}
+
+async function loadDeptDistribution() {
+  try {
+    const response = await getDeptUserDistribution()
+    setDeptDistributionOption(buildPieOption(toNameValueList(response.data)))
+  } catch {
+    ElMessage.error('加载部门分布失败')
+  }
+}
+
+async function loadRoleDistribution() {
+  try {
+    const response = await getRoleUserDistribution()
+    setRoleDistributionOption(buildPieOption(toNameValueList(response.data)))
+  } catch {
+    ElMessage.error('加载角色分布失败')
+  }
+}
+
+async function loadOperationStatistics() {
+  try {
+    const response = await getOperationStatistics(operationDays.value)
+    const data = response.data
+
+    const dates = data.map(item => item.date ?? '')
+    const values = data.map(item => item.value ?? 0)
+
+    setOperationOption(buildLineOption('操作次数', dates, values, '#E6A23C'))
+  } catch {
+    ElMessage.error('加载操作统计失败')
+  }
+}
+
+async function loadOperationTypeStatistics() {
+  try {
+    const response = await getOperationTypeStatistics()
+    setOperationTypeOption(buildPieOption(toNameValueList(response.data)))
+  } catch {
+    ElMessage.error('加载操作类型统计失败')
+  }
+}
+
+function toNameValueList(data: NameValue[]): { name: string; value: number }[] {
+  return data.map(item => ({ name: item.name ?? '', value: item.value ?? 0 }))
+}
+
+function buildLineOption(seriesName: string, xData: string[], yData: number[], color: string): EChartsOption {
+  return {
+    tooltip: {
+      trigger: 'axis'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: xData
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: seriesName,
+        type: 'line',
+        smooth: true,
+        data: yData,
+        itemStyle: {
+          color: color
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: color + '80' },
+              { offset: 1, color: color + '20' }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+
+function buildPieOption(data: { name: string; value: number }[]): EChartsOption {
+  return {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left'
+    },
+    series: [
+      {
+        name: '人员分布',
+        type: 'pie',
+        radius: '50%',
+        data: data,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    ]
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style scoped>

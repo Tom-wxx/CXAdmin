@@ -70,7 +70,7 @@
 
     <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="680px" append-to-body>
-      <el-form ref="menuForm" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="menuFormRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
             <el-form-item label="上级菜单">
@@ -102,9 +102,9 @@
                 placement="bottom-start"
                 width="460"
                 trigger="click"
-                @show="$refs['iconSelect'].reset()"
+                @show="iconSelectRef?.reset()"
               >
-                <IconSelect ref="iconSelect" @selected="selected" />
+                <IconSelect ref="iconSelectRef" @selected="selected" />
                 <template #reference><el-input v-model="form.icon" placeholder="点击选择图标" readonly>
                   <template #prefix>
                     <menu-icon v-if="form.icon" :name="form.icon" />
@@ -234,204 +234,207 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive, nextTick } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { listMenu, getMenu, addMenu, updateMenu, delMenu, treeselect } from '@/api/system/menu'
-import IconSelect from '@/components/IconSelect'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+import IconSelect from '@/components/IconSelect/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+import { parseTime } from '@/utils'
+import type { Menu, MenuQuery } from '@/types/system/menu'
+
+defineOptions({ name: 'Menu' })
 
 const STATUS_OPTIONS = [
   { value: '0', label: '正常', type: 'success' },
   { value: '1', label: '停用', type: 'danger' }
 ]
 
-export default {
-  name: 'Menu',
-  components: { IconSelect, SearchForm, TableToolbar, DictTag },
-  data() {
-    return {
-      searchFields: [
-        { prop: 'menuName', label: '菜单名称', type: 'input' },
-        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '菜单状态' }
-      ],
-      statusOptions: STATUS_OPTIONS,
-      // 加载状态
-      loading: true,
-      // 菜单列表
-      menuList: [],
-      // 菜单树选项
-      menuOptions: [],
-      // 对话框标题
-      dialogTitle: '',
-      // 对话框显示状态
-      dialogVisible: false,
-      // 是否展开，默认全部展开
-      isExpandAll: true,
-      // 重新渲染表格状态
-      refreshTable: true,
-      // 查询参数
-      queryParams: {
-        menuName: undefined,
-        status: undefined
-      },
-      // 表单数据
-      form: {},
-      // 表单校验规则
-      rules: {
-        menuName: [
-          { required: true, message: '菜单名称不能为空', trigger: 'blur' }
-        ],
-        orderNum: [
-          { required: true, message: '菜单顺序不能为空', trigger: 'blur' }
-        ],
-        path: [
-          { required: true, message: '路由地址不能为空', trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    /** 查询菜单列表 */
-    getList() {
-      this.loading = true
-      listMenu(this.queryParams).then(response => {
-        this.menuList = response.data
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    /** 查询菜单下拉树结构 */
-    getTreeselect() {
-      treeselect().then(response => {
-        this.menuOptions = []
-        const menu = { menuId: 0, menuName: '主类目', children: [] }
-        menu.children = response.data
-        this.menuOptions.push(menu)
-      })
-    },
-    /** 选择图标 */
-    selected(name) {
-      this.form.icon = name
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.getList()
-    },
-    /** 重置按钮操作 */
-    resetQuery() {
-      this.handleQuery()
-    },
-    /** 新增按钮操作 */
-    handleAdd(row) {
-      this.reset()
-      this.getTreeselect()
-      if (row != null && row.menuId) {
-        this.form.parentId = row.menuId
-      } else {
-        this.form.parentId = 0
-      }
-      this.dialogTitle = '添加菜单'
-      this.dialogVisible = true
-    },
-    /** 展开/折叠操作 */
-    toggleExpandAll() {
-      this.refreshTable = false
-      this.isExpandAll = !this.isExpandAll
-      this.$nextTick(() => {
-        this.refreshTable = true
-      })
-    },
-    /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.reset()
-      this.getTreeselect()
-      getMenu(row.menuId).then(response => {
-        this.form = response.data
-        this.dialogTitle = '修改菜单'
-        this.dialogVisible = true
-      })
-    },
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs.menuForm.validate(valid => {
-        if (valid) {
-          if (this.form.menuId) {
-            updateMenu(this.form).then(response => {
-              this.$message.success('修改成功')
-              this.dialogVisible = false
-              this.getList()
-            })
-          } else {
-            addMenu(this.form).then(response => {
-              this.$message.success('新增成功')
-              this.dialogVisible = false
-              this.getList()
-            })
-          }
-        }
-      })
-    },
-    /** 取消按钮 */
-    cancel() {
-      this.dialogVisible = false
-      this.reset()
-    },
-    /** 表单重置 */
-    reset() {
-      this.form = {
-        menuId: undefined,
-        parentId: 0,
-        menuName: undefined,
-        icon: undefined,
-        menuType: 'M',
-        orderNum: 0,
-        isFrame: 1,
-        isCache: 0,
-        visible: '0',
-        status: '0'
-      }
-      if (this.$refs.menuForm) {
-        this.$refs.menuForm.resetFields()
-      }
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      this.$confirm('是否确认删除名称为"' + row.menuName + '"的菜单？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delMenu(row.menuId, false)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      }).catch(error => {
-        if (error !== 'cancel') {
-          this.$message.error(error.message || '删除失败')
-        }
-      })
-    },
-    /** 时间格式化 */
-    parseTime(time) {
-      if (!time) {
-        return ''
-      }
-      const date = new Date(time)
-      const year = date.getFullYear()
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const hour = date.getHours().toString().padStart(2, '0')
-      const minute = date.getMinutes().toString().padStart(2, '0')
-      const second = date.getSeconds().toString().padStart(2, '0')
-      return `${year}-${month}-${day} ${hour}:${minute}:${second}`
-    }
-  }
+const searchFields = [
+  { prop: 'menuName', label: '菜单名称', type: 'input' },
+  { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '菜单状态' }
+]
+
+const statusOptions = STATUS_OPTIONS
+
+// 加载状态
+const loading = ref(true)
+// 菜单列表
+const menuList = ref<Menu[]>([])
+// 菜单树选项
+const menuOptions = ref<Menu[]>([])
+// 对话框标题
+const dialogTitle = ref('')
+// 对话框显示状态
+const dialogVisible = ref(false)
+// 是否展开，默认全部展开
+const isExpandAll = ref(true)
+// 重新渲染表格状态
+const refreshTable = ref(true)
+// 查询参数
+const queryParams = reactive<MenuQuery>({
+  menuName: undefined,
+  status: undefined
+})
+
+const menuFormRef = ref<FormInstance>()
+const iconSelectRef = ref<InstanceType<typeof IconSelect>>()
+
+const formDefaults: Menu = {
+  menuId: undefined,
+  parentId: 0,
+  menuName: undefined,
+  icon: undefined,
+  menuType: 'M',
+  orderNum: 0,
+  isFrame: 1,
+  isCache: 0,
+  visible: '0',
+  status: '0'
 }
+
+// 表单数据
+const form = reactive<Menu>({ ...formDefaults })
+
+// 表单校验规则
+const rules = reactive<FormRules>({
+  menuName: [
+    { required: true, message: '菜单名称不能为空', trigger: 'blur' }
+  ],
+  orderNum: [
+    { required: true, message: '菜单顺序不能为空', trigger: 'blur' }
+  ],
+  path: [
+    { required: true, message: '路由地址不能为空', trigger: 'blur' }
+  ]
+})
+
+/** 查询菜单列表 */
+function getList() {
+  loading.value = true
+  listMenu(queryParams).then(response => {
+    menuList.value = response.data
+    loading.value = false
+  }).catch(() => {
+    loading.value = false
+  })
+}
+
+/** 查询菜单下拉树结构 */
+function getTreeselect() {
+  treeselect().then(response => {
+    // api 声明 treeselect() 返回 TreeOption[]（id/label），但后端 /treeselect 实际返回
+    // MenuVO[]（menuId/menuName/children），与 el-tree-select 的 props 映射一致；
+    // 这是既有的类型标注与运行时结构不一致问题，此处按真实运行时结构处理。
+    const menu: Menu = { menuId: 0, menuName: '主类目', children: response.data as unknown as Menu[] }
+    menuOptions.value = [menu]
+  })
+}
+
+/** 选择图标 */
+function selected(name: string) {
+  form.icon = name
+}
+
+/** 搜索按钮操作 */
+function handleQuery() {
+  getList()
+}
+
+/** 重置按钮操作 */
+function resetQuery() {
+  handleQuery()
+}
+
+/** 新增按钮操作 */
+function handleAdd(row?: Menu) {
+  reset()
+  getTreeselect()
+  if (row != null && row.menuId) {
+    form.parentId = row.menuId
+  } else {
+    form.parentId = 0
+  }
+  dialogTitle.value = '添加菜单'
+  dialogVisible.value = true
+}
+
+/** 展开/折叠操作 */
+function toggleExpandAll() {
+  refreshTable.value = false
+  isExpandAll.value = !isExpandAll.value
+  nextTick(() => {
+    refreshTable.value = true
+  })
+}
+
+/** 修改按钮操作 */
+function handleUpdate(row: Menu) {
+  reset()
+  getTreeselect()
+  getMenu(row.menuId as number).then(response => { // 表格行数据，menuId 必然存在
+    Object.assign(form, response.data)
+    dialogTitle.value = '修改菜单'
+    dialogVisible.value = true
+  })
+}
+
+/** 提交按钮 */
+function submitForm() {
+  menuFormRef.value?.validate(valid => {
+    if (valid) {
+      if (form.menuId) {
+        updateMenu(form).then(() => {
+          ElMessage.success('修改成功')
+          dialogVisible.value = false
+          getList()
+        })
+      } else {
+        addMenu(form).then(() => {
+          ElMessage.success('新增成功')
+          dialogVisible.value = false
+          getList()
+        })
+      }
+    }
+  })
+}
+
+/** 取消按钮 */
+function cancel() {
+  dialogVisible.value = false
+  reset()
+}
+
+/** 表单重置 */
+function reset() {
+  Object.assign(form, formDefaults)
+  menuFormRef.value?.resetFields()
+}
+
+/** 删除按钮操作 */
+function handleDelete(row: Menu) {
+  ElMessageBox.confirm('是否确认删除名称为"' + row.menuName + '"的菜单？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return delMenu(row.menuId as number, false) // 表格行数据，menuId 必然存在
+  }).then(() => {
+    getList()
+    ElMessage.success('删除成功')
+  }).catch((error: unknown) => {
+    if (error !== 'cancel') {
+      const message = error instanceof Error ? error.message : '删除失败'
+      ElMessage.error(message)
+    }
+  })
+}
+
+getList()
 </script>
 
 <style scoped>

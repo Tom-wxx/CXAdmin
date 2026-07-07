@@ -1,18 +1,21 @@
 <template>
   <div class="sso-callback">登录中，请稍候...</div>
 </template>
-<script>
+<script setup lang="ts">
+import { useRoute } from 'vue-router'
 import { setToken } from '@/utils/auth'
-export default {
-  name: 'SsoCallback',
-  created() {
-    // 后端已通过 Set-Cookie 写入 HttpOnly token；前端只需打 user.token=1 标记
-    setToken()
-    this.$store.commit('user/SET_TOKEN', '1')
-    const redirect = this.$route.query.redirect || '/index'
-    window.location.href = redirect
-  }
-}
+import { useStore } from '@/composables/store'
+
+defineOptions({ name: 'SsoCallback' })
+
+const route = useRoute()
+const store = useStore()
+
+// 后端已通过 Set-Cookie 写入 HttpOnly token；前端只需打 user.token=1 标记
+setToken()
+store.commit('user/SET_TOKEN', '1')
+const redirect = (route.query.redirect as string) || '/index'
+window.location.href = redirect
 </script>
 <style scoped>
 .sso-callback {

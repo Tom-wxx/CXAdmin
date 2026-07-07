@@ -61,13 +61,13 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
+      v-model:page="queryParams.current"
+      v-model:limit="queryParams.size"
       @pagination="getList"
     />
 
-    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+    <el-dialog :title="dialogTitle" v-model="open" width="600px" append-to-body>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="模板编码" prop="templateCode">
           <el-input v-model="form.templateCode" placeholder="请输入模板编码" />
         </el-form-item>
@@ -113,7 +113,10 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import {
   listTemplate,
   getTemplate,
@@ -122,10 +125,14 @@ import {
   delTemplate,
   changeTemplateStatus
 } from '@/api/system/notificationTemplate'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+import type { NotificationTemplate, NotificationTemplateQuery } from '@/types/system/notification'
+import { parseTime } from '@/utils/index.js'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+
+defineOptions({ name: 'NotificationTemplate' })
 
 const PRIORITY_OPTIONS = [
   { value: 'urgent', label: '紧急', type: 'danger' },
@@ -137,148 +144,151 @@ const STATUS_SEARCH_OPTIONS = [
   { value: '0', label: '停用' }
 ]
 
-export default {
-  name: 'NotificationTemplate',
-  components: { Pagination, SearchForm, TableToolbar, DictTag },
-  data() {
-    return {
-      searchFields: [
-        { prop: 'templateName', label: '模板名称', type: 'input', placeholder: '请输入模板名称' },
-        { prop: 'templateCode', label: '模板编码', type: 'input', placeholder: '请输入模板编码' },
-        { prop: 'status', label: '状态', type: 'select', options: STATUS_SEARCH_OPTIONS, placeholder: '请选择状态' }
-      ],
-      priorityOptions: PRIORITY_OPTIONS,
-      loading: true,
-      ids: [],
-      multiple: true,
-      total: 0,
-      templateList: [],
-      title: '',
-      open: false,
-      queryParams: {
-        pageNum: 1,
-        pageSize: 10,
-        templateName: undefined,
-        templateCode: undefined,
-        type: undefined,
-        status: undefined
-      },
-      form: {},
-      rules: {
-        templateCode: [{ required: true, message: '模板编码不能为空', trigger: 'blur' }],
-        templateName: [{ required: true, message: '模板名称不能为空', trigger: 'blur' }],
-        title: [{ required: true, message: '标题模板不能为空', trigger: 'blur' }],
-        content: [{ required: true, message: '内容模板不能为空', trigger: 'blur' }],
-        type: [{ required: true, message: '通知类型不能为空', trigger: 'change' }]
-      }
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    getList() {
-      this.loading = true
-      listTemplate(this.queryParams).then(response => {
-        this.templateList = response.rows
-        this.total = response.total
-        this.loading = false
-      })
-    },
-    handleQuery() {
-      this.queryParams.pageNum = 1
-      this.getList()
-    },
-    resetQuery() {
-      this.queryParams.pageNum = 1
-      this.getList()
-    },
-    cancel() {
-      this.open = false
-      this.reset()
-    },
-    reset() {
-      this.form = {
-        id: undefined,
-        templateCode: undefined,
-        templateName: undefined,
-        title: undefined,
-        content: undefined,
-        type: 'system',
-        priority: 'normal',
-        status: '1',
-        remark: undefined
-      }
-      this.$refs['form'] && this.$refs['form'].resetFields()
-    },
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.id)
-      this.multiple = !selection.length
-    },
-    handleAdd() {
-      this.reset()
-      this.open = true
-      this.title = '添加通知模板'
-    },
-    handleUpdate(row) {
-      this.reset()
-      const id = row.id || this.ids[0]
-      getTemplate(id).then(response => {
-        this.form = response.data
-        this.open = true
-        this.title = '修改通知模板'
-      })
-    },
-    submitForm() {
-      this.$refs['form'].validate(valid => {
-        if (valid) {
-          if (this.form.id != undefined) {
-            updateTemplate(this.form).then(() => {
-              this.$message.success('修改成功')
-              this.open = false
-              this.getList()
-            })
-          } else {
-            addTemplate(this.form).then(() => {
-              this.$message.success('新增成功')
-              this.open = false
-              this.getList()
-            })
-          }
-        }
-      })
-    },
-    handleDelete(row) {
-      const ids = row.id ? [row.id] : this.ids
-      this.$confirm('是否确认删除选中的模板?', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delTemplate(ids)
-      }).then(() => {
-        this.$message.success('删除成功')
-        this.getList()
-      })
-    },
-    handleStatusChange(row) {
-      let text = row.status === '1' ? '启用' : '停用'
-      this.$confirm('确认要"' + text + '""' + row.templateName + '"模板吗?', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return changeTemplateStatus(row.id, row.status)
-      }).then(() => {
-        this.$message.success(text + '成功')
-      }).catch(() => {
-        row.status = row.status === '0' ? '1' : '0'
-      })
-    },
-    parseTime(time) {
-      if (!time) return ''
-      return new Date(time).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
-    }
-  }
+const searchFields = [
+  { prop: 'templateName', label: '模板名称', type: 'input', placeholder: '请输入模板名称' },
+  { prop: 'templateCode', label: '模板编码', type: 'input', placeholder: '请输入模板编码' },
+  { prop: 'status', label: '状态', type: 'select', options: STATUS_SEARCH_OPTIONS, placeholder: '请选择状态' }
+]
+const priorityOptions = PRIORITY_OPTIONS
+
+const loading = ref(true)
+const ids = ref<number[]>([])
+const multiple = ref(true)
+const total = ref(0)
+const templateList = ref<NotificationTemplate[]>([])
+const dialogTitle = ref('')
+const open = ref(false)
+
+const queryParams = reactive<NotificationTemplateQuery>({
+  current: 1,
+  size: 10,
+  templateName: undefined,
+  templateCode: undefined,
+  type: undefined,
+  status: undefined
+})
+
+const emptyForm = (): NotificationTemplate => ({
+  id: undefined,
+  templateCode: undefined,
+  templateName: undefined,
+  title: undefined,
+  content: undefined,
+  type: 'system',
+  priority: 'normal',
+  status: '1',
+  remark: undefined
+})
+
+const form = ref<NotificationTemplate>(emptyForm())
+const formRef = ref<FormInstance>()
+
+const rules: FormRules = {
+  templateCode: [{ required: true, message: '模板编码不能为空', trigger: 'blur' }],
+  templateName: [{ required: true, message: '模板名称不能为空', trigger: 'blur' }],
+  title: [{ required: true, message: '标题模板不能为空', trigger: 'blur' }],
+  content: [{ required: true, message: '内容模板不能为空', trigger: 'blur' }],
+  type: [{ required: true, message: '通知类型不能为空', trigger: 'change' }]
 }
+
+function getList() {
+  loading.value = true
+  listTemplate(queryParams).then(res => {
+    templateList.value = res.rows
+    total.value = res.total
+    loading.value = false
+  })
+}
+
+function handleQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+function resetQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+function reset() {
+  form.value = emptyForm()
+  formRef.value?.resetFields()
+}
+
+function cancel() {
+  open.value = false
+  reset()
+}
+
+function handleSelectionChange(selection: NotificationTemplate[]) {
+  ids.value = selection.map(item => item.id as number)
+  multiple.value = !selection.length
+}
+
+function handleAdd() {
+  reset()
+  open.value = true
+  dialogTitle.value = '添加通知模板'
+}
+
+function handleUpdate(row: NotificationTemplate) {
+  reset()
+  const id = row.id ?? ids.value[0]
+  getTemplate(id as number).then(res => {
+    form.value = res.data
+    open.value = true
+    dialogTitle.value = '修改通知模板'
+  })
+}
+
+function submitForm() {
+  formRef.value?.validate(valid => {
+    if (valid) {
+      if (form.value.id != null) {
+        updateTemplate(form.value).then(() => {
+          ElMessage.success('修改成功')
+          open.value = false
+          getList()
+        })
+      } else {
+        addTemplate(form.value).then(() => {
+          ElMessage.success('新增成功')
+          open.value = false
+          getList()
+        })
+      }
+    }
+  })
+}
+
+function handleDelete(row?: NotificationTemplate) {
+  const delIds = row?.id ? [row.id as number] : ids.value
+  ElMessageBox.confirm('是否确认删除选中的模板?', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => delTemplate(delIds))
+    .then(() => {
+      ElMessage.success('删除成功')
+      getList()
+    })
+    .catch(() => { /* 用户取消 */ })
+}
+
+function handleStatusChange(row: NotificationTemplate) {
+  const text = row.status === '1' ? '启用' : '停用'
+  ElMessageBox.confirm('确认要"' + text + '""' + row.templateName + '"模板吗?', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => changeTemplateStatus(row.id as number, row.status as string))
+    .then(() => {
+      ElMessage.success(text + '成功')
+    })
+    .catch(() => {
+      row.status = row.status === '0' ? '1' : '0'
+    })
+}
+
+getList()
 </script>

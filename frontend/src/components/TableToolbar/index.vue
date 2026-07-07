@@ -66,27 +66,49 @@
   </el-row>
 </template>
 
-<script>
-export default {
-  name: 'TableToolbar',
-  props: {
-    showAdd: { type: Boolean, default: false },
-    showEdit: { type: Boolean, default: false },
-    showDelete: { type: Boolean, default: false },
-    showExport: { type: Boolean, default: false },
-    showImport: { type: Boolean, default: false },
-    showRefresh: { type: Boolean, default: false },
-    addDisabled: { type: Boolean, default: false },
-    editDisabled: { type: Boolean, default: false },
-    deleteDisabled: { type: Boolean, default: false },
-    exportDisabled: { type: Boolean, default: false },
-    importDisabled: { type: Boolean, default: false },
-    /** 编辑按钮：未选中或多选时禁用 */
-    single: { type: Boolean, default: false },
-    /** 删除按钮：未选中时禁用 */
-    multiple: { type: Boolean, default: false }
-  }
-}
+<script setup lang="ts">
+defineOptions({ name: 'TableToolbar' })
+
+withDefaults(defineProps<{
+  showAdd?: boolean
+  showEdit?: boolean
+  showDelete?: boolean
+  showExport?: boolean
+  showImport?: boolean
+  showRefresh?: boolean
+  addDisabled?: boolean
+  editDisabled?: boolean
+  deleteDisabled?: boolean
+  exportDisabled?: boolean
+  importDisabled?: boolean
+  /** 编辑按钮：未选中或多选时禁用 */
+  single?: boolean
+  /** 删除按钮：未选中时禁用 */
+  multiple?: boolean
+}>(), {
+  showAdd: false,
+  showEdit: false,
+  showDelete: false,
+  showExport: false,
+  showImport: false,
+  showRefresh: false,
+  addDisabled: false,
+  editDisabled: false,
+  deleteDisabled: false,
+  exportDisabled: false,
+  importDisabled: false,
+  single: false,
+  multiple: false
+})
+
+defineEmits<{
+  (e: 'add'): void
+  (e: 'edit'): void
+  (e: 'delete'): void
+  (e: 'export'): void
+  (e: 'import'): void
+  (e: 'refresh'): void
+}>()
 </script>
 
 <style scoped>

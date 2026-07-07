@@ -117,7 +117,7 @@
         <el-table-column label="下载次数" align="center" prop="downloadCount" width="100" />
         <el-table-column label="上传时间" align="center" prop="createTime" width="180">
           <template #default="scope">
-            <span>{{ parseTime(scope.row.createTime) }}</span>
+            <span>{{ parseTime(scope.row.createTime || '') }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width">
@@ -155,8 +155,8 @@
       <pagination
         v-show="total>0"
         :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
+        v-model:page="queryParams.current"
+        v-model:limit="queryParams.size"
         @pagination="getList"
       />
     </el-card>
@@ -164,7 +164,7 @@
     <!-- 上传对话框 -->
     <el-dialog title="上传文件" v-model="uploadDialogVisible" width="600px" @close="handleUploadClose">
       <el-upload
-        ref="upload"
+        ref="uploadRef"
         class="upload-container"
         drag
         :action="uploadUrl"
@@ -191,7 +191,7 @@
 
     <!-- 编辑对话框 -->
     <el-dialog title="编辑文件信息" v-model="editDialogVisible" width="600px" @close="handleEditClose">
-      <el-form :model="editForm" :rules="editRules" ref="editForm" label-width="100px">
+      <el-form :model="editForm" :rules="editRules" ref="editFormRef" label-width="100px">
         <el-form-item label="文件名称">
           <el-input v-model="editForm.originalName" disabled />
         </el-form-item>
@@ -212,7 +212,7 @@
           <el-input v-model="editForm.createBy" disabled />
         </el-form-item>
         <el-form-item label="上传时间">
-          <el-input :value="parseTime(editForm.createTime)" disabled />
+          <el-input :value="parseTime(editForm.createTime || '')" disabled />
         </el-form-item>
         <el-form-item label="存储路径">
           <el-input v-model="editForm.filePath" disabled />
@@ -259,7 +259,7 @@
             <p><strong>文件名：</strong>{{ previewFile.originalName }}</p>
             <p><strong>文件大小：</strong>{{ formatFileSize(previewFile.fileSize) }}</p>
             <p><strong>文件类型：</strong>{{ previewFile.fileType }}</p>
-            <p><strong>上传时间：</strong>{{ parseTime(previewFile.createTime) }}</p>
+            <p><strong>上传时间：</strong>{{ parseTime(previewFile.createTime || '') }}</p>
           </div>
         </div>
       </div>
@@ -270,12 +270,21 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules, UploadInstance, UploadFile, UploadFiles, UploadRawFile, UploadUserFile } from 'element-plus'
 import { listFile, updateFile, deleteFile, getFileStatistics, getFileUrl, downloadFile } from '@/api/system/file'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+import { useCrudTable } from '@/composables'
+import { parseTime } from '@/utils'
+import type { Result } from '@/types/api'
+import type { FileInfo, FileQuery, FileStatistics } from '@/types/system/file'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+
+defineOptions({ name: 'FileManagement' })
 
 const CATEGORY_OPTIONS = [
   { value: 'image', label: '图片', type: 'success' },
@@ -285,245 +294,213 @@ const CATEGORY_OPTIONS = [
   { value: 'other', label: '其他', type: '' }
 ]
 
-export default {
-  name: 'FileManagement',
-  components: {
-    Pagination,
-    SearchForm,
-    TableToolbar,
-    DictTag
-  },
-  data() {
-    return {
-      // 搜索字段配置
-      searchFields: [
-        { prop: 'fileName', label: '文件名称', type: 'input' },
-        { prop: 'category', label: '文件类型', type: 'select', options: CATEGORY_OPTIONS, placeholder: '请选择文件类型' }
-      ],
-      categoryOptions: CATEGORY_OPTIONS,
-      // 遮罩层
-      loading: true,
-      // 选中数组
-      ids: [],
-      // 非多个禁用
-      multiple: true,
-      // 总条数
-      total: 0,
-      // 文件列表
-      fileList: [],
-      // 查询参数
-      queryParams: {
-        pageNum: 1,
-        pageSize: 10,
-        fileName: undefined,
-        category: undefined
-      },
-      // 统计数据
-      statistics: {
-        totalFiles: 0,
-        totalSize: 0,
-        imageCount: 0,
-        documentCount: 0
-      },
-      // 上传对话框
-      uploadDialogVisible: false,
-      uploadUrl: import.meta.env.VITE_APP_BASE_API + '/system/file/upload',
-      uploadFileList: [],
-      // 编辑对话框
-      editDialogVisible: false,
-      editForm: {},
-      editRules: {
-        remark: [
-          { max: 500, message: '文件用途不能超过500个字符', trigger: 'blur' }
-        ]
-      },
-      // 预览对话框
-      previewDialogVisible: false,
-      previewFile: {}
-    }
-  },
-  created() {
-    this.getList()
-    this.getStatistics()
-  },
-  methods: {
-    /** 查询文件列表 */
-    getList() {
-      this.loading = true
-      listFile(this.queryParams).then(response => {
-        this.fileList = response.rows
-        this.total = response.total
-        this.loading = false
-      })
-    },
-    /** 获取统计数据 */
-    getStatistics() {
-      getFileStatistics().then(response => {
-        this.statistics = response.data || {}
-      })
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.pageNum = 1
-      this.getList()
-    },
-    /** 重置按钮操作（SearchForm 已自动清字段） */
-    resetQuery() {
-      this.queryParams.pageNum = 1
-      this.queryParams.pageSize = 10
-      this.handleQuery()
-    },
-    /** 多选框选中数据 */
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.fileId)
-      this.multiple = !selection.length
-    },
-    /** 上传文件 */
-    handleUpload() {
-      this.uploadDialogVisible = true
-      this.uploadFileList = []
-    },
-    /** 提交上传 */
-    submitUpload() {
-      this.$refs.upload.submit()
-    },
-    /** 上传前校验 */
-    beforeUpload(file) {
-      const maxSize = 100 * 1024 * 1024 // 100MB
-      if (file.size > maxSize) {
-        this.$message.error('文件大小不能超过 100MB')
-        return false
-      }
-      return true
-    },
-    /** 上传成功 */
-    handleUploadSuccess(response, file, fileList) {
-      if (response.code === 200) {
-        this.$message.success('上传成功')
-        this.getList()
-        this.getStatistics()
-      } else {
-        this.$message.error(response.message || '上传失败')
-      }
-      // 如果所有文件都上传完成，关闭对话框
-      const allUploaded = fileList.every(f => f.status === 'success' || f.status === 'fail')
-      if (allUploaded) {
-        setTimeout(() => {
-          this.uploadDialogVisible = false
-        }, 500)
-      }
-    },
-    /** 上传失败 */
-    handleUploadError(err, file, fileList) {
-      this.$message.error('上传失败: ' + err.message)
-    },
-    /** 上传对话框关闭 */
-    handleUploadClose() {
-      this.$refs.upload.clearFiles()
-    },
-    /** 编辑文件 */
-    handleEdit(row) {
-      this.editForm = { ...row }
-      this.editDialogVisible = true
-    },
-    /** 提交编辑 */
-    submitEdit() {
-      this.$refs.editForm.validate((valid) => {
-        if (valid) {
-          // 调用更新接口
-          const params = {
-            fileId: this.editForm.fileId,
-            remark: this.editForm.remark
-          }
+const searchFields = [
+  { prop: 'fileName', label: '文件名称', type: 'input' },
+  { prop: 'category', label: '文件类型', type: 'select', options: CATEGORY_OPTIONS, placeholder: '请选择文件类型' }
+]
+const categoryOptions = CATEGORY_OPTIONS
 
-          updateFile(params).then(response => {
-            if (response.code === 200) {
-              this.$message.success('更新成功')
-              this.editDialogVisible = false
-              this.getList()
-            } else {
-              this.$message.error(response.message || '更新失败')
-            }
-          }).catch(() => {
-            this.$message.error('更新失败，请稍后重试')
-          })
-        }
-      })
-    },
-    /** 编辑对话框关闭 */
-    handleEditClose() {
-      this.editForm = {}
-      this.$refs.editForm.resetFields()
-    },
-    /** 预览文件 */
-    handlePreview(row) {
-      this.previewFile = row
-      this.previewDialogVisible = true
-    },
-    /** 预览对话框关闭 */
-    handlePreviewClose() {
-      this.previewFile = {}
-    },
-    /** 下载文件 */
-    handleDownload(row) {
-      const fileId = row.fileId
-      downloadFile(fileId).then(response => {
-        const blob = new Blob([response])
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = row.originalName
-        link.click()
-        window.URL.revokeObjectURL(url)
-        this.$message.success('下载成功')
-      }).catch(() => {
-        this.$message.error('下载失败')
-      })
-    },
-    /** 删除文件 */
-    handleDelete(row) {
-      const fileIds = row.fileId ? [row.fileId] : this.ids
-      this.$confirm('是否确认删除选中的文件?', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return deleteFile(fileIds.join(','))
-      }).then(() => {
-        this.getList()
-        this.getStatistics()
-        this.$message.success('删除成功')
-      }).catch(() => {})
-    },
-    /** 获取文件URL */
-    getFileUrl(fileUrl) {
-      return getFileUrl(fileUrl)
-    },
-    /** 格式化文件大小 */
-    formatFileSize(bytes) {
-      if (!bytes || bytes === 0) return '0 B'
-      const k = 1024
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-      const i = Math.floor(Math.log(bytes) / Math.log(k))
-      return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i]
-    },
-    /** 获取文件图标 */
-    getFileIcon(category) {
-      const icons = {
-        image: 'el-icon-picture',
-        document: 'el-icon-document',
-        video: 'el-icon-video-camera',
-        audio: 'el-icon-headset',
-        other: 'el-icon-document'
-      }
-      return icons[category] || 'el-icon-document'
-    },
-    /** 格式化时间 */
-    parseTime(time) {
-      if (!time) return ''
-      return time.replace('T', ' ')
-    }
+const { loading, list: fileList, total, queryParams, getList, handleQuery, resetQuery } =
+  useCrudTable<FileInfo, FileQuery>({
+    listApi: listFile,
+    defaultQuery: { fileName: undefined, category: undefined }
+  })
+
+// 选中数组 / 非多个禁用
+const ids = ref<number[]>([])
+const multiple = ref(true)
+
+// 统计数据
+const statistics = ref<FileStatistics>({
+  totalFiles: 0,
+  totalSize: 0,
+  imageCount: 0,
+  documentCount: 0
+})
+
+// 上传对话框
+const uploadDialogVisible = ref(false)
+const uploadUrl = import.meta.env.VITE_APP_BASE_API + '/system/file/upload'
+const uploadFileList = ref<UploadUserFile[]>([])
+const uploadRef = ref<UploadInstance>()
+
+// 编辑对话框
+const editDialogVisible = ref(false)
+const editForm = ref<FileInfo>({})
+const editFormRef = ref<FormInstance>()
+const editRules = reactive<FormRules>({
+  remark: [
+    { max: 500, message: '文件用途不能超过500个字符', trigger: 'blur' }
+  ]
+})
+
+// 预览对话框
+const previewDialogVisible = ref(false)
+const previewFile = ref<FileInfo>({})
+
+/** 获取统计数据 */
+function getStatistics() {
+  getFileStatistics().then(response => {
+    statistics.value = response.data || {}
+  })
+}
+getStatistics()
+
+/** 多选框选中数据 */
+function handleSelectionChange(selection: FileInfo[]) {
+  ids.value = selection.map(item => item.fileId!)
+  multiple.value = !selection.length
+}
+
+/** 上传文件 */
+function handleUpload() {
+  uploadDialogVisible.value = true
+  uploadFileList.value = []
+}
+
+/** 提交上传 */
+function submitUpload() {
+  uploadRef.value?.submit()
+}
+
+/** 上传前校验 */
+function beforeUpload(file: UploadRawFile) {
+  const maxSize = 100 * 1024 * 1024 // 100MB
+  if (file.size > maxSize) {
+    ElMessage.error('文件大小不能超过 100MB')
+    return false
   }
+  return true
+}
+
+/** 上传成功（response 为后端 upload 接口原始 JSON，字段不完全等同于 FileInfo，这里只读 code/message） */
+function handleUploadSuccess(response: Result<unknown>, _file: UploadFile, uploadFiles: UploadFiles) {
+  if (response.code === 200) {
+    ElMessage.success('上传成功')
+    getList()
+    getStatistics()
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+  // 如果所有文件都上传完成，关闭对话框
+  const allUploaded = uploadFiles.every(f => f.status === 'success' || f.status === 'fail')
+  if (allUploaded) {
+    setTimeout(() => {
+      uploadDialogVisible.value = false
+    }, 500)
+  }
+}
+
+/** 上传失败 */
+function handleUploadError(err: Error) {
+  ElMessage.error('上传失败: ' + err.message)
+}
+
+/** 上传对话框关闭 */
+function handleUploadClose() {
+  uploadRef.value?.clearFiles()
+}
+
+/** 编辑文件 */
+function handleEdit(row: FileInfo) {
+  editForm.value = { ...row }
+  editDialogVisible.value = true
+}
+
+/** 提交编辑 */
+function submitEdit() {
+  editFormRef.value?.validate((valid) => {
+    if (valid) {
+      // 调用更新接口
+      const params: FileInfo = {
+        fileId: editForm.value.fileId,
+        remark: editForm.value.remark
+      }
+
+      updateFile(params).then(response => {
+        if (response.code === 200) {
+          ElMessage.success('更新成功')
+          editDialogVisible.value = false
+          getList()
+        } else {
+          ElMessage.error(response.message || '更新失败')
+        }
+      }).catch(() => {
+        ElMessage.error('更新失败，请稍后重试')
+      })
+    }
+  })
+}
+
+/** 编辑对话框关闭 */
+function handleEditClose() {
+  editForm.value = {}
+  editFormRef.value?.resetFields()
+}
+
+/** 预览文件 */
+function handlePreview(row: FileInfo) {
+  previewFile.value = row
+  previewDialogVisible.value = true
+}
+
+/** 预览对话框关闭 */
+function handlePreviewClose() {
+  previewFile.value = {}
+}
+
+/** 下载文件 */
+function handleDownload(row: FileInfo) {
+  const fileId = row.fileId! // 触发下载的行始终带 fileId
+  downloadFile(fileId).then(response => {
+    const blob = new Blob([response])
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = row.originalName ?? ''
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('下载成功')
+  }).catch(() => {
+    ElMessage.error('下载失败')
+  })
+}
+
+/** 删除文件（row 缺省时走工具栏批量删除，取选中 ids） */
+function handleDelete(row?: FileInfo) {
+  const fileIds = row?.fileId ? [row.fileId!] : ids.value
+  ElMessageBox.confirm('是否确认删除选中的文件?', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return deleteFile(fileIds)
+  }).then(() => {
+    getList()
+    getStatistics()
+    ElMessage.success('删除成功')
+  }).catch(() => {})
+}
+
+/** 格式化文件大小 */
+function formatFileSize(bytes?: number) {
+  if (!bytes || bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i]
+}
+
+/** 获取文件图标 */
+function getFileIcon(category?: string) {
+  const icons: Record<string, string> = {
+    image: 'el-icon-picture',
+    document: 'el-icon-document',
+    video: 'el-icon-video-camera',
+    audio: 'el-icon-headset',
+    other: 'el-icon-document'
+  }
+  return icons[category || ''] || 'el-icon-document'
 }
 </script>
 

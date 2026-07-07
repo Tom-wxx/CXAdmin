@@ -1,7 +1,7 @@
 <template>
   <div v-if="!item.hidden">
-    <template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild.children||onlyOneChild.noShowingChildren)&&!item.alwaysShow">
-      <app-link v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path)">
+    <template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild?.children||onlyOneChild?.noShowingChildren)&&!item.alwaysShow">
+      <app-link v-if="onlyOneChild && onlyOneChild.meta" :to="resolvePath(onlyOneChild.path)">
         <el-menu-item :index="resolvePath(onlyOneChild.path)">
           <menu-icon v-if="onlyOneChild.meta.icon" :name="onlyOneChild.meta.icon" />
           <template #title><span>{{ onlyOneChild.meta.title }}</span></template>
@@ -26,62 +26,71 @@
   </div>
 </template>
 
-<script>
-import AppLink from './Link'
+<script setup lang="ts">
+import { ref } from 'vue'
+import AppLink from './Link.vue'
 
-export default {
-  name: 'SidebarItem',
-  components: { AppLink },
-  props: {
-    item: {
-      type: Object,
-      required: true
-    },
-    isNest: {
-      type: Boolean,
-      default: false
-    },
-    basePath: {
-      type: String,
-      default: ''
-    }
-  },
-  data() {
-    return {
-      onlyOneChild: null
-    }
-  },
-  methods: {
-    hasOneShowingChild(children = [], parent) {
-      const showingChildren = children.filter(item => {
-        if (item.hidden) {
-          return false
-        } else {
-          this.onlyOneChild = item
-          return true
-        }
-      })
+defineOptions({ name: 'SidebarItem' })
 
-      if (showingChildren.length === 1) {
-        return true
-      }
+interface RouteMeta {
+  icon?: string
+  title?: string
+  [key: string]: unknown
+}
 
-      if (showingChildren.length === 0) {
-        this.onlyOneChild = { ...parent, path: '', noShowingChildren: true }
-        return true
-      }
+interface RouteItem {
+  path: string
+  hidden?: boolean
+  alwaysShow?: boolean
+  children?: RouteItem[]
+  noShowingChildren?: boolean
+  meta?: RouteMeta
+  [key: string]: unknown
+}
 
+interface Props {
+  item: RouteItem
+  isNest?: boolean
+  basePath?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isNest: false,
+  basePath: ''
+})
+
+// Mutated as a side-effect of hasOneShowingChild (called in template) — must be reactive ref.
+const onlyOneChild = ref<RouteItem | null>(null)
+
+function hasOneShowingChild(children: RouteItem[] = [], parent: RouteItem): boolean {
+  const showingChildren = children.filter(child => {
+    if (child.hidden) {
       return false
-    },
-    resolvePath(routePath) {
-      if (routePath.startsWith('/')) {
-        return routePath
-      }
-      if (this.basePath.endsWith('/')) {
-        return this.basePath + routePath
-      }
-      return this.basePath + '/' + routePath
+    } else {
+      onlyOneChild.value = child
+      return true
     }
+  })
+
+  if (showingChildren.length === 1) {
+    return true
   }
+
+  if (showingChildren.length === 0) {
+    onlyOneChild.value = { ...parent, path: '', noShowingChildren: true }
+    return true
+  }
+
+  return false
+}
+
+function resolvePath(routePath: string): string {
+  if (routePath.startsWith('/')) {
+    return routePath
+  }
+  if (props.basePath.endsWith('/')) {
+    return props.basePath + routePath
+  }
+  return props.basePath + '/' + routePath
 }
 </script>

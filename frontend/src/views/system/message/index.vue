@@ -20,7 +20,7 @@
     />
 
     <!-- 数据表格 -->
-    <el-table v-loading="loading" :data="messageList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="消息ID" align="center" prop="messageId" width="80" />
       <el-table-column label="消息名称" align="center" prop="messageName" :show-overflow-tooltip="true" />
@@ -61,7 +61,7 @@
     </el-table>
 
     <!-- 分页 -->
-    <pagination
+    <Pagination
       v-show="total > 0"
       :total="total"
       v-model:page="queryParams.current"
@@ -71,7 +71,7 @@
 
     <!-- 添加或修改对话框 -->
     <el-dialog :title="title" v-model="open" width="600px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="消息名称" prop="messageName">
           <el-input v-model="form.messageName" placeholder="请输入消息名称" />
         </el-form-item>
@@ -113,12 +113,19 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { listMessage, getMessage, addMessage, updateMessage, delMessage, changeMessageStatus } from '@/api/system/message'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+import { useCrudTable } from '@/composables'
+import type { Message, MessageQuery } from '@/types/system/message'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+
+defineOptions({ name: 'Message' })
 
 const MESSAGE_TYPE_OPTIONS = [
   { value: '1', label: '邮件', type: 'success' },
@@ -131,166 +138,124 @@ const STATUS_OPTIONS = [
   { value: '1', label: '停用' }
 ]
 
-export default {
-  name: 'Message',
-  components: {
-    Pagination,
-    SearchForm,
-    TableToolbar,
-    DictTag
-  },
-  data() {
-    return {
-      searchFields: [
-        { prop: 'messageName', label: '消息名称', type: 'input' },
-        { prop: 'messageCode', label: '消息编码', type: 'input' },
-        { prop: 'messageType', label: '消息类型', type: 'select', options: MESSAGE_TYPE_OPTIONS, placeholder: '请选择消息类型' },
-        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '请选择状态' }
-      ],
-      messageTypeOptions: MESSAGE_TYPE_OPTIONS,
-      loading: true,
-      ids: [],
-      multiple: true,
-      total: 0,
-      messageList: [],
-      title: '',
-      open: false,
-      queryParams: {
-        current: 1,
-        size: 10,
-        messageName: null,
-        messageCode: null,
-        messageType: null,
-        status: null
-      },
-      form: {},
-      rules: {
-        messageName: [
-          { required: true, message: '消息名称不能为空', trigger: 'blur' }
-        ],
-        messageCode: [
-          { required: true, message: '消息编码不能为空', trigger: 'blur' }
-        ],
-        messageType: [
-          { required: true, message: '消息类型不能为空', trigger: 'change' }
-        ],
-        content: [
-          { required: true, message: '消息内容不能为空', trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    getList() {
-      this.loading = true
-      listMessage(this.queryParams).then(response => {
-        this.messageList = response.rows
-        this.total = response.total
-        this.loading = false
-      })
-    },
-    resetForm(refName) {
-      if (this.$refs[refName]) {
-        this.$refs[refName].resetFields()
-      }
-    },
-    cancel() {
-      this.open = false
-      this.reset()
-    },
-    reset() {
-      this.form = {
-        messageId: null,
-        messageName: null,
-        messageCode: null,
-        messageType: '1',
-        subject: null,
-        content: null,
-        variables: null,
-        status: '0',
-        remark: null
-      }
-      this.resetForm('form')
-    },
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    resetQuery() {
-      this.queryParams.current = 1
-      this.queryParams.size = 10
-      this.handleQuery()
-    },
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.messageId)
-      this.multiple = !selection.length
-    },
-    handleAdd() {
-      this.reset()
-      this.open = true
-      this.title = '添加消息模板'
-    },
-    handleUpdate(row) {
-      this.reset()
-      const messageId = row.messageId || this.ids
-      getMessage(messageId).then(response => {
-        this.form = response.data
-        this.open = true
-        this.title = '修改消息模板'
-      })
-    },
-    submitForm() {
-      this.$refs['form'].validate(valid => {
-        if (valid) {
-          if (this.form.messageId != null) {
-            updateMessage(this.form).then(response => {
-              this.$message.success('修改成功')
-              this.open = false
-              this.getList()
-            })
-          } else {
-            addMessage(this.form).then(response => {
-              this.$message.success('新增成功')
-              this.open = false
-              this.getList()
-            })
-          }
-        }
-      })
-    },
-    handleDelete(row) {
-      const messageIds = row.messageId || this.ids
-      this.$confirm('是否确认删除所选消息模板？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delMessage(messageIds)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      })
-    },
-    handleStatusChange(row) {
-      let text = row.status === '0' ? '启用' : '停用'
-      this.$confirm('确认要"' + text + '""' + row.messageName + '"吗?', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return changeMessageStatus({
-          messageId: row.messageId,
-          status: row.status
+const messageTypeOptions = MESSAGE_TYPE_OPTIONS
+
+const searchFields = [
+  { prop: 'messageName', label: '消息名称', type: 'input' },
+  { prop: 'messageCode', label: '消息编码', type: 'input' },
+  { prop: 'messageType', label: '消息类型', type: 'select', options: MESSAGE_TYPE_OPTIONS, placeholder: '请选择消息类型' },
+  { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '请选择状态' }
+]
+
+const { loading, list, total, queryParams, getList, handleQuery, resetQuery } =
+  useCrudTable<Message, MessageQuery>({
+    listApi: listMessage,
+    defaultQuery: { messageName: undefined, messageCode: undefined, messageType: undefined, status: undefined } as Partial<MessageQuery>
+  })
+
+const ids = ref<number[]>([])
+const multiple = ref(true)
+const title = ref('')
+const open = ref(false)
+const formRef = ref<FormInstance>()
+
+const defaultForm = (): Message => ({
+  messageId: undefined,
+  messageName: undefined,
+  messageCode: undefined,
+  messageType: '1',
+  subject: undefined,
+  content: undefined,
+  variables: undefined,
+  status: '0',
+  remark: undefined
+})
+const form = reactive<Message>(defaultForm())
+
+const rules: FormRules = {
+  messageName: [{ required: true, message: '消息名称不能为空', trigger: 'blur' }],
+  messageCode: [{ required: true, message: '消息编码不能为空', trigger: 'blur' }],
+  messageType: [{ required: true, message: '消息类型不能为空', trigger: 'change' }],
+  content: [{ required: true, message: '消息内容不能为空', trigger: 'blur' }]
+}
+
+function reset() {
+  Object.assign(form, defaultForm())
+  formRef.value?.resetFields()
+}
+
+function cancel() {
+  open.value = false
+  reset()
+}
+
+function handleSelectionChange(selection: Message[]) {
+  ids.value = selection.map(item => item.messageId as number)
+  multiple.value = !selection.length
+}
+
+function handleAdd() {
+  reset()
+  open.value = true
+  title.value = '添加消息模板'
+}
+
+function handleUpdate(row: Message) {
+  reset()
+  const messageId = row.messageId || ids.value
+  getMessage(messageId as number).then(response => {
+    Object.assign(form, response.data)
+    open.value = true
+    title.value = '修改消息模板'
+  })
+}
+
+function submitForm() {
+  formRef.value?.validate(valid => {
+    if (valid) {
+      if (form.messageId != null) {
+        updateMessage(form).then(() => {
+          ElMessage.success('修改成功')
+          open.value = false
+          getList()
         })
-      }).then(() => {
-        this.$message.success(text + '成功')
-      }).catch(() => {
-        row.status = row.status === '0' ? '1' : '0'
-      })
+      } else {
+        addMessage(form).then(() => {
+          ElMessage.success('新增成功')
+          open.value = false
+          getList()
+        })
+      }
     }
-  }
+  })
+}
+
+function handleDelete(row?: Message) {
+  const messageIds = (row?.messageId != null ? row.messageId : ids.value) as number | number[]
+  ElMessageBox.confirm('是否确认删除所选消息模板？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return delMessage(messageIds)
+  }).then(() => {
+    getList()
+    ElMessage.success('删除成功')
+  }).catch(() => { /* 用户取消 */ })
+}
+
+function handleStatusChange(row: Message) {
+  const text = row.status === '0' ? '启用' : '停用'
+  ElMessageBox.confirm('确认要"' + text + '""' + row.messageName + '"吗?', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return changeMessageStatus({ messageId: row.messageId!, status: row.status! })
+  }).then(() => {
+    ElMessage.success(text + '成功')
+  }).catch(() => {
+    row.status = row.status === '0' ? '1' : '0'
+  })
 }
 </script>

@@ -19,10 +19,9 @@
         <h2 class="form-title">欢迎登录</h2>
         <p class="form-subtitle">请输入您的账户信息</p>
 
-        <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
+        <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" class="login-form">
           <el-form-item prop="username">
             <el-input
-              ref="username"
               v-model="loginForm.username"
               placeholder="用户名"
               prefix-icon="User"
@@ -37,7 +36,7 @@
             <el-form-item prop="password">
               <el-input
                 :key="passwordType"
-                ref="password"
+                ref="passwordRef"
                 v-model="loginForm.password"
                 :type="passwordType"
                 placeholder="密码"
@@ -88,8 +87,8 @@
         </el-form>
 
         <div class="form-footer">
-          <el-link @click="$router.push('/register')">注册账号</el-link>
-          <el-link style="float:right" @click="$router.push('/forgot-password')">忘记密码</el-link>
+          <el-link @click="router.push('/register')">注册账号</el-link>
+          <el-link style="float:right" @click="router.push('/forgot-password')">忘记密码</el-link>
         </div>
 
         <div v-if="providers.length" class="sso-section">
@@ -112,89 +111,100 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import type { FormInstance, FormRules } from 'element-plus'
 import { getCaptcha } from '@/api/login'
 import { listEnabledProviders } from '@/api/system/sso'
+import type { LoginBody } from '@/types/auth'
+import type { SsoProviderPublic } from '@/types/system/sso'
+import { useUserStore } from '@/composables/store'
 
-export default {
-  name: 'Login',
-  data() {
-    return {
-      loginForm: {
-        username: 'admin',
-        password: 'admin123',
-        code: '',
-        uuid: ''
-      },
-      loginRules: {
-        username: [{ required: true, trigger: 'blur', message: '请输入您的账号' }],
-        password: [{ required: true, trigger: 'blur', message: '请输入您的密码' }],
-        code: [{ required: true, trigger: 'change', message: '请输入验证码' }]
-      },
-      passwordType: 'password',
-      capsTooltip: false,
-      loading: false,
-      redirect: undefined,
-      codeUrl: '',
-      captchaEnabled: true,
-      providers: []
-    }
+defineOptions({ name: 'Login' })
+
+const router = useRouter()
+const route = useRoute()
+const { login } = useUserStore()
+
+const loginFormRef = ref<FormInstance>()
+// ElInput instance — typed loosely to avoid complex import expression
+const passwordRef = ref<{ focus: () => void } | null>(null)
+
+const loginForm = reactive<LoginBody>({
+  username: 'admin',
+  password: 'admin123',
+  code: '',
+  uuid: ''
+})
+
+const loginRules: FormRules = {
+  username: [{ required: true, trigger: 'blur', message: '请输入您的账号' }],
+  password: [{ required: true, trigger: 'blur', message: '请输入您的密码' }],
+  code: [{ required: true, trigger: 'change', message: '请输入验证码' }]
+}
+
+const passwordType = ref('password')
+const capsTooltip = ref(false)
+const loading = ref(false)
+const redirect = ref<string | undefined>(undefined)
+const codeUrl = ref('')
+const captchaEnabled = ref(true)
+const providers = ref<SsoProviderPublic[]>([])
+
+watch(
+  () => route.query,
+  (query) => {
+    redirect.value = (query && query.redirect) as string | undefined
   },
-  watch: {
-    $route: {
-      handler: function(route) {
-        this.redirect = route.query && route.query.redirect
-      },
-      immediate: true
-    }
-  },
-  created() {
-    this.getCode()
-    listEnabledProviders().then(res => { this.providers = res.data || [] })
-  },
-  methods: {
-    checkCapslock(e) {
-      const { key } = e
-      this.capsTooltip = key && key.length === 1 && (key >= 'A' && key <= 'Z')
-    },
-    showPwd() {
-      if (this.passwordType === 'password') {
-        this.passwordType = ''
-      } else {
-        this.passwordType = 'password'
-      }
-      this.$nextTick(() => {
-        this.$refs.password.focus()
-      })
-    },
-    getCode() {
-      getCaptcha().then(res => {
-        this.codeUrl = res.data.img
-        this.loginForm.uuid = res.data.uuid
-      })
-    },
-    handleLogin() {
-      this.$refs.loginForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            const redirectPath = this.redirect || '/index'
-            window.location.href = redirectPath
-          }).catch(() => {
-            this.loading = false
-            if (this.captchaEnabled) {
-              this.getCode()
-            }
-          })
+  { immediate: true }
+)
+
+function checkCapslock(e: KeyboardEvent) {
+  const { key } = e
+  capsTooltip.value = !!(key && key.length === 1 && key >= 'A' && key <= 'Z')
+}
+
+function showPwd() {
+  passwordType.value = passwordType.value === 'password' ? '' : 'password'
+  nextTick(() => {
+    passwordRef.value?.focus()
+  })
+}
+
+function getCode() {
+  getCaptcha().then(res => {
+    codeUrl.value = res.data.img ?? ''
+    loginForm.uuid = res.data.uuid ?? ''
+    captchaEnabled.value = res.data.captchaEnabled !== false
+  })
+}
+
+function handleLogin() {
+  loginFormRef.value?.validate(valid => {
+    if (valid) {
+      loading.value = true
+      login(loginForm).then(() => {
+        const redirectPath = redirect.value || '/index'
+        window.location.href = redirectPath
+      }).catch(() => {
+        loading.value = false
+        if (captchaEnabled.value) {
+          getCode()
         }
       })
-    },
-    ssoLogin(code) {
-      // 走 SP 后端跳 IdP
-      window.location.href = import.meta.env.VITE_APP_BASE_API + '/sso/authorize/' + code
     }
-  }
+  })
 }
+
+function ssoLogin(code: string | undefined) {
+  // 走 SP 后端跳 IdP
+  window.location.href = import.meta.env.VITE_APP_BASE_API + '/sso/authorize/' + code
+}
+
+// setup body (replaces created)
+getCode()
+listEnabledProviders().then(res => { providers.value = res.data || [] })
 </script>
 
 <style lang="scss" scoped>

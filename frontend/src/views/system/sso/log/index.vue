@@ -55,78 +55,90 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
 import { listSsoLogs, listProviders } from '@/api/system/sso'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
+import type { SsoLoginLog } from '@/types/system/sso'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
 
-export default {
-  name: 'SsoLog',
-  components: { Pagination, SearchForm, TableToolbar },
-  data() {
-    return {
-      loading: true,
-      dataList: [],
-      total: 0,
-      queryParams: {
-        current: 1, size: 10,
-        providerId: null, action: null, status: null, userId: null,
-        from: null, to: null
-      },
-      providerOptions: [],
-      searchFields: [
-        { prop: 'providerId', label: 'IdP', type: 'select', options: [], width: '160px' },
-        { prop: 'action', label: '动作', type: 'select', width: '120px',
-          options: [
-            { label: '发起授权', value: 'authorize' },
-            { label: '回调', value: 'callback' },
-            { label: '绑定', value: 'bind' },
-            { label: '解绑', value: 'unbind' }
-          ] },
-        { prop: 'status', label: '状态', type: 'select', width: '120px',
-          options: [
-            { label: '成功', value: 'success' },
-            { label: '失败', value: 'fail' }
-          ] },
-        { prop: 'userId', label: '用户ID', type: 'input', width: '120px' }
-      ]
-    }
-  },
-  created() {
-    this.loadProviders()
-    this.getList()
-  },
-  methods: {
-    loadProviders() {
-      // 拉所有 IdP（含禁用的），便于历史日志查询
-      listProviders({ current: 1, size: 100 }).then(res => {
-        const opts = (res.rows || []).map(p => ({ label: `${p.name} (${p.code})`, value: p.id }))
-        this.providerOptions = opts
-        // 把 options 注入到 searchFields[0]
-        const f = this.searchFields.find(x => x.prop === 'providerId')
-        if (f) f.options = opts
-      })
-    },
-    getList() {
-      this.loading = true
-      listSsoLogs(this.queryParams)
-        .then(res => { this.dataList = res.rows; this.total = res.total })
-        .finally(() => { this.loading = false })
-    },
-    handleQuery() { this.queryParams.current = 1; this.getList() },
-    resetQuery() {
-      this.queryParams = { current: 1, size: 10, providerId: null, action: null, status: null, userId: null, from: null, to: null }
-      this.handleQuery()
-    },
-    actionType(a) {
-      return { authorize: 'info', callback: 'primary', bind: 'success', unbind: 'warning' }[a] || ''
-    },
-    actionLabel(a) {
-      return { authorize: '发起授权', callback: '回调', bind: '绑定', unbind: '解绑' }[a] || a
-    }
-  }
+defineOptions({ name: 'SsoLog' })
+
+// 原始代码按 providerId 过滤，SsoLogQuery 类型仅定义 providerCode；
+// 此处用宽松类型以与后端实际参数匹配
+interface SsoLogQueryExtended {
+  current: number
+  size: number
+  providerId: number | null
+  action: string | null
+  status: string | null
+  userId: number | null
+  from: string | null
+  to: string | null
 }
+
+const loading = ref(true)
+const dataList = ref<SsoLoginLog[]>([])
+const total = ref(0)
+
+const queryParams = reactive<SsoLogQueryExtended>({
+  current: 1, size: 10,
+  providerId: null, action: null, status: null, userId: null,
+  from: null, to: null
+})
+
+const searchFields = ref([
+  { prop: 'providerId', label: 'IdP', type: 'select', options: [] as { label: string; value: number }[], width: '160px' },
+  { prop: 'action', label: '动作', type: 'select', width: '120px',
+    options: [
+      { label: '发起授权', value: 'authorize' },
+      { label: '回调', value: 'callback' },
+      { label: '绑定', value: 'bind' },
+      { label: '解绑', value: 'unbind' }
+    ] },
+  { prop: 'status', label: '状态', type: 'select', width: '120px',
+    options: [
+      { label: '成功', value: 'success' },
+      { label: '失败', value: 'fail' }
+    ] },
+  { prop: 'userId', label: '用户ID', type: 'input', width: '120px' }
+])
+
+function loadProviders() {
+  // 拉所有 IdP（含禁用的），便于历史日志查询
+  listProviders({ current: 1, size: 100 } as any).then(res => {
+    const opts = (res.rows || []).map(p => ({ label: `${p.name} (${p.code})`, value: p.id as number }))
+    // 把 options 注入到 searchFields[0]
+    const f = searchFields.value.find(x => x.prop === 'providerId')
+    if (f) f.options = opts
+  })
+}
+
+function getList() {
+  loading.value = true
+  listSsoLogs(queryParams as any)
+    .then(res => { dataList.value = res.rows; total.value = res.total })
+    .finally(() => { loading.value = false })
+}
+
+function handleQuery() { queryParams.current = 1; getList() }
+
+function resetQuery() {
+  Object.assign(queryParams, { current: 1, size: 10, providerId: null, action: null, status: null, userId: null, from: null, to: null })
+  handleQuery()
+}
+
+function actionType(a: string): string {
+  return ({ authorize: 'info', callback: 'primary', bind: 'success', unbind: 'warning' } as Record<string, string>)[a] || ''
+}
+
+function actionLabel(a: string): string {
+  return ({ authorize: '发起授权', callback: '回调', bind: '绑定', unbind: '解绑' } as Record<string, string>)[a] || a
+}
+
+loadProviders()
+getList()
 </script>
 
 <style scoped>

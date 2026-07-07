@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview --port 8081",
     "type-check": "vue-tsc --noEmit",
-    "lint": "eslint src --ext .js,.vue"
+    "lint": "eslint src --ext .js,.ts,.vue"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -29,6 +29,8 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@babel/eslint-parser": "^7.25.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^25.9.3",
     "@types/nprogress": "^0.2.3",
@@ -43,23 +45,30 @@
   "eslintConfig": {
     "root": true,
     "env": {
-      "node": true
+      "node": true,
+      "browser": true,
+      "es2021": true
     },
     "extends": [
       "plugin:vue/vue3-essential",
-      "eslint:recommended"
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended"
     ],
+    "parser": "vue-eslint-parser",
     "parserOptions": {
-      "parser": "@babel/eslint-parser",
-      "requireConfigFile": false,
-      "ecmaVersion": 2020,
+      "parser": "@typescript-eslint/parser",
+      "ecmaVersion": 2021,
       "sourceType": "module"
     },
+    "plugins": ["@typescript-eslint"],
     "rules": {
       "vue/multi-word-component-names": "off",
       "vue/no-reserved-component-names": "off",
       "vue/no-mutating-props": ["error", { "shallowOnly": true }],
-      "no-unused-vars": ["error", { "args": "none", "ignoreRestSiblings": true }]
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { "args": "none", "caughtErrors": "none", "ignoreRestSiblings": true, "varsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-expressions": ["error", { "allowShortCircuit": true, "allowTernary": true }]
     }
   },
   "browserslist": [

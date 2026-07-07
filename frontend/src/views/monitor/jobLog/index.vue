@@ -64,7 +64,7 @@
 
     <!-- 查看详情对话框 -->
     <el-dialog title="调度日志详细" v-model="viewDialogVisible" width="700px" append-to-body>
-      <el-form ref="form" :model="viewForm" label-width="120px">
+      <el-form :model="viewForm" label-width="120px">
         <el-row>
           <el-col :span="12">
             <el-form-item label="日志编号：">{{ viewForm.jobLogId }}</el-form-item>
@@ -72,7 +72,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="任务组名：">{{ viewForm.jobGroup }}</el-form-item>
-            <el-form-item label="执行时间：">{{ parseTime(viewForm.createTime) }}</el-form-item>
+            <el-form-item label="执行时间：">{{ parseTime(viewForm.createTime || '') }}</el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="调用方法：">{{ viewForm.invokeTarget }}</el-form-item>
@@ -101,12 +101,21 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { listJobLog, getJobLog, delJobLog, cleanJobLog } from '@/api/monitor/job'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+import { parseTime } from '@/utils'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+import type { JobLog, JobLogQuery } from '@/types/monitor/job'
+
+defineOptions({ name: 'JobLog' })
+
+const router = useRouter()
 
 const JOB_GROUP_OPTIONS = [
   { value: 'DEFAULT', label: '默认' },
@@ -117,123 +126,94 @@ const STATUS_OPTIONS = [
   { value: '1', label: '失败', type: 'danger' }
 ]
 
-export default {
-  name: 'JobLog',
-  components: {
-    Pagination,
-    SearchForm,
-    TableToolbar,
-    DictTag
-  },
-  data() {
-    return {
-      // 搜索字段配置
-      searchFields: [
-        { prop: 'jobName', label: '任务名称', type: 'input' },
-        { prop: 'jobGroup', label: '任务组名', type: 'select', options: JOB_GROUP_OPTIONS, placeholder: '任务组名' },
-        { prop: 'status', label: '执行状态', type: 'select', options: STATUS_OPTIONS, placeholder: '执行状态' }
-      ],
-      statusOptions: STATUS_OPTIONS,
-      // 加载状态
-      loading: true,
-      // 任务日志列表
-      jobLogList: [],
-      // 总条数
-      total: 0,
-      // 查询参数
-      queryParams: {
-        current: 1,
-        size: 10,
-        jobName: undefined,
-        jobGroup: undefined,
-        status: undefined
-      },
-      // 查看详情对话框显示状态
-      viewDialogVisible: false,
-      // 查看详情数据
-      viewForm: {}
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    /** 查询任务日志列表 */
-    getList() {
-      this.loading = true
-      listJobLog(this.queryParams).then(response => {
-        this.jobLogList = response.rows
-        this.total = response.total
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    /** 重置按钮操作（SearchForm 已自动清字段） */
-    resetQuery() {
-      this.queryParams.current = 1
-      this.queryParams.size = 10
-      this.handleQuery()
-    },
-    /** 查看按钮操作 */
-    handleView(row) {
-      const jobLogId = row.jobLogId
-      getJobLog(jobLogId).then(response => {
-        this.viewForm = response.data
-        this.viewDialogVisible = true
-      })
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      this.$confirm('是否确认删除日志编号为"' + row.jobLogId + '"的数据项？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delJobLog(row.jobLogId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      })
-    },
-    /** 清空按钮操作 */
-    handleClean() {
-      this.$confirm('是否确认清空所有调度日志数据？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return cleanJobLog()
-      }).then(() => {
-        this.getList()
-        this.$message.success('清空成功')
-      })
-    },
-    /** 返回按钮操作 */
-    handleBack() {
-      this.$router.push('/monitor/job')
-    },
-    /** 时间格式化 */
-    parseTime(time) {
-      if (!time) {
-        return ''
-      }
-      const date = new Date(time)
-      const year = date.getFullYear()
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const hour = date.getHours().toString().padStart(2, '0')
-      const minute = date.getMinutes().toString().padStart(2, '0')
-      const second = date.getSeconds().toString().padStart(2, '0')
-      return `${year}-${month}-${day} ${hour}:${minute}:${second}`
-    }
-  }
+const statusOptions = STATUS_OPTIONS
+
+const searchFields = [
+  { prop: 'jobName', label: '任务名称', type: 'input' },
+  { prop: 'jobGroup', label: '任务组名', type: 'select', options: JOB_GROUP_OPTIONS, placeholder: '任务组名' },
+  { prop: 'status', label: '执行状态', type: 'select', options: STATUS_OPTIONS, placeholder: '执行状态' }
+]
+
+const loading = ref(true)
+const jobLogList = ref<JobLog[]>([])
+const total = ref(0)
+const queryParams = reactive<JobLogQuery & { current: number; size: number }>({
+  current: 1,
+  size: 10,
+  jobName: undefined,
+  jobGroup: undefined,
+  status: undefined
+})
+const viewDialogVisible = ref(false)
+const viewForm = ref<JobLog>({})
+
+/** 查询任务日志列表 */
+function getList() {
+  loading.value = true
+  listJobLog(queryParams).then(res => {
+    jobLogList.value = res.rows
+    total.value = res.total
+  }).finally(() => {
+    loading.value = false
+  })
 }
+
+/** 搜索按钮操作 */
+function handleQuery() {
+  queryParams.current = 1
+  getList()
+}
+
+/** 重置按钮操作（SearchForm 已自动清字段） */
+function resetQuery() {
+  queryParams.current = 1
+  queryParams.size = 10
+  handleQuery()
+}
+
+/** 查看按钮操作 */
+function handleView(row: JobLog) {
+  getJobLog(row.jobLogId as number).then(res => {
+    viewForm.value = res.data
+    viewDialogVisible.value = true
+  })
+}
+
+/** 删除按钮操作 */
+function handleDelete(row: JobLog) {
+  ElMessageBox.confirm('是否确认删除日志编号为"' + row.jobLogId + '"的数据项？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return delJobLog(row.jobLogId as number)
+  }).then(() => {
+    getList()
+    ElMessage.success('删除成功')
+  })
+}
+
+/** 清空按钮操作 */
+function handleClean() {
+  ElMessageBox.confirm('是否确认清空所有调度日志数据？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    return cleanJobLog()
+  }).then(() => {
+    getList()
+    ElMessage.success('清空成功')
+  })
+}
+
+/** 返回按钮操作 */
+function handleBack() {
+  router.push('/monitor/job')
+}
+
+// init
+getList()
 </script>
 
 <style scoped>

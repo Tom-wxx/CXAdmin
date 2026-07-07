@@ -14,71 +14,62 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Pagination',
-  props: {
-    total: {
-      required: true,
-      type: Number
-    },
-    page: {
-      type: Number,
-      default: 1
-    },
-    limit: {
-      type: Number,
-      default: 10
-    },
-    pageSizes: {
-      type: Array,
-      default() {
-        return [10, 20, 30, 50]
-      }
-    },
-    layout: {
-      type: String,
-      default: 'total, sizes, prev, pager, next, jumper'
-    },
-    background: {
-      type: Boolean,
-      default: true
-    },
-    autoScroll: {
-      type: Boolean,
-      default: true
-    },
-    hidden: {
-      type: Boolean,
-      default: false
-    }
+<script setup lang="ts">
+import { computed } from 'vue'
+
+defineOptions({ name: 'Pagination', inheritAttrs: false })
+
+interface Props {
+  total: number
+  page?: number
+  limit?: number
+  pageSizes?: number[]
+  layout?: string
+  background?: boolean
+  autoScroll?: boolean
+  hidden?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  page: 1,
+  limit: 10,
+  pageSizes: () => [10, 20, 30, 50],
+  layout: 'total, sizes, prev, pager, next, jumper',
+  background: true,
+  autoScroll: true,
+  hidden: false
+})
+
+const emit = defineEmits<{
+  (e: 'update:page', v: number): void
+  (e: 'update:limit', v: number): void
+  (e: 'pagination', v: { page: number; limit: number }): void
+}>()
+
+const currentPage = computed<number>({
+  get() {
+    return props.page
   },
-  computed: {
-    currentPage: {
-      get() {
-        return this.page
-      },
-      set(val) {
-        this.$emit('update:page', val)
-      }
-    },
-    pageSize: {
-      get() {
-        return this.limit
-      },
-      set(val) {
-        this.$emit('update:limit', val)
-      }
-    }
-  },
-  methods: {
-    handleSizeChange(val) {
-      this.$emit('pagination', { page: this.currentPage, limit: val })
-    },
-    handleCurrentChange(val) {
-      this.$emit('pagination', { page: val, limit: this.pageSize })
-    }
+  set(val: number) {
+    emit('update:page', val)
   }
+})
+
+const pageSize = computed<number>({
+  get() {
+    return props.limit
+  },
+  set(val: number) {
+    emit('update:limit', val)
+  }
+})
+
+function handleSizeChange(val: number) {
+  emit('pagination', { page: currentPage.value, limit: val })
+}
+
+function handleCurrentChange(val: number) {
+  emit('pagination', { page: val, limit: pageSize.value })
 }
 </script>
 

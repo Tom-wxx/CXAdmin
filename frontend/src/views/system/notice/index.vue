@@ -12,7 +12,7 @@
     <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList" />
 
     <!-- 数据表格 -->
-    <el-table v-loading="loading" :data="noticeList" border>
+    <el-table v-loading="loading" :data="list" border>
       <el-table-column label="公告编号" align="center" prop="noticeId" width="100" />
       <el-table-column label="公告标题" align="center" prop="noticeTitle" show-overflow-tooltip />
       <el-table-column label="公告类型" align="center" width="100">
@@ -56,7 +56,7 @@
     </el-table>
 
     <!-- 分页组件 -->
-    <pagination
+    <Pagination
       v-show="total > 0"
       :total="total"
       v-model:page="queryParams.current"
@@ -66,7 +66,7 @@
 
     <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="820px" append-to-body :close-on-click-modal="false">
-      <el-form ref="noticeForm" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="noticeFormRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="公告标题" prop="noticeTitle">
           <el-input v-model="form.noticeTitle" placeholder="请输入公告标题" maxlength="50" />
         </el-form-item>
@@ -111,7 +111,7 @@
           <DictTag :options="statusOptions" :value="viewForm.status" />
         </el-descriptions-item>
         <el-descriptions-item label="创建者">{{ viewForm.createBy }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">{{ parseTime(viewForm.createTime) }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间" :span="2">{{ parseTime(viewForm.createTime || '') }}</el-descriptions-item>
         <el-descriptions-item label="公告内容" :span="2">
           <div class="ql-snow notice-view-wrapper">
             <div class="ql-editor notice-view-content" v-html="viewForm.noticeContent || '无内容'"></div>
@@ -126,14 +126,22 @@
   </div>
 </template>
 
-<script>
-import { listNotice, getNotice, addNotice, updateNotice, delNotice } from '@/api/system/notice'
-import Pagination from '@/components/Pagination'
-import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
-import DictTag from '@/components/DictTag'
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import { listNotice, getNotice, addNotice, updateNotice, delNotice } from '@/api/system/notice'
+import { useCrudTable } from '@/composables'
+import { parseTime } from '@/utils'
+import type { Notice, NoticeQuery } from '@/types/system/notice'
+import Pagination from '@/components/Pagination/index.vue'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TableToolbar from '@/components/TableToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+
+defineOptions({ name: 'Notice' })
 
 const NOTICE_TYPE_OPTIONS = [
   { value: '1', label: '通知', type: 'success' },
@@ -144,215 +152,147 @@ const STATUS_OPTIONS = [
   { value: '1', label: '关闭', type: 'info' }
 ]
 
-export default {
-  name: 'Notice',
-  components: {
-    Pagination,
-    SearchForm,
-    TableToolbar,
-    DictTag,
-    QuillEditor
-  },
-  data() {
-    return {
-      // 搜索字段配置
-      searchFields: [
-        { prop: 'noticeTitle', label: '公告标题', type: 'input' },
-        { prop: 'noticeType', label: '公告类型', type: 'select', options: NOTICE_TYPE_OPTIONS, placeholder: '公告类型' },
-        { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '公告状态' }
-      ],
-      noticeTypeOptions: NOTICE_TYPE_OPTIONS,
-      statusOptions: STATUS_OPTIONS,
-      // 加载状态
-      loading: true,
-      // 通知公告列表
-      noticeList: [],
-      // 总条数
-      total: 0,
-      // 查询参数
-      queryParams: {
-        current: 1,
-        size: 10,
-        noticeTitle: undefined,
-        noticeType: undefined,
-        status: undefined
-      },
-      // 对话框标题
-      dialogTitle: '',
-      // 对话框显示状态
-      dialogVisible: false,
-      // 查看详情对话框显示状态
-      viewDialogVisible: false,
-      // 表单数据
-      form: {},
-      // 查看详情数据
-      viewForm: {},
-      // 富文本编辑器配置
-      editorOptions: {
-        theme: 'snow',
-        placeholder: '请输入公告内容',
-        modules: {
-          toolbar: [
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ header: 1 }, { header: 2 }],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            [{ color: [] }, { background: [] }],
-            [{ align: [] }],
-            ['blockquote', 'code-block'],
-            ['link'],
-            ['clean']
-          ]
-        }
-      },
-      // 表单校验规则
-      rules: {
-        noticeTitle: [
-          { required: true, message: '公告标题不能为空', trigger: 'blur' },
-          { max: 50, message: '公告标题长度不能超过50个字符', trigger: 'blur' }
-        ],
-        noticeType: [
-          { required: true, message: '公告类型不能为空', trigger: 'change' }
-        ],
-        noticeContent: [
-          {
-            required: true,
-            trigger: 'change',
-            // 剥离 HTML 标签后判空，避免 quill 空状态 "<p><br></p>" 通过校验
-            validator: (rule, value, callback) => {
-              const plain = (value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim()
-              if (!plain) {
-                callback(new Error('公告内容不能为空'))
-              } else {
-                callback()
-              }
-            }
-          }
-        ]
-      }
-    }
-  },
-  created() {
-    this.getList()
-  },
-  methods: {
-    /** 查询通知公告列表 */
-    getList() {
-      this.loading = true
-      listNotice(this.queryParams).then(response => {
-        this.noticeList = response.rows
-        this.total = response.total
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.current = 1
-      this.getList()
-    },
-    /** 重置按钮操作 */
-    resetQuery() {
-      this.queryParams = {
-        current: 1,
-        size: 10,
-        noticeTitle: undefined,
-        noticeType: undefined,
-        status: undefined
-      }
-      this.handleQuery()
-    },
-    /** 新增按钮操作 */
-    handleAdd() {
-      this.reset()
-      this.dialogTitle = '添加通知公告'
-      this.dialogVisible = true
-    },
-    /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.reset()
-      const noticeId = row.noticeId
-      getNotice(noticeId).then(response => {
-        this.form = response.data
-        this.dialogTitle = '修改通知公告'
-        this.dialogVisible = true
-      })
-    },
-    /** 查看按钮操作 */
-    handleView(row) {
-      const noticeId = row.noticeId
-      getNotice(noticeId).then(response => {
-        this.viewForm = response.data
-        this.viewDialogVisible = true
-      })
-    },
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs.noticeForm.validate(valid => {
-        if (valid) {
-          if (this.form.noticeId) {
-            updateNotice(this.form).then(response => {
-              this.$message.success('修改成功')
-              this.dialogVisible = false
-              this.getList()
-            })
-          } else {
-            addNotice(this.form).then(response => {
-              this.$message.success('新增成功')
-              this.dialogVisible = false
-              this.getList()
-            })
-          }
-        }
-      })
-    },
-    /** 取消按钮 */
-    cancel() {
-      this.dialogVisible = false
-      this.reset()
-    },
-    /** 表单重置 */
-    reset() {
-      this.form = {
-        noticeId: undefined,
-        noticeTitle: undefined,
-        noticeType: '1',
-        noticeContent: undefined,
-        status: '0',
-        remark: undefined
-      }
-      if (this.$refs.noticeForm) {
-        this.$refs.noticeForm.resetFields()
-      }
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      this.$confirm('是否确认删除公告标题为"' + row.noticeTitle + '"的数据项？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        return delNotice(row.noticeId)
-      }).then(() => {
-        this.getList()
-        this.$message.success('删除成功')
-      })
-    },
-    /** 时间格式化 */
-    parseTime(time) {
-      if (!time) {
-        return ''
-      }
-      const date = new Date(time)
-      const year = date.getFullYear()
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const hour = date.getHours().toString().padStart(2, '0')
-      const minute = date.getMinutes().toString().padStart(2, '0')
-      const second = date.getSeconds().toString().padStart(2, '0')
-      return `${year}-${month}-${day} ${hour}:${minute}:${second}`
-    }
+const noticeTypeOptions = NOTICE_TYPE_OPTIONS
+const statusOptions = STATUS_OPTIONS
+
+const searchFields = [
+  { prop: 'noticeTitle', label: '公告标题', type: 'input' },
+  { prop: 'noticeType', label: '公告类型', type: 'select', options: NOTICE_TYPE_OPTIONS, placeholder: '公告类型' },
+  { prop: 'status', label: '状态', type: 'select', options: STATUS_OPTIONS, placeholder: '公告状态' }
+]
+
+const { loading, list, total, queryParams, getList, handleQuery, resetQuery } =
+  useCrudTable<Notice, NoticeQuery>({
+    listApi: listNotice,
+    defaultQuery: { noticeTitle: undefined, noticeType: undefined, status: undefined }
+  })
+
+// 编辑对话框
+const dialogTitle = ref('')
+const dialogVisible = ref(false)
+const noticeFormRef = ref<FormInstance>()
+
+// 查看详情对话框
+const viewDialogVisible = ref(false)
+const viewForm = reactive<Notice>({})
+
+// 富文本编辑器配置
+const editorOptions = {
+  theme: 'snow',
+  placeholder: '请输入公告内容',
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ header: 1 }, { header: 2 }],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ color: [] }, { background: [] }],
+      [{ align: [] }],
+      ['blockquote', 'code-block'],
+      ['link'],
+      ['clean']
+    ]
   }
+}
+
+const formDefaults: Notice = {
+  noticeId: undefined,
+  noticeTitle: undefined,
+  noticeType: '1',
+  noticeContent: undefined,
+  status: '0',
+  remark: undefined
+}
+
+const form = reactive<Notice>({ ...formDefaults })
+
+const rules = reactive<FormRules>({
+  noticeTitle: [
+    { required: true, message: '公告标题不能为空', trigger: 'blur' },
+    { max: 50, message: '公告标题长度不能超过50个字符', trigger: 'blur' }
+  ],
+  noticeType: [
+    { required: true, message: '公告类型不能为空', trigger: 'change' }
+  ],
+  noticeContent: [
+    {
+      required: true,
+      trigger: 'change',
+      // 剥离 HTML 标签后判空，避免 quill 空状态 "<p><br></p>" 通过校验
+      validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => {
+        const plain = (value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim()
+        if (!plain) {
+          callback(new Error('公告内容不能为空'))
+        } else {
+          callback()
+        }
+      }
+    }
+  ]
+})
+
+function reset() {
+  Object.assign(form, formDefaults)
+  noticeFormRef.value?.resetFields()
+}
+
+function handleAdd() {
+  reset()
+  dialogTitle.value = '添加通知公告'
+  dialogVisible.value = true
+}
+
+function handleUpdate(row: Notice) {
+  reset()
+  getNotice(row.noticeId!).then(response => {
+    Object.assign(form, response.data)
+    dialogTitle.value = '修改通知公告'
+    dialogVisible.value = true
+  })
+}
+
+function handleView(row: Notice) {
+  getNotice(row.noticeId!).then(response => {
+    Object.assign(viewForm, response.data)
+    viewDialogVisible.value = true
+  })
+}
+
+function submitForm() {
+  noticeFormRef.value?.validate(valid => {
+    if (valid) {
+      if (form.noticeId) {
+        updateNotice(form).then(() => {
+          ElMessage.success('修改成功')
+          dialogVisible.value = false
+          getList()
+        })
+      } else {
+        addNotice(form).then(() => {
+          ElMessage.success('新增成功')
+          dialogVisible.value = false
+          getList()
+        })
+      }
+    }
+  })
+}
+
+function cancel() {
+  dialogVisible.value = false
+  reset()
+}
+
+function handleDelete(row: Notice) {
+  ElMessageBox.confirm(
+    '是否确认删除公告标题为"' + row.noticeTitle + '"的数据项？',
+    '警告',
+    { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+  ).then(() => {
+    return delNotice(row.noticeId!)
+  }).then(() => {
+    getList()
+    ElMessage.success('删除成功')
+  }).catch(() => {})
 }
 </script>
 
