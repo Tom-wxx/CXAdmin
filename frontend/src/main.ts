@@ -10,6 +10,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'normalize.css/normalize.css'
 import '@/styles/index.scss'
+import '@/styles/refresh.scss'
 
 import '@/permission' // 权限控制
 import MenuIcon from '@/components/MenuIcon/index.vue'

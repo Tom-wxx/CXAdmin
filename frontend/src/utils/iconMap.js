@@ -21,6 +21,7 @@ const RENAME = {
   'circle-plus-outline': 'CirclePlus',
   'close-notification': 'MuteNotification',
   'cloudy-and-sunny': 'PartlyCloudy',
+  'dashboard': 'Odometer',
   'date': 'Calendar',
   'delete-solid': 'DeleteFilled',
   'dish-1': 'Dish',

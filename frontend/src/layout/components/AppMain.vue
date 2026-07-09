@@ -23,9 +23,9 @@ const key = computed(() => route.path)
   min-height: calc(100vh - 48px);
   width: 100%;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
   padding: 16px;
-  background: #f0f2f5;
+  background: #f5f7fb;
 }
 
 .fade-leave-active,

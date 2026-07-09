@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-logo-container" :class="{ collapse: isCollapse }">
+  <div class="sidebar-logo-container" :class="{ collapse: isCollapse }" :style="logoStyle">
     <router-link to="/" class="sidebar-logo-link">
       <div class="sidebar-logo-content">
         <div class="logo-icon-wrapper">
@@ -14,13 +14,30 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useSettingsStore } from '@/composables/store'
 
 defineOptions({ name: 'SidebarLogo' })
 
 defineProps<{ isCollapse: boolean }>()
 
-const { title } = useSettingsStore()
+const { title, sidebarColor } = useSettingsStore()
+
+const logoStyle = computed(() => ({
+  '--logo-title-color': isLightColor(sidebarColor.value) ? '#1f2937' : '#ffffff',
+  '--logo-subtle-border': isLightColor(sidebarColor.value) ? '#e5e7eb' : 'rgba(255, 255, 255, 0.12)'
+}))
+
+function isLightColor(color?: string): boolean {
+  if (!color) return true
+  const hex = color.replace('#', '')
+  if (hex.length !== 6) return true
+  const r = parseInt(hex.slice(0, 2), 16)
+  const g = parseInt(hex.slice(2, 4), 16)
+  const b = parseInt(hex.slice(4, 6), 16)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+  return brightness > 155
+}
 </script>
 
 <style lang="scss" scoped>
@@ -31,6 +48,7 @@ const { title } = useSettingsStore()
   line-height: 48px;
   text-align: center;
   overflow: hidden;
+  border-bottom: 1px solid var(--logo-subtle-border);
 
   &.collapse {
     .logo-icon-wrapper {
@@ -54,7 +72,7 @@ const { title } = useSettingsStore()
       .logo-icon-wrapper {
         width: 28px;
         height: 28px;
-        background: #13c2c2;
+        background: #0f9f9f;
         border-radius: 6px;
         display: flex;
         align-items: center;
@@ -72,9 +90,8 @@ const { title } = useSettingsStore()
         margin: 0;
         font-size: 15px;
         font-weight: 600;
-        color: #fff;
+        color: var(--logo-title-color);
         white-space: nowrap;
-        letter-spacing: 0.5px;
       }
     }
   }

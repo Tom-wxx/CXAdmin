@@ -84,12 +84,12 @@ function getLineChartOption() {
         data: props.chartData?.values ?? [],
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(19, 194, 194, 0.15)' },
-            { offset: 1, color: 'rgba(19, 194, 194, 0.01)' }
+            { offset: 0, color: 'rgba(15, 159, 159, 0.14)' },
+            { offset: 1, color: 'rgba(15, 159, 159, 0.01)' }
           ])
         },
-        itemStyle: { color: '#13c2c2' },
-        lineStyle: { width: 2, color: '#13c2c2' }
+        itemStyle: { color: '#0f9f9f' },
+        lineStyle: { width: 2, color: '#0f9f9f' }
       }
     ]
   }
@@ -132,7 +132,7 @@ function getBarChartOption() {
         name: props.title,
         type: 'bar',
         data: props.chartData?.values ?? [],
-        itemStyle: { color: '#13c2c2', borderRadius: [2, 2, 0, 0] },
+        itemStyle: { color: '#0f9f9f', borderRadius: [2, 2, 0, 0] },
         barWidth: '50%',
         barMaxWidth: 36
       }
@@ -144,7 +144,7 @@ function getPieChartOption() {
   const labels = props.chartData?.labels ?? []
   const values = props.chartData?.values ?? []
   const pieData = labels.map((label, index) => ({ name: label, value: values[index] ?? 0 }))
-  const colors = ['#13c2c2', '#1890ff', '#52c41a', '#fa8c16', '#f5222d', '#722ed1']
+  const colors = ['#0f9f9f', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6']
 
   return {
     tooltip: {
@@ -200,18 +200,19 @@ watch(
 <style lang="scss" scoped>
 .chart-card {
   background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
   margin-bottom: 16px;
-  transition: box-shadow 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
 
   .chart-card-header {
     padding: 12px 16px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #eef2f7;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -219,7 +220,7 @@ watch(
     .chart-card-title {
       font-size: 14px;
       font-weight: 600;
-      color: #303133;
+      color: #1f2937;
     }
   }
 

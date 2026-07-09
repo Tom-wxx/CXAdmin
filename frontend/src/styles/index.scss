@@ -1,14 +1,13 @@
-// 视觉刷新 demo：新风格 + 微动效
-@import './refresh.scss';
-
-// ===== 靛青色简约主题 =====
-$primary: #13c2c2;
-$primary-dark: #08979c;
-$primary-light: #e6fffb;
-$bg-color: #f0f2f5;
-$text-primary: #303133;
-$text-secondary: #8c8c8c;
-$border-color: #e8e8e8;
+// 全局浅色后台主题基础层
+$admin-primary: #0f9f9f;
+$admin-primary-dark: #087f83;
+$admin-primary-light: #e6fffb;
+$admin-bg: #f5f7fb;
+$admin-surface: #ffffff;
+$admin-text: #1f2937;
+$admin-text-secondary: #64748b;
+$admin-border: #e5e7eb;
+$admin-radius: 8px;
 
 body {
   height: 100%;
@@ -16,7 +15,8 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
-  color: $text-primary;
+  color: $admin-text;
+  background: $admin-bg;
 }
 
 html {
@@ -62,136 +62,123 @@ div:focus {
   }
 }
 
-// ===== Element UI 主题覆盖 =====
+// Element Plus 主题覆盖
+.el-button {
+  border-radius: 6px;
+}
 
-// 按钮
 .el-button--primary {
-  background-color: $primary;
-  border-color: $primary;
+  background-color: $admin-primary;
+  border-color: $admin-primary;
 
   &:hover,
   &:focus {
-    background-color: $primary-dark;
-    border-color: $primary-dark;
+    background-color: $admin-primary-dark;
+    border-color: $admin-primary-dark;
   }
 
   &.is-plain {
-    color: $primary;
-    border-color: #b5f5ec;
-    background: $primary-light;
+    color: $admin-primary-dark;
+    border-color: #99f6e4;
+    background: $admin-primary-light;
 
     &:hover,
     &:focus {
-      background-color: $primary;
-      border-color: $primary;
+      background-color: $admin-primary;
+      border-color: $admin-primary;
       color: #fff;
     }
   }
 }
 
-// 链接
 .el-link--primary {
-  color: $primary;
+  color: $admin-primary;
 
   &:hover {
-    color: $primary-dark;
+    color: $admin-primary-dark;
   }
 }
 
-// 分页
 .el-pagination.is-background {
   .el-pager li:not(.disabled).active {
-    background-color: $primary;
+    background-color: $admin-primary;
   }
 }
 
-// 表格
 .el-table {
+  color: $admin-text;
+
   th.el-table__cell {
-    background-color: #fafafa;
-    color: $text-primary;
+    background-color: #f8fafc;
+    color: $admin-text;
     font-weight: 600;
     font-size: 13px;
   }
 }
 
-// 标签页
-.el-tabs__item.is-active {
-  color: $primary;
+.el-tabs__item.is-active,
+.el-tabs__item:hover {
+  color: $admin-primary;
 }
 
 .el-tabs__active-bar {
-  background-color: $primary;
+  background-color: $admin-primary;
 }
 
-// 开关
 .el-switch.is-checked .el-switch__core {
-  border-color: $primary;
-  background-color: $primary;
+  border-color: $admin-primary;
+  background-color: $admin-primary;
 }
 
-// 复选框
 .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: $primary;
-  border-color: $primary;
+  background-color: $admin-primary;
+  border-color: $admin-primary;
 }
 
-.el-checkbox__input.is-checked + .el-checkbox__label {
-  color: $primary;
-}
-
-// 单选
-.el-radio__input.is-checked .el-radio__inner {
-  border-color: $primary;
-  background: $primary;
-}
-
+.el-checkbox__input.is-checked + .el-checkbox__label,
 .el-radio__input.is-checked + .el-radio__label {
-  color: $primary;
+  color: $admin-primary;
 }
 
-// 输入框 focus
+.el-radio__input.is-checked .el-radio__inner {
+  border-color: $admin-primary;
+  background: $admin-primary;
+}
+
+.el-input__wrapper.is-focus,
+.el-select .el-input.is-focus .el-input__wrapper,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px $admin-primary inset, 0 0 0 3px rgba(15, 159, 159, 0.10);
+}
+
 .el-input__inner:focus,
 .el-textarea__inner:focus {
-  border-color: $primary;
+  border-color: $admin-primary;
 }
 
-// Tag
 .el-tag--primary {
-  background-color: $primary-light;
-  border-color: #87e8de;
-  color: $primary-dark;
+  background-color: $admin-primary-light;
+  border-color: #99f6e4;
+  color: $admin-primary-dark;
 }
 
-// 菜单
 .el-menu-item:hover,
 .el-menu-item:focus {
   background-color: transparent;
 }
 
-// 下拉菜单
 .el-dropdown-menu__item:not(.is-disabled):hover {
-  background-color: $primary-light;
-  color: $primary;
+  background-color: $admin-primary-light;
+  color: $admin-primary-dark;
 }
 
-// 消息提示
-.el-message-box__headerbtn:hover .el-message-box__close {
-  color: $primary;
-}
-
-// 卡片通用样式
-.el-card {
-  border: 1px solid $border-color;
-  border-radius: 4px;
-  box-shadow: none;
-
-  &:hover {
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
-  }
-}
-
-// 面包屑
+.el-message-box__headerbtn:hover .el-message-box__close,
 .el-breadcrumb__inner.is-link:hover {
-  color: $primary;
+  color: $admin-primary;
+}
+
+.el-card {
+  border: 1px solid $admin-border;
+  border-radius: $admin-radius;
+  box-shadow: none;
 }

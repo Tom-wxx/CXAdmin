@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview --port 8081",
     "type-check": "vue-tsc --noEmit",
-    "lint": "eslint src --ext .js,.ts,.vue"
+    "lint": "eslint src --ext .js,.ts,.vue",
+    "test:theme": "node scripts/verify-light-theme.mjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",

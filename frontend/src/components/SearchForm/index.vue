@@ -2,7 +2,7 @@
   <el-form
     :model="model"
     :inline="true"
-    size="small"
+    size="default"
     label-width="80px"
     class="search-form"
     @submit.prevent
@@ -18,7 +18,7 @@
         v-model="model[field.prop]"
         :placeholder="field.placeholder || ('请输入' + field.label)"
         :clearable="field.clearable !== false"
-        :style="{ width: field.width || '200px' }"
+        :style="{ width: field.width || '220px' }"
         @keyup.enter="handleSearch"
       />
       <el-select
@@ -27,7 +27,7 @@
         :placeholder="field.placeholder || ('请选择' + field.label)"
         :clearable="field.clearable !== false"
         :multiple="!!field.multiple"
-        :style="{ width: field.width || '200px' }"
+        :style="{ width: field.width || '220px' }"
       >
         <el-option
           v-for="opt in field.options || []"
@@ -43,7 +43,7 @@
         :placeholder="field.placeholder || ('请选择' + field.label)"
         :clearable="field.clearable !== false"
         value-format="yyyy-MM-dd"
-        :style="{ width: field.width || '200px' }"
+        :style="{ width: field.width || '220px' }"
       />
       <el-date-picker
         v-else-if="field.type === 'daterange'"
@@ -54,7 +54,7 @@
         end-placeholder="结束日期"
         :clearable="field.clearable !== false"
         value-format="yyyy-MM-dd"
-        :style="{ width: field.width || '240px' }"
+        :style="{ width: field.width || '300px' }"
       />
       <el-date-picker
         v-else-if="field.type === 'datetime'"
@@ -63,17 +63,16 @@
         :placeholder="field.placeholder || ('请选择' + field.label)"
         :clearable="field.clearable !== false"
         value-format="yyyy-MM-dd HH:mm:ss"
-        :style="{ width: field.width || '200px' }"
+        :style="{ width: field.width || '220px' }"
       />
     </el-form-item>
 
     <el-form-item>
-      <el-button type="primary" icon="Search" size="small" @click="handleSearch">搜索</el-button>
-      <el-button icon="Refresh" size="small" @click="handleReset">重置</el-button>
+      <el-button type="primary" icon="Search" @click="handleSearch">搜索</el-button>
+      <el-button icon="Refresh" @click="handleReset">重置</el-button>
       <el-button
         v-if="collapsible"
         type="text"
-        size="small"
         @click="collapsed = !collapsed"
       >
         {{ collapsed ? '展开' : '收起' }}
@@ -96,7 +95,6 @@ interface FieldOption {
 interface SearchField {
   prop: string
   label: string
-  /** input | select | date | daterange | datetime（宽松为 string，便于各页内联声明） */
   type?: string
   placeholder?: string
   clearable?: boolean
@@ -107,7 +105,6 @@ interface SearchField {
 }
 
 interface Props {
-  // 宽松为 Record<string, any>，以便各页传入带类型的 query 对象（接口无索引签名）
   model: Record<string, any>
   fields: SearchField[]
   collapseAt?: number

@@ -186,7 +186,7 @@ const isCollapse = computed(() => !sidebar.value.opened)
 
 const textColor = computed(() => (isLightColor(sidebarColor.value) ? '#303133' : 'rgba(255,255,255,0.65)'))
 
-const activeTextColor = computed(() => '#13c2c2')
+const activeTextColor = computed(() => '#0f9f9f')
 
 const topMenuRoutes = computed<AppRouteRecord[]>(() => (sidebarPosition.value === 'top' ? addRoutes.value : routes.value))
 
@@ -287,7 +287,13 @@ function handleTopMenuSelect(index: string): void {
 </script>
 
 <style lang="scss" scoped>
-$primary: #13c2c2;
+$primary: #0f9f9f;
+$sidebar-bg: #ffffff;
+$sidebar-border: #e5e7eb;
+$sidebar-active-bg: #e6fffb;
+$page-bg: #f5f7fb;
+$text-main: #1f2937;
+$text-muted: #64748b;
 $sidebar-width: 208px;
 $sidebar-collapsed-width: 64px;
 $navbar-height: 48px;
@@ -310,6 +316,8 @@ $navbar-height: 48px;
     z-index: 1001;
     overflow-y: auto;
     overflow-x: hidden;
+    background: $sidebar-bg;
+    border-right: 1px solid $sidebar-border;
 
     &.sidebar-collapsed {
       width: $sidebar-collapsed-width;
@@ -322,6 +330,7 @@ $navbar-height: 48px;
 
     :deep(.el-menu){
       border-right: none;
+      background: transparent;
     }
 
     :deep(.el-menu-item),
@@ -329,15 +338,20 @@ $navbar-height: 48px;
       height: 44px;
       line-height: 44px;
       font-size: 14px;
+      color: $text-muted;
+      margin: 2px 8px;
+      border-radius: 8px;
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.08) !important;
+        background-color: #f8fafc !important;
+        color: $text-main !important;
       }
     }
 
     :deep(.el-menu-item.is-active){
-      background-color: $primary !important;
-      color: #fff !important;
+      background-color: $sidebar-active-bg !important;
+      color: $primary !important;
+      font-weight: 600;
     }
 
     :deep(.el-menu-item i),
@@ -388,14 +402,14 @@ $navbar-height: 48px;
     transition: margin-left 0.2s;
     margin-left: $sidebar-width;
     position: relative;
-    background: #f0f2f5;
+    background: $page-bg;
 
     .navbar {
       height: $navbar-height;
       overflow: hidden;
       position: relative;
       background: #fff;
-      border-bottom: 1px solid #e8e8e8;
+      border-bottom: 1px solid $sidebar-border;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -408,12 +422,12 @@ $navbar-height: 48px;
         i {
           font-size: 20px;
           cursor: pointer;
-          color: #595959;
+          color: $text-muted;
           padding: 4px;
-          border-radius: 4px;
+          border-radius: 6px;
 
           &:hover {
-            background: #f0f2f5;
+            background: #f8fafc;
             color: $primary;
           }
         }
@@ -427,14 +441,14 @@ $navbar-height: 48px;
         .theme-btn {
           font-size: 18px;
           cursor: pointer;
-          color: #595959;
+          color: $text-muted;
           padding: 4px;
-          border-radius: 4px;
+          border-radius: 6px;
           transition: color 0.2s;
 
           &:hover {
             color: $primary;
-            background: #f0f2f5;
+            background: #f8fafc;
           }
         }
 
@@ -456,12 +470,12 @@ $navbar-height: 48px;
             .user-name {
               margin-right: 4px;
               font-size: 14px;
-              color: #595959;
+              color: $text-main;
             }
 
             .el-icon {
               font-size: 12px;
-              color: #bfbfbf;
+              color: $text-muted;
             }
           }
 
@@ -494,6 +508,7 @@ $navbar-height: 48px;
       justify-content: space-between;
       align-items: center;
       padding: 0 20px;
+      border-bottom: 1px solid $sidebar-border;
 
       .navbar-left {
         display: flex;
@@ -510,11 +525,14 @@ $navbar-height: 48px;
         .theme-btn {
           font-size: 18px;
           cursor: pointer;
-          color: rgba(255, 255, 255, 0.65);
-          transition: color 0.2s;
+          color: $text-muted;
+          padding: 4px;
+          border-radius: 6px;
+          transition: color 0.2s, background 0.2s;
 
           &:hover {
-            color: #fff;
+            color: $primary;
+            background: #f8fafc;
           }
         }
 
@@ -535,12 +553,12 @@ $navbar-height: 48px;
 
             .user-name {
               margin-right: 4px;
-              color: rgba(255, 255, 255, 0.85);
+              color: $text-main;
               font-size: 14px;
             }
 
             .el-icon {
-              color: rgba(255, 255, 255, 0.45);
+              color: $text-muted;
               font-size: 12px;
             }
           }
@@ -567,9 +585,12 @@ $navbar-height: 48px;
           height: 56px;
           line-height: 56px;
           border-bottom: 2px solid transparent;
+          color: $text-muted;
 
           &.is-active {
             border-bottom-color: $primary;
+            color: $primary !important;
+            background: transparent !important;
           }
 
           i {
@@ -599,7 +620,7 @@ $navbar-height: 48px;
       .sub-navbar {
         height: $navbar-height;
         background: #fff;
-        border-bottom: 1px solid #e8e8e8;
+        border-bottom: 1px solid $sidebar-border;
         display: flex;
         align-items: center;
         padding: 0 16px;
@@ -612,9 +633,12 @@ $navbar-height: 48px;
             font-size: 20px;
             cursor: pointer;
             margin-right: 16px;
-            color: #595959;
+            color: $text-muted;
+            padding: 4px;
+            border-radius: 6px;
 
             &:hover {
+              background: #f8fafc;
               color: $primary;
             }
           }
@@ -622,7 +646,7 @@ $navbar-height: 48px;
           .title {
             font-size: 15px;
             font-weight: 500;
-            color: #303133;
+            color: $text-main;
           }
         }
       }

@@ -92,7 +92,7 @@
           <!-- 统计卡片 -->
           <div class="stats-card">
             <div class="stat-item">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+              <div class="stat-icon stat-icon-document">
                 <el-icon><Document /></el-icon>
               </div>
               <div class="stat-info">
@@ -102,7 +102,7 @@
             </div>
 
             <div class="stat-item">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
+              <div class="stat-icon stat-icon-star">
                 <el-icon><StarFilled /></el-icon>
               </div>
               <div class="stat-info">
@@ -112,7 +112,7 @@
             </div>
 
             <div class="stat-item">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
+              <div class="stat-icon stat-icon-view">
                 <el-icon><View /></el-icon>
               </div>
               <div class="stat-info">
@@ -608,21 +608,26 @@ handleBindReturn()
 </script>
 
 <style lang="scss" scoped>
+$profile-accent: #0f9f9f;
+$profile-accent-dark: #087f83;
+$profile-accent-soft: #e6fffb;
+$profile-bg: #f5f7fb;
+$profile-surface: #ffffff;
+$profile-border: #e5e7eb;
+$profile-text: #1f2937;
+$profile-text-secondary: #64748b;
+$profile-text-muted: #94a3b8;
+$profile-radius: 8px;
+$profile-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+
 .profile-container {
   min-height: calc(100vh - 50px);
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  background: $profile-bg;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
 
-  // 顶部装饰背景
   .header-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 180px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 0 0 50% 50% / 0 0 80px 80px;
+    display: none;
   }
 
   .profile-content {
@@ -633,17 +638,17 @@ handleBindReturn()
 
   // 左侧用户卡片
   .user-card {
-    background: white;
-    border-radius: 16px;
-    padding: 30px 20px;
-    border: 1px solid #eef0f3;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-    transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: $profile-surface;
+    border-radius: $profile-radius;
+    padding: 24px 20px;
+    border: 1px solid $profile-border;
+    box-shadow: $profile-shadow;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     margin-bottom: 20px;
 
     &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+      border-color: #cbd5e1;
+      box-shadow: $profile-shadow;
     }
 
     .avatar-section {
@@ -655,13 +660,12 @@ handleBindReturn()
         margin-bottom: 16px;
         cursor: pointer;
 
-        /* 头像外层柔光环：hover 时放大 + 浮现 */
         &::after {
           content: '';
           position: absolute;
           inset: -8px;
           border-radius: 50%;
-          background: radial-gradient(circle at center, rgba(19, 194, 194, 0.25), transparent 70%);
+          background: radial-gradient(circle at center, rgba(15, 159, 159, 0.16), transparent 70%);
           opacity: 0;
           transition: opacity 0.3s ease, transform 0.4s ease;
           pointer-events: none;
@@ -690,15 +694,14 @@ handleBindReturn()
         }
 
         .avatar-placeholder {
-          background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%);
+          background: $profile-accent;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
           font-size: 48px;
           border: 4px solid #fff;
-          box-shadow: 0 4px 12px rgba(19, 194, 194, 0.25);
-          animation: avatar-pulse 4s ease-in-out infinite;
+          box-shadow: 0 2px 8px rgba(15, 159, 159, 0.20);
         }
 
         .upload-btn {
@@ -706,14 +709,14 @@ handleBindReturn()
           bottom: 0;
           right: -5px;
           z-index: 2;
-          background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%) !important;
+          background: $profile-accent !important;
           border: 3px solid white !important;
-          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
-          box-shadow: 0 2px 8px rgba(19, 194, 194, 0.4);
+          transition: background 0.2s ease, box-shadow 0.2s ease;
+          box-shadow: 0 2px 8px rgba(15, 159, 159, 0.25);
 
           &:hover {
-            transform: scale(1.15) rotate(8deg);
-            box-shadow: 0 4px 16px rgba(19, 194, 194, 0.55);
+            background: $profile-accent-dark !important;
+            box-shadow: 0 0 0 3px rgba(15, 159, 159, 0.12);
           }
         }
       }
@@ -721,13 +724,13 @@ handleBindReturn()
       .user-name {
         font-size: 22px;
         font-weight: 600;
-        color: #303133;
+        color: $profile-text;
         margin: 8px 0 4px;
       }
 
       .user-username {
         font-size: 14px;
-        color: #909399;
+        color: $profile-text-secondary;
         margin: 0 0 12px;
       }
 
@@ -741,7 +744,7 @@ handleBindReturn()
 
     .divider {
       height: 1px;
-      background: linear-gradient(90deg, transparent, #e4e7ed, transparent);
+      background: $profile-border;
       margin: 20px 0;
     }
 
@@ -750,7 +753,7 @@ handleBindReturn()
         display: flex;
         align-items: center;
         padding: 12px 8px;
-        border-radius: 10px;
+        border-radius: $profile-radius;
         margin-bottom: 8px;
         transition: all 0.3s ease;
 
@@ -764,8 +767,8 @@ handleBindReturn()
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #f5f7fa;
-          border-radius: 10px;
+          background: #f8fafc;
+          border-radius: $profile-radius;
           margin-right: 12px;
           font-size: 18px;
         }
@@ -775,13 +778,13 @@ handleBindReturn()
 
           .info-label {
             font-size: 12px;
-            color: #909399;
+            color: $profile-text-muted;
             margin-bottom: 2px;
           }
 
           .info-value {
             font-size: 14px;
-            color: #303133;
+            color: $profile-text;
             font-weight: 500;
           }
         }
@@ -791,10 +794,11 @@ handleBindReturn()
 
   // 统计卡片
   .stats-card {
-    background: white;
-    border-radius: 20px;
+    background: $profile-surface;
+    border-radius: $profile-radius;
     padding: 20px;
-    box-shadow: 0 2px 20px rgba(102, 126, 234, 0.1);
+    border: 1px solid $profile-border;
+    box-shadow: $profile-shadow;
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
@@ -803,26 +807,40 @@ handleBindReturn()
       display: flex;
       align-items: center;
       padding: 12px;
-      border-radius: 12px;
-      background: #f5f7fa;
-      transition: all 0.3s ease;
+      border-radius: $profile-radius;
+      background: #f8fafc;
+      border: 1px solid transparent;
+      transition: border-color 0.2s ease, background 0.2s ease;
 
       &:hover {
-        transform: translateX(5px);
-        background: #fff;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        background: $profile-surface;
+        border-color: #cbd5e1;
       }
 
       .stat-icon {
         width: 48px;
         height: 48px;
-        border-radius: 12px;
+        border-radius: $profile-radius;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
         font-size: 24px;
         margin-right: 12px;
+      }
+
+      .stat-icon-document {
+        color: $profile-accent;
+        background: $profile-accent-soft;
+      }
+
+      .stat-icon-star {
+        color: #4f46e5;
+        background: #eef2ff;
+      }
+
+      .stat-icon-view {
+        color: #2563eb;
+        background: #eff6ff;
       }
 
       .stat-info {
@@ -831,13 +849,13 @@ handleBindReturn()
         .stat-value {
           font-size: 20px;
           font-weight: 600;
-          color: #303133;
+          color: $profile-text;
           margin-bottom: 2px;
         }
 
         .stat-label {
           font-size: 12px;
-          color: #909399;
+          color: $profile-text-muted;
         }
       }
     }
@@ -845,34 +863,37 @@ handleBindReturn()
 
   // 右侧内容卡片
   .content-card {
-    background: white;
-    border-radius: 20px;
+    background: $profile-surface;
+    border-radius: $profile-radius;
     padding: 24px;
-    box-shadow: 0 2px 20px rgba(102, 126, 234, 0.1);
+    border: 1px solid $profile-border;
+    box-shadow: $profile-shadow;
     min-height: 600px;
 
     .profile-tabs {
       :deep(.el-tabs__nav-wrap::after){
-        display: none;
+        height: 1px;
+        background-color: $profile-border;
       }
 
       :deep(.el-tabs__item){
         font-size: 15px;
         font-weight: 500;
-        padding: 0 30px;
+        color: $profile-text-secondary;
+        padding: 0 24px;
 
         i {
           margin-right: 6px;
         }
 
         &.is-active {
-          color: #667eea;
+          color: $profile-accent;
         }
       }
 
       :deep(.el-tabs__active-bar){
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        height: 3px;
+        background: $profile-accent;
+        height: 2px;
       }
     }
 
@@ -883,34 +904,35 @@ handleBindReturn()
     .profile-form {
       :deep(.el-form-item__label){
         font-weight: 500;
-        color: #606266;
+        color: $profile-text-secondary;
       }
 
       :deep(.el-input__inner){
-        border-radius: 8px;
-        transition: all 0.3s ease;
+        border-radius: $profile-radius;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
         &:focus {
-          border-color: #667eea;
-          box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+          border-color: $profile-accent;
+          box-shadow: 0 0 0 2px rgba(15, 159, 159, 0.12);
         }
       }
 
       :deep(.el-button--primary){
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 8px;
+        background: $profile-accent;
+        border-color: $profile-accent;
+        border-radius: $profile-radius;
         padding: 12px 28px;
+        transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 
         &:hover {
-          opacity: 0.9;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          background: $profile-accent-dark;
+          border-color: $profile-accent-dark;
+          box-shadow: 0 0 0 3px rgba(15, 159, 159, 0.12);
         }
       }
 
       :deep(.el-button){
-        border-radius: 8px;
+        border-radius: $profile-radius;
         padding: 12px 28px;
       }
     }
@@ -922,14 +944,15 @@ handleBindReturn()
         align-items: center;
         justify-content: space-between;
         padding: 20px;
-        border-radius: 12px;
-        background: #f5f7fa;
+        border-radius: $profile-radius;
+        background: #f8fafc;
+        border: 1px solid transparent;
         margin-bottom: 16px;
-        transition: all 0.3s ease;
+        transition: border-color 0.2s ease, background 0.2s ease;
 
         &:hover {
-          background: #fff;
-          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+          background: $profile-surface;
+          border-color: #cbd5e1;
         }
 
         .security-info {
@@ -943,26 +966,27 @@ handleBindReturn()
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            background: white;
-            border-radius: 12px;
+            background: $profile-surface;
+            border: 1px solid $profile-border;
+            border-radius: $profile-radius;
             margin-right: 16px;
           }
 
           .security-title {
             font-size: 16px;
             font-weight: 600;
-            color: #303133;
+            color: $profile-text;
             margin-bottom: 4px;
           }
 
           .security-desc {
             font-size: 13px;
-            color: #909399;
+            color: $profile-text-secondary;
           }
         }
 
         :deep(.el-button){
-          border-radius: 8px;
+          border-radius: $profile-radius;
         }
       }
     }
@@ -974,12 +998,16 @@ handleBindReturn()
         align-items: center;
         justify-content: space-between;
         padding: 20px;
-        border-radius: 12px;
-        background: #f5f7fa;
+        border-radius: $profile-radius;
+        background: #f8fafc;
+        border: 1px solid transparent;
         margin-bottom: 16px;
-        transition: all 0.3s ease;
+        transition: border-color 0.2s ease, background 0.2s ease;
 
-        &:hover { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        &:hover {
+          background: $profile-surface;
+          border-color: #cbd5e1;
+        }
 
         .binding-info {
           display: flex;
@@ -988,19 +1016,22 @@ handleBindReturn()
           .binding-icon {
             width: 48px; height: 48px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 22px; color: #606266;
-            background: white; border-radius: 12px; margin-right: 16px;
+            font-size: 22px; color: $profile-text-secondary;
+            background: $profile-surface;
+            border: 1px solid $profile-border;
+            border-radius: $profile-radius;
+            margin-right: 16px;
           }
 
-          .binding-title { font-size: 16px; font-weight: 600; color: #303133; margin-bottom: 4px; }
-          .binding-desc  { font-size: 13px; color: #909399; }
-          .binding-time  { color: #c0c4cc; }
+          .binding-title { font-size: 16px; font-weight: 600; color: $profile-text; margin-bottom: 4px; }
+          .binding-desc  { font-size: 13px; color: $profile-text-secondary; }
+          .binding-time  { color: $profile-text-muted; }
         }
       }
     }
     .binding-empty {
       text-align: center;
-      color: #909399;
+      color: $profile-text-muted;
       padding: 32px 0;
       p { margin: 8px 0 0; }
     }

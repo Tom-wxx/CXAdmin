@@ -3,12 +3,10 @@
     <!-- Hero 欢迎卡：渐变背景 + 浮动装饰图 -->
     <div class="hero fresh-anim" :style="{animationDelay: '0ms'}">
       <div class="hero-text">
-        <div class="hero-greeting">{{ greeting }}，{{ userName }} 👋</div>
+        <div class="hero-greeting">{{ greeting }}，{{ userName }}</div>
         <div class="hero-sub">{{ todayStr }} · 今天系统运行平稳，{{ stats.totalUsers || '—' }} 名用户在册</div>
       </div>
       <div class="hero-deco">
-        <div class="deco-bubble b1"></div>
-        <div class="deco-bubble b2"></div>
         <el-icon><DataAnalysis /></el-icon>
       </div>
     </div>
@@ -145,14 +143,14 @@ const loginStatsData = ref<DashboardChartSeries>({ labels: [], values: [] })
 const deptDistributionData = ref<DashboardChartSeries>({ labels: [], values: [] })
 const recentLogs = ref<DashboardRecentLog[]>([])
 const quickLinks: QuickLink[] = [
-  { path: '/system/user',    icon: 'el-icon-user',         label: '用户管理', color: '#13c2c2' },
-  { path: '/system/role',    icon: 'el-icon-s-custom',     label: '角色管理', color: '#5b6ef0' },
-  { path: '/system/sso',     icon: 'el-icon-link',         label: '身份认证', color: '#722ed1' },
-  { path: '/monitor/operlog',icon: 'el-icon-document',     label: '操作日志', color: '#fa8c16' },
-  { path: '/monitor/online', icon: 'el-icon-video-play',   label: '在线用户', color: '#52c41a' },
-  { path: '/monitor/job',    icon: 'el-icon-time',         label: '定时任务', color: '#eb2f96' },
-  { path: '/profile',        icon: 'el-icon-s-promotion',  label: '个人中心', color: '#f5222d' },
-  { path: '/system/dict',    icon: 'el-icon-collection',   label: '数据字典', color: '#1890ff' }
+  { path: '/system/user',    icon: 'el-icon-user',         label: '用户管理', color: '#0f9f9f' },
+  { path: '/system/role',    icon: 'el-icon-s-custom',     label: '角色管理', color: '#4f46e5' },
+  { path: '/system/sso',     icon: 'el-icon-link',         label: '身份认证', color: '#7c3aed' },
+  { path: '/monitor/operlog',icon: 'el-icon-document',     label: '操作日志', color: '#d97706' },
+  { path: '/monitor/online', icon: 'el-icon-video-play',   label: '在线用户', color: '#16a34a' },
+  { path: '/monitor/job',    icon: 'el-icon-time',         label: '定时任务', color: '#db2777' },
+  { path: '/profile',        icon: 'el-icon-s-promotion',  label: '个人中心', color: '#dc2626' },
+  { path: '/system/dict',    icon: 'el-icon-collection',   label: '数据字典', color: '#2563eb' }
 ]
 
 const userName = computed(() => userNameFromStore.value || 'admin')
@@ -175,7 +173,7 @@ const todayStr = computed(() => {
 const statList = computed<StatListItem[]>(() => {
   const s = stats.value || {}
   return [
-    { key: 'totalUsers',   title: '用户总数', value: s.totalUsers   || 0, icon: 'el-icon-user',       bg: '#e6fffb', color: '#13c2c2', footer: `今日新增 ${s.todayUsers || 0}`, trend: s.userTrend },
+    { key: 'totalUsers',   title: '用户总数', value: s.totalUsers   || 0, icon: 'el-icon-user',       bg: '#e6fffb', color: '#0f9f9f', footer: `今日新增 ${s.todayUsers || 0}`, trend: s.userTrend },
     { key: 'totalRoles',   title: '角色数量', value: s.totalRoles   || 0, icon: 'el-icon-s-custom',   bg: '#eef0ff', color: '#5b6ef0', footer: `已配置角色`,                     trend: undefined },
     { key: 'onlineUsers',  title: '在线用户', value: s.onlineUsers  || 0, icon: 'el-icon-video-play', bg: '#f6ffed', color: '#52c41a', footer: `活跃 ${s.activeUsers || s.onlineUsers || 0}`, trend: s.onlineTrend },
     { key: 'totalNotices', title: '通知公告', value: s.totalNotices || 0, icon: 'el-icon-bell',       bg: '#fff7e6', color: '#fa8c16', footer: `待办 ${s.pendingTasks || 0}`,   trend: undefined }
@@ -234,12 +232,12 @@ loadDashboardData()
 </script>
 
 <style lang="scss" scoped>
-$accent: #13c2c2;
-$accent-2: #5b6ef0;
-$card-border: #eef0f3;
-$text-1: #1f2329;
-$text-2: #646a73;
-$text-3: #8f959e;
+$accent: #0f9f9f;
+$accent-2: #4f46e5;
+$card-border: #e5e7eb;
+$text-1: #1f2937;
+$text-2: #64748b;
+$text-3: #94a3b8;
 
 .dashboard-fresh {
   padding: 4px;
@@ -249,37 +247,26 @@ $text-3: #8f959e;
 .hero {
   position: relative;
   margin-bottom: 20px;
-  padding: 28px 32px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #0f7474 0%, #08979c 45%, #13c2c2 100%);
-  color: #fff;
+  padding: 24px 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  color: $text-1;
+  border: 1px solid $card-border;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 8px 24px rgba(8, 151, 156, 0.18);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
-.hero-greeting { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
-.hero-sub      { margin-top: 8px; font-size: 14px; opacity: 0.85; }
+.hero-greeting { font-size: 22px; font-weight: 700; }
+.hero-sub      { margin-top: 8px; font-size: 14px; color: $text-2; }
 
 .hero-deco {
   position: relative; width: 120px; height: 90px;
   i {
     position: absolute; right: 8px; bottom: 0;
-    font-size: 64px; color: rgba(255,255,255,0.4);
+    font-size: 56px; color: rgba(15, 159, 159, 0.16);
   }
-}
-.deco-bubble {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.12);
-  animation: bubble-float 6s ease-in-out infinite;
-}
-.deco-bubble.b1 { width: 90px; height: 90px; top: -10px; right: -10px; }
-.deco-bubble.b2 { width: 50px; height: 50px; top: 40px; right: 80px; animation-delay: 2s; }
-@keyframes bubble-float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
 }
 
 /* Stat row */
@@ -294,10 +281,11 @@ $text-3: #8f959e;
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  border-radius: 8px;
 }
 .stat-icon {
   width: 48px; height: 48px;
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   font-size: 22px;
   flex-shrink: 0;
@@ -335,7 +323,10 @@ $text-3: #8f959e;
     grid-template-columns: 1fr;
   }
 }
-.bento-card { padding: 20px; }
+.bento-card {
+  padding: 20px;
+  border-radius: 8px;
+}
 .bento-card.chart-wrap { padding: 8px; }
 .bento-card.chart-wrap :deep(.chart-card),
 .bento-card.chart-wrap :deep(.panel){
@@ -385,30 +376,28 @@ $text-3: #8f959e;
   gap: 12px;
 }
 .quick-tile {
-  --tile-color: #13c2c2;
+  --tile-color: #0f9f9f;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 18px 8px;
-  border-radius: 12px;
-  background: #fafbfc;
+  border-radius: 8px;
+  background: #f8fafc;
   text-decoration: none;
   color: $text-1;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-  border: 1px solid transparent;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  border: 1px solid $card-border;
 
   i {
     font-size: 22px;
     color: var(--tile-color);
     margin-bottom: 8px;
-    transition: transform 0.3s ease;
+    transition: color 0.2s ease;
   }
   span { font-size: 12px; color: $text-2; }
 
   &:hover {
-    transform: translateY(-3px);
     background: #fff;
     border-color: var(--tile-color);
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-    i { transform: scale(1.15) rotate(-6deg); }
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     span { color: $text-1; }
   }
 }

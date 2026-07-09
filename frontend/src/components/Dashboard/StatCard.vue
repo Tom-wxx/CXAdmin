@@ -42,7 +42,7 @@ const cardData = computed(() => [
     value: props.data.totalUsers || 0,
     icon: 'el-icon-user',
     bgColor: '#e6fffb',
-    iconColor: '#13c2c2',
+    iconColor: '#0f9f9f',
     footer: `今日新增 ${props.data.todayUsers || 0}`
   },
   {
@@ -82,16 +82,17 @@ const cardData = computed(() => [
 
 .stat-card {
   background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
   padding: 20px;
   margin-bottom: 16px;
   display: flex;
   align-items: center;
-  transition: box-shadow 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
 
   .stat-card-icon {
@@ -116,14 +117,14 @@ const cardData = computed(() => [
 
   .stat-card-title {
     font-size: 13px;
-    color: #8c8c8c;
+    color: #64748b;
     margin-bottom: 4px;
   }
 
   .stat-card-value {
     font-size: 28px;
     font-weight: 600;
-    color: #303133;
+    color: #1f2937;
     line-height: 1.2;
     margin-bottom: 4px;
     font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
@@ -131,7 +132,7 @@ const cardData = computed(() => [
 
   .stat-card-footer {
     font-size: 12px;
-    color: #bfbfbf;
+    color: #94a3b8;
   }
 }
 

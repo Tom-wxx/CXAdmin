@@ -5,7 +5,7 @@
         type="primary"
         plain
         icon="Plus"
-        size="small"
+        size="default"
         :disabled="addDisabled"
         @click="$emit('add')"
       >新增</el-button>
@@ -15,7 +15,7 @@
         type="success"
         plain
         icon="Edit"
-        size="small"
+        size="default"
         :disabled="editDisabled || single"
         @click="$emit('edit')"
       >修改</el-button>
@@ -25,7 +25,7 @@
         type="danger"
         plain
         icon="Delete"
-        size="small"
+        size="default"
         :disabled="deleteDisabled || multiple"
         @click="$emit('delete')"
       >删除</el-button>
@@ -35,7 +35,7 @@
         type="warning"
         plain
         icon="Download"
-        size="small"
+        size="default"
         :disabled="exportDisabled"
         @click="$emit('export')"
       >导出</el-button>
@@ -45,7 +45,7 @@
         type="info"
         plain
         icon="Upload"
-        size="small"
+        size="default"
         :disabled="importDisabled"
         @click="$emit('import')"
       >导入</el-button>
@@ -57,7 +57,7 @@
       <el-tooltip content="刷新" placement="top">
         <el-button
           circle
-          size="small"
+          size="default"
           icon="Refresh"
           @click="$emit('refresh')"
         />

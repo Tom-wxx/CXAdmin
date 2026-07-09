@@ -1,5 +1,5 @@
 const getSidebarColor = () => {
-  return localStorage.getItem('sidebarColor') || '#001529'
+  return localStorage.getItem('sidebarColor') || '#ffffff'
 }
 
 const getSidebarPosition = () => {
