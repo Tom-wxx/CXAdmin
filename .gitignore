@@ -46,6 +46,7 @@ captcha-*.png
 *_PLAN.md
 *_MIGRATION.md
 docs/
+spec/
 
 # AI 助手文档（不入库）
 CLAUDE.md
