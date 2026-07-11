@@ -91,7 +91,7 @@ Run:
 
 ```powershell
 cd frontend
-npm install --save-dev vitest@^4.0.0 @vue/test-utils@^2.4.6 jsdom@^27.0.0
+npm install --save-dev vitest@^4.0.0 @vue/test-utils@^2.4.6 jsdom@^26.1.0
 ```
 
 在 `frontend/package.json` 的 `scripts` 中增加：
