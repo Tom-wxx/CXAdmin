@@ -1586,7 +1586,7 @@ Create `frontend/src/views/login/index.spec.ts`:
 ```ts
 import { shallowMount } from '@vue/test-utils'
 import { ref } from 'vue'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import LoginView from './index.vue'
 
 const petType = ref<'cat' | 'dog' | 'owl'>('cat')
@@ -1618,22 +1618,33 @@ vi.mock('@/api/system/sso', () => ({
 }))
 
 describe('登录页动态宠物集成', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    }))
+    vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(1)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('渲染 108px 全局宠物并触发配置加载', () => {
     petType.value = 'owl'
     const wrapper = shallowMount(LoginView, {
       global: {
         stubs: {
-          LoginPet: {
-            props: ['type', 'size'],
-            template: '<div data-testid="login-pet" :data-type="type" :data-size="size" />'
-          }
+          LoginPet: false
         }
       }
     })
 
     const pet = wrapper.get('[data-testid="login-pet"]')
-    expect(pet.attributes('data-type')).toBe('owl')
-    expect(pet.attributes('data-size')).toBe('108')
+    expect(pet.attributes('data-pet')).toBe('owl')
+    expect(pet.attributes('style')).toContain('width: 108px')
+    expect(pet.attributes('style')).toContain('height: 108px')
     expect(loadLoginPetType).toHaveBeenCalled()
   })
 })
