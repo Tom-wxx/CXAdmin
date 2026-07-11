@@ -11,6 +11,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ISysConfigService extends IService<SysConfig> {
 
+    /**
+     * 登录页宠物类型配置键，允许值：cat、dog、owl
+     */
     String LOGIN_PET_CONFIG_KEY = "sys.login.pet.type";
 
     /**
@@ -23,8 +26,14 @@ public interface ISysConfigService extends IService<SysConfig> {
      */
     String selectConfigByKey(String configKey);
 
+    /**
+     * 查询登录页宠物类型，配置缺失或非法时回退为 cat
+     */
     String selectLoginPetType();
 
+    /**
+     * 更新登录页宠物类型，允许值：cat、dog、owl，非法值或更新失败时抛出业务异常
+     */
     void updateLoginPetType(String type);
 
     /**

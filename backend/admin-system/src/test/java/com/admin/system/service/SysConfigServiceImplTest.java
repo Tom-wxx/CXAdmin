@@ -74,6 +74,17 @@ class SysConfigServiceImplTest {
         assertEquals("登录页宠物配置不存在", exception.getMessage());
     }
 
+    @Test
+    void updateLoginPetType_existingConfigButUpdateReturnsZero_shouldThrowClearError() {
+        when(configMapper.selectConfigByKey(CONFIG_KEY)).thenReturn(config(4L, "cat"));
+        when(configMapper.updateById(any(SysConfig.class))).thenReturn(0);
+
+        ServiceException exception = assertThrows(ServiceException.class,
+                () -> configService.updateLoginPetType("dog"));
+
+        assertEquals("登录页宠物配置更新失败", exception.getMessage());
+    }
+
     private SysConfig config(Long id, String value) {
         SysConfig config = new SysConfig();
         config.setConfigId(id);
