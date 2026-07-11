@@ -60,7 +60,7 @@ CREATE TABLE `sys_config`  (
   `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '备注',
   `deleted` int(1) NULL DEFAULT 0 COMMENT '删除标志（0未删除 1已删除）',
   PRIMARY KEY (`config_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '参数配置表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '参数配置表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_config
@@ -68,6 +68,7 @@ CREATE TABLE `sys_config`  (
 INSERT INTO `sys_config` VALUES (1, '主框架页-默认皮肤样式名称', 'sys.index.skinName', 'skin-blue', 'Y', '2025-11-25 11:11:39', 1, NULL, NULL, '蓝色 skin-blue、绿色 skin-green、紫色 skin-purple、红色 skin-red、黄色 skin-yellow', 0);
 INSERT INTO `sys_config` VALUES (2, '用户管理-账号初始密码', 'sys.user.initPassword', '123456', 'Y', '2025-11-25 11:11:39', 1, NULL, NULL, '初始化密码 123456', 0);
 INSERT INTO `sys_config` VALUES (3, '主框架页-侧边栏主题', 'sys.index.sideTheme', 'theme-dark', 'Y', '2025-11-25 11:11:39', 1, NULL, NULL, '深色主题theme-dark，浅色主题theme-light', 0);
+INSERT INTO `sys_config` VALUES (4, '登录页宠物', 'sys.login.pet.type', 'cat', 'Y', '2026-07-10 00:00:00', 1, NULL, NULL, '允许值：cat、dog、owl；默认 cat', 0);
 
 -- ----------------------------
 -- Table structure for sys_dept

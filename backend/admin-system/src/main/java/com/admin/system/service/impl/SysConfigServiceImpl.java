@@ -2,6 +2,7 @@ package com.admin.system.service.impl;
 
 import com.admin.common.exception.ServiceException;
 import com.admin.system.entity.SysConfig;
+import com.admin.system.enums.LoginPetType;
 import com.admin.system.mapper.SysConfigMapper;
 import com.admin.system.service.ISysConfigService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -37,6 +38,29 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     public String selectConfigByKey(String configKey) {
         SysConfig config = configMapper.selectConfigByKey(configKey);
         return config != null ? config.getConfigValue() : null;
+    }
+
+    @Override
+    public String selectLoginPetType() {
+        return LoginPetType.normalize(selectConfigByKey(LOGIN_PET_CONFIG_KEY));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateLoginPetType(String type) {
+        if (!LoginPetType.isValid(type)) {
+            throw new ServiceException("不支持的登录页宠物类型");
+        }
+
+        SysConfig config = configMapper.selectConfigByKey(LOGIN_PET_CONFIG_KEY);
+        if (config == null) {
+            throw new ServiceException("登录页宠物配置不存在");
+        }
+
+        config.setConfigValue(type);
+        if (configMapper.updateById(config) != 1) {
+            throw new ServiceException("登录页宠物配置更新失败");
+        }
     }
 
     /**

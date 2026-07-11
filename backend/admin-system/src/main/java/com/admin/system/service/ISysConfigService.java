@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ISysConfigService extends IService<SysConfig> {
 
+    String LOGIN_PET_CONFIG_KEY = "sys.login.pet.type";
+
     /**
      * 分页查询参数配置列表
      */
@@ -20,6 +22,10 @@ public interface ISysConfigService extends IService<SysConfig> {
      * 根据参数键名查询参数值
      */
     String selectConfigByKey(String configKey);
+
+    String selectLoginPetType();
+
+    void updateLoginPetType(String type);
 
     /**
      * 新增参数配置
