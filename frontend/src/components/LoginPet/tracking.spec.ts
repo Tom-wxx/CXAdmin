@@ -45,7 +45,12 @@ describe('calculatePetMotion', () => {
 
   it('减少动态效果时按 intensity 缩小幅度', () => {
     const motion = calculatePetMotion({ x: 250, y: 50 }, rect, 0.35)
-    expect(Math.abs(motion.eyeX)).toBeLessThanOrEqual(2.1)
-    expect(Math.abs(motion.rotate)).toBeLessThanOrEqual(1.75)
+    expect(motion).toEqual({
+      eyeX: 2.1,
+      eyeY: -2.1,
+      headX: 1.4,
+      headY: -1.05,
+      rotate: 1.75
+    })
   })
 })
