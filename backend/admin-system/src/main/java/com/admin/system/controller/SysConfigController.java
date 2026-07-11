@@ -2,6 +2,7 @@ package com.admin.system.controller;
 
 import com.admin.common.PageResult;
 import com.admin.common.Result;
+import com.admin.system.dto.LoginPetTypeDTO;
 import com.admin.system.dto.PageQuery;
 import com.admin.system.entity.SysConfig;
 import com.admin.system.service.ISysConfigService;
@@ -53,6 +54,20 @@ public class SysConfigController {
     public Result<String> getConfigKey(@Parameter(description = "参数键名") @PathVariable String configKey) {
         String configValue = configService.selectConfigByKey(configKey);
         return Result.success(configValue);
+    }
+
+    @Operation(summary = "查询登录页宠物")
+    @GetMapping("/public/login-pet")
+    public Result<String> getLoginPet() {
+        return Result.success("查询登录页宠物成功", configService.selectLoginPetType());
+    }
+
+    @Operation(summary = "修改登录页宠物")
+    @PreAuthorize("@ss.hasPermi('system:config:edit')")
+    @PutMapping("/login-pet")
+    public Result<Void> updateLoginPet(@Validated @RequestBody LoginPetTypeDTO body) {
+        configService.updateLoginPetType(body.getType());
+        return Result.success("登录页宠物修改成功");
     }
 
     /**
