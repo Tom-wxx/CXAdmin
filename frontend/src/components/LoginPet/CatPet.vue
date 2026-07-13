@@ -15,6 +15,10 @@ const headStyle = computed(() => ({
 const eyeStyle = computed(() => ({
   transform: `translate(${props.motion.eyeX}px, ${props.motion.eyeY}px)`
 }))
+
+const animationStyle = computed(() => ({
+  animationPlayState: props.reducedMotion ? 'paused' : 'running'
+}))
 </script>
 
 <template>
@@ -24,7 +28,7 @@ const eyeStyle = computed(() => ({
     aria-label="动态猫咪"
     :class="{ 'reduced-motion': reducedMotion }"
   >
-    <g class="cat-tail">
+    <g class="cat-tail" :style="animationStyle">
       <path d="M88 88 C116 78 116 108 94 108" />
     </g>
     <g class="pet-head" :style="headStyle">
@@ -33,8 +37,8 @@ const eyeStyle = computed(() => ({
         d="M25 42 L18 16 L42 30 Q60 20 78 30 L102 16 L95 43 Q101 55 96 72 Q90 96 60 98 Q30 96 24 72 Q19 55 25 42Z"
       />
       <path class="inner-ear" d="M26 31 L23 23 L36 32Z M84 32 L97 23 L94 34Z" />
-      <ellipse class="eye" cx="44" cy="59" rx="12" ry="14" />
-      <ellipse class="eye" cx="76" cy="59" rx="12" ry="14" />
+      <ellipse class="eye" cx="44" cy="59" rx="12" ry="14" :style="animationStyle" />
+      <ellipse class="eye" cx="76" cy="59" rx="12" ry="14" :style="animationStyle" />
       <g class="pupils" :style="eyeStyle">
         <circle cx="44" cy="60" r="5" />
         <circle cx="76" cy="60" r="5" />

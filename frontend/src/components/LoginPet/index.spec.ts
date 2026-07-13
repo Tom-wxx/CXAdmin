@@ -70,10 +70,15 @@ describe('LoginPet', () => {
   })
 
   it.each([
-    ['cat', '动态猫咪'],
-    ['dog', '动态小狗'],
-    ['owl', '动态猫头鹰']
-  ] as const)('渲染 %s SVG 并提供中文可访问名称', (type, accessibleName) => {
+    ['cat', '动态猫咪', ['.cat-tail'], ['.eye', '.cat-tail']],
+    ['dog', '动态小狗', ['.dog-ear', '.dog-tail', '.dog-tongue'], ['.eye', '.dog-tail', '.dog-tongue']],
+    ['owl', '动态猫头鹰', ['.owl-wing', '.beak'], ['.eye', '.owl-wing']]
+  ] as const)('渲染 %s SVG、专属节点并提供中文可访问名称', (
+    type,
+    accessibleName,
+    signatureSelectors,
+    animatedSelectors
+  ) => {
     const wrapper = mount(LoginPet, { props: { type } })
 
     expect(wrapper.get('[data-testid="login-pet"]').attributes('data-pet')).toBe(type)
@@ -81,6 +86,16 @@ describe('LoginPet', () => {
       role: 'img',
       'aria-label': accessibleName,
       viewBox: '0 0 120 120'
+    })
+    signatureSelectors.forEach(selector => {
+      expect(wrapper.find(selector).exists()).toBe(true)
+    })
+    animatedSelectors.forEach(selector => {
+      const nodes = wrapper.findAll<SVGElement>(selector)
+      expect(nodes.length).toBeGreaterThan(0)
+      nodes.forEach(node => {
+        expect(node.element.style.animationPlayState).toBe('running')
+      })
     })
 
     wrapper.unmount()
@@ -218,9 +233,16 @@ describe('LoginPet', () => {
     wrapper.unmount()
   })
 
-  it('减少动态效果会停止循环动画并降低方向反馈强度', async () => {
+  it.each([
+    ['cat', ['.eye', '.cat-tail']],
+    ['dog', ['.eye', '.dog-tail', '.dog-tongue']],
+    ['owl', ['.eye', '.owl-wing']]
+  ] as const)('%s 在减少动态效果下暂停全部循环动画并按 0.35 更新头部', async (
+    type,
+    animatedSelectors
+  ) => {
     reducedMotion = true
-    const wrapper = mount(LoginPet, { attachTo: document.body })
+    const wrapper = mount(LoginPet, { props: { type }, attachTo: document.body })
     vi.spyOn(wrapper.element, 'getBoundingClientRect').mockReturnValue({
       left: 100, top: 100, width: 100, height: 100,
       right: 200, bottom: 200, x: 100, y: 100, toJSON: () => ({})
@@ -234,6 +256,16 @@ describe('LoginPet', () => {
     expect(wrapper.get('svg').classes()).toContain('reduced-motion')
     expect(root.style.getPropertyValue('--pet-eye-x')).toBe('2.1px')
     expect(root.style.getPropertyValue('--pet-eye-y')).toBe('-2.1px')
+    expect(wrapper.get('.pet-head').attributes('style')).toContain(
+      'translate(1.4px, -1.05px) rotate(1.75deg)'
+    )
+    animatedSelectors.forEach(selector => {
+      const nodes = wrapper.findAll<SVGElement>(selector)
+      expect(nodes.length).toBeGreaterThan(0)
+      nodes.forEach(node => {
+        expect(node.element.style.animationPlayState).toBe('paused')
+      })
+    })
     wrapper.unmount()
   })
 

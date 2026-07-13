@@ -15,6 +15,10 @@ const headStyle = computed(() => ({
 const eyeStyle = computed(() => ({
   transform: `translate(${props.motion.eyeX}px, ${props.motion.eyeY}px)`
 }))
+
+const animationStyle = computed(() => ({
+  animationPlayState: props.reducedMotion ? 'paused' : 'running'
+}))
 </script>
 
 <template>
@@ -24,7 +28,7 @@ const eyeStyle = computed(() => ({
     aria-label="动态小狗"
     :class="{ 'reduced-motion': reducedMotion }"
   >
-    <g class="dog-tail">
+    <g class="dog-tail" :style="animationStyle">
       <path d="M91 88 Q116 74 111 98" />
     </g>
     <g class="pet-head" :style="headStyle">
@@ -34,15 +38,19 @@ const eyeStyle = computed(() => ({
         class="pet-fill"
         d="M28 34 Q60 14 92 34 Q101 55 94 79 Q84 99 60 99 Q36 99 26 79 Q19 55 28 34Z"
       />
-      <ellipse class="eye" cx="44" cy="58" rx="11" ry="13" />
-      <ellipse class="eye" cx="76" cy="58" rx="11" ry="13" />
+      <ellipse class="eye" cx="44" cy="58" rx="11" ry="13" :style="animationStyle" />
+      <ellipse class="eye" cx="76" cy="58" rx="11" ry="13" :style="animationStyle" />
       <g class="pupils" :style="eyeStyle">
         <circle cx="44" cy="59" r="5" />
         <circle cx="76" cy="59" r="5" />
       </g>
       <ellipse class="muzzle" cx="60" cy="77" rx="19" ry="15" />
       <ellipse class="nose" cx="60" cy="71" rx="8" ry="6" />
-      <path class="dog-tongue" d="M54 82 Q60 94 66 82 V94 Q60 104 54 94Z" />
+      <path
+        class="dog-tongue"
+        d="M54 82 Q60 94 66 82 V94 Q60 104 54 94Z"
+        :style="animationStyle"
+      />
     </g>
   </svg>
 </template>
