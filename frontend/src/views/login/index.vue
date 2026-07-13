@@ -7,9 +7,7 @@
       <div class="orb orb-3"></div>
 
       <div class="brand-area">
-        <div class="brand-icon">
-          <el-icon><Platform /></el-icon>
-        </div>
+        <LoginPet class="brand-pet" :type="loginPetType" :size="108" />
         <h1 class="brand-title">CXAdmin</h1>
         <p class="brand-desc">简洁高效的企业级后台管理系统</p>
       </div>
@@ -119,13 +117,16 @@ import { getCaptcha } from '@/api/login'
 import { listEnabledProviders } from '@/api/system/sso'
 import type { LoginBody } from '@/types/auth'
 import type { SsoProviderPublic } from '@/types/system/sso'
+import LoginPet from '@/components/LoginPet/index.vue'
 import { useUserStore } from '@/composables/store'
+import { useLoginPetConfig } from '@/composables/useLoginPetConfig'
 
 defineOptions({ name: 'Login' })
 
 const router = useRouter()
 const route = useRoute()
 const { login } = useUserStore()
+const { loginPetType, loadLoginPetType } = useLoginPetConfig()
 
 const loginFormRef = ref<FormInstance>()
 // ElInput instance — typed loosely to avoid complex import expression
@@ -203,6 +204,7 @@ function ssoLogin(code: string | undefined) {
 }
 
 // setup body (replaces created)
+void loadLoginPetType()
 getCode()
 listEnabledProviders().then(res => { providers.value = res.data || [] })
 </script>
@@ -266,22 +268,10 @@ $dark-bg: #001529;
     color: #fff;
   }
 
-  .brand-icon {
-    width: 64px;
-    height: 64px;
-    background: $primary;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 32px;
-    box-shadow: 0 8px 24px rgba(19, 194, 194, 0.4);
-    animation: brand-pulse 3s ease-in-out infinite;
-
-    i {
-      font-size: 32px;
-      color: #fff;
-    }
+  .brand-pet {
+    display: block;
+    margin-bottom: 28px;
+    filter: drop-shadow(0 10px 22px rgba(19, 194, 194, 0.3));
   }
 
   .brand-title {
@@ -460,11 +450,6 @@ $dark-bg: #001529;
   0%, 100% { transform: translate(-50%, -50%) scale(1); }
   50%      { transform: translate(-30%, -70%) scale(1.2); }
 }
-@keyframes brand-pulse {
-  0%, 100% { box-shadow: 0 8px 24px rgba(19, 194, 194, 0.4); transform: scale(1); }
-  50%      { box-shadow: 0 8px 36px rgba(19, 194, 194, 0.65); transform: scale(1.03); }
-}
-
 @media screen and (max-width: 960px) {
   .login-left {
     display: none;
