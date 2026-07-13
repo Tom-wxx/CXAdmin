@@ -58,6 +58,7 @@
 - **数据统计** - 系统数据可视化统计
 - **单点登录 (SSO)** - 通用 OAuth2 / OIDC 适配器：动态配置 IdP（GitHub / Google 等），首次登录自动注册并绑定，已登录用户可从个人中心管理第三方账号绑定。client_secret AES-GCM 加密入库
 - **个人中心** - 查看 / 修改个人信息、修改密码、头像上传、SSO 账号绑定管理
+- **动态登录宠物** - 登录页支持猫咪、小狗、猫头鹰三种 108px 内联 SVG 宠物，默认猫咪；眼睛、头部和专属动作会跟随鼠标方向，并适配减少动态效果偏好
 
 ## 快速开始
 
@@ -77,6 +78,12 @@ CREATE DATABASE admin_system DEFAULT CHARACTER SET utf8mb4;
 
 -- 导入数据（单文件聚合所有表 + 种子数据，按依赖顺序执行）
 mysql -u root -p admin_system < database/init.sql
+```
+
+已有数据库升级时不要重新执行初始化脚本，请改为执行幂等升级 SQL：
+
+```bash
+mysql -u root -p admin_system < database/upgrade/20260713_add_login_pet_config.sql
 ```
 
 ### 2. 启动后端
@@ -128,7 +135,9 @@ CXAdmin/
 │       ├── components/           # 公共组件
 │       ├── router/ store/ utils/ # 路由 / Vuex / 工具
 │       └── main.ts               # 入口
-└── database/                     # 数据库脚本（init.sql 单文件聚合）
+└── database/                     # 数据库脚本
+    ├── init.sql                  # 新装：完整表结构与种子数据
+    └── upgrade/                  # 既有数据库：按日期执行的幂等升级脚本
 ```
 
 ## 配置说明
@@ -155,6 +164,13 @@ spring:
       port: 6379
       password:      # 默认无密码
 ```
+
+### 登录页宠物配置
+
+- 全局配置键：`sys.login.pet.type`
+- 允许值：`cat`、`dog`、`owl`
+- 默认值：`cat`（猫咪）
+- 具有 `system:config:edit` 权限或超级管理员权限的用户，可在右上角 **主题设置** 抽屉中切换；登录页读取失败时会静默回退猫咪。
 
 ### 单点登录（SSO）配置
 
