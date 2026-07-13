@@ -3,6 +3,15 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import store from '@/store'
 import { HTTP_OK, HTTP_UNAUTHORIZED, HTTP_SERVER_ERROR } from '@/utils/constants'
 
+export interface AppRequestConfig extends AxiosRequestConfig {
+  /** 仅抑制当前请求的全局错误提示与登录失效处理 */
+  silent?: boolean
+}
+
+function isSilent(config?: AxiosRequestConfig): boolean {
+  return Boolean((config as AppRequestConfig | undefined)?.silent)
+}
+
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_APP_BASE_API,
@@ -21,31 +30,38 @@ service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res = response.data
     const code = res.code || HTTP_OK
+    const silent = isSilent(response.config)
 
     if (code === HTTP_UNAUTHORIZED) {
-      ElMessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', {
-        confirmButtonText: '重新登录',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        store.dispatch('user/logout').then(() => {
-          location.href = '/login'
+      if (!silent) {
+        ElMessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', {
+          confirmButtonText: '重新登录',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          store.dispatch('user/logout').then(() => {
+            location.href = '/login'
+          })
         })
-      })
+      }
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     } else if (code === HTTP_SERVER_ERROR) {
-      ElMessage({
-        message: res.message || 'Error',
-        type: 'error',
-        duration: 5 * 1000
-      })
+      if (!silent) {
+        ElMessage({
+          message: res.message || 'Error',
+          type: 'error',
+          duration: 5 * 1000
+        })
+      }
       return Promise.reject(new Error(res.message || 'Error'))
     } else if (code !== HTTP_OK) {
-      ElMessage({
-        message: res.message || 'Error',
-        type: 'error',
-        duration: 5 * 1000
-      })
+      if (!silent) {
+        ElMessage({
+          message: res.message || 'Error',
+          type: 'error',
+          duration: 5 * 1000
+        })
+      }
       return Promise.reject('error')
     } else {
       return res
@@ -60,11 +76,13 @@ service.interceptors.response.use(
     } else if (message.includes('Request failed with status code')) {
       message = '系统接口' + message.substr(message.length - 3) + '异常'
     }
-    ElMessage({
-      message: message,
-      type: 'error',
-      duration: 5 * 1000
-    })
+    if (!isSilent(error.config)) {
+      ElMessage({
+        message: message,
+        type: 'error',
+        duration: 5 * 1000
+      })
+    }
     return Promise.reject(error)
   }
 )
@@ -75,7 +93,7 @@ service.interceptors.response.use(
  * - 列表接口注解 Promise<TableResponse<X>>（body 顶层带 rows/total）
  * - responseType:'blob' 等由调用方断言为 Promise<Blob>
  */
-export function request<T = unknown>(config: AxiosRequestConfig): Promise<T> {
+export function request<T = unknown>(config: AppRequestConfig): Promise<T> {
   return service(config) as unknown as Promise<T>
 }
 

@@ -1,6 +1,7 @@
 import request from '@/utils/request'
 import type { Result, TableResponse } from '@/types/api'
-import type { Config, ConfigQuery } from '@/types/system/config'
+import type { LoginPetType } from '@/types/login-pet'
+import type { Config, ConfigQuery, LoginPetTypeUpdateBody } from '@/types/system/config'
 
 /** 分页查询参数配置列表 */
 export function listConfig(query: ConfigQuery): Promise<TableResponse<Config>> {
@@ -35,4 +36,19 @@ export function delConfig(configIds: number | number[]): Promise<Result<void>> {
 /** 校验参数键名是否唯一 */
 export function checkConfigKeyUnique(configKey: string, configId?: number): Promise<Result<boolean>> {
   return request({ url: '/system/config/checkConfigKeyUnique', method: 'get', params: { configKey, configId } })
+}
+
+/** 公开读取登录宠物类型，失败时由调用方静默回退 */
+export function getLoginPetType(): Promise<Result<LoginPetType>> {
+  return request({
+    url: '/system/config/public/login-pet',
+    method: 'get',
+    silent: true
+  })
+}
+
+/** 更新全局登录宠物类型 */
+export function updateLoginPetType(type: LoginPetType): Promise<Result<void>> {
+  const data: LoginPetTypeUpdateBody = { type }
+  return request({ url: '/system/config/login-pet', method: 'put', data })
 }

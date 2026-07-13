@@ -1,5 +1,6 @@
 import type { BaseEntity } from '@/types/base'
 import type { PageQuery } from '@/types/api'
+import type { LoginPetType } from '@/types/login-pet'
 
 /** 参数配置对象（对应后端 sys_config / SysConfig） */
 export interface Config extends BaseEntity {
@@ -16,4 +17,9 @@ export interface ConfigQuery extends PageQuery {
   configName?: string
   configKey?: string
   configType?: string
+}
+
+/** 登录宠物配置更新请求 */
+export interface LoginPetTypeUpdateBody {
+  type: LoginPetType
 }
