@@ -1,6 +1,7 @@
 package com.admin.framework.config;
 
 import com.admin.common.config.JwtProperties;
+import com.admin.common.constants.SystemConstants;
 import com.admin.common.utils.RedisUtil;
 import com.admin.framework.security.JwtAuthenticationFilter;
 import com.admin.framework.web.GlobalExceptionHandler;
@@ -8,6 +9,7 @@ import com.admin.system.controller.SysConfigController;
 import com.admin.system.entity.SysUser;
 import com.admin.system.security.LoginUser;
 import com.admin.system.service.ISysConfigService;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -38,7 +39,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,6 +53,10 @@ class LoginPetEndpointSecurityIntegrationTest {
 
     private static final String PUBLIC_LOGIN_PET_PATH = "/system/config/public/login-pet";
     private static final String UPDATE_LOGIN_PET_PATH = "/system/config/login-pet";
+    private static final String VALIDATION_TOKEN = "login-pet-validation-token";
+    private static final String NO_PERMISSION_TOKEN = "login-pet-no-permission-token";
+    private static final String EDIT_PERMISSION_TOKEN = "login-pet-edit-permission-token";
+    private static final String ALL_PERMISSION_TOKEN = "login-pet-all-permission-token";
 
     @Autowired
     private WebApplicationContext context;
@@ -60,11 +64,14 @@ class LoginPetEndpointSecurityIntegrationTest {
     @Autowired
     private ISysConfigService configService;
 
+    @Autowired
+    private RedisUtil redisUtil;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        reset(configService);
+        reset(configService, redisUtil);
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .build();
@@ -90,14 +97,17 @@ class LoginPetEndpointSecurityIntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = {" ", "fox"})
     void invalidJsonType_returnsBusinessCode400WithoutUpdating(String type) throws Exception {
+        givenLoginUser(VALIDATION_TOKEN, Set.of("system:config:edit"));
+
         mockMvc.perform(put(UPDATE_LOGIN_PET_PATH)
-                        .with(authentication(loginUserAuthentication(Set.of("system:config:edit"))))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + VALIDATION_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"" + type + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(400));
 
         verify(configService, never()).updateLoginPetType(anyString());
+        verify(redisUtil).get(SystemConstants.LOGIN_TOKEN_KEY + VALIDATION_TOKEN);
     }
 
     @Test
@@ -112,27 +122,47 @@ class LoginPetEndpointSecurityIntegrationTest {
 
     @Test
     void authenticatedUserWithoutEditPermission_isRejected() throws Exception {
+        givenLoginUser(NO_PERMISSION_TOKEN, Set.of("system:config:query"));
+
         mockMvc.perform(put(UPDATE_LOGIN_PET_PATH)
-                        .with(authentication(loginUserAuthentication(Set.of("system:config:query"))))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + NO_PERMISSION_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"dog\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(403));
 
         verify(configService, never()).updateLoginPetType(anyString());
+        verify(redisUtil).get(SystemConstants.LOGIN_TOKEN_KEY + NO_PERMISSION_TOKEN);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"system:config:edit", "*:*:*"})
-    void authenticatedUserWithAllowedPermission_updatesLoginPet(String permission) throws Exception {
+    @Test
+    void bearerLoginUserWithEditPermission_updatesLoginPet() throws Exception {
+        givenLoginUser(EDIT_PERMISSION_TOKEN, Set.of("system:config:edit"));
+
         mockMvc.perform(put(UPDATE_LOGIN_PET_PATH)
-                        .with(authentication(loginUserAuthentication(Set.of(permission))))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + EDIT_PERMISSION_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"dog\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
 
         verify(configService).updateLoginPetType("dog");
+        verify(redisUtil).get(SystemConstants.LOGIN_TOKEN_KEY + EDIT_PERMISSION_TOKEN);
+    }
+
+    @Test
+    void cookieLoginUserWithAllPermission_updatesLoginPet() throws Exception {
+        givenLoginUser(ALL_PERMISSION_TOKEN, Set.of("*:*:*"));
+
+        mockMvc.perform(put(UPDATE_LOGIN_PET_PATH)
+                        .cookie(new Cookie(SystemConstants.TOKEN_COOKIE_NAME, ALL_PERMISSION_TOKEN))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"dog\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(configService).updateLoginPetType("dog");
+        verify(redisUtil).get(SystemConstants.LOGIN_TOKEN_KEY + ALL_PERMISSION_TOKEN);
     }
 
     @Test
@@ -153,15 +183,18 @@ class LoginPetEndpointSecurityIntegrationTest {
         verify(configService, never()).selectLoginPetType();
     }
 
-    private Authentication loginUserAuthentication(Set<String> permissions) {
+    private void givenLoginUser(String token, Set<String> permissions) {
         SysUser user = new SysUser();
         user.setUserId(2L);
         user.setUsername("mvc-test-user");
         user.setStatus("0");
 
         LoginUser loginUser = new LoginUser(user, permissions);
-        return UsernamePasswordAuthenticationToken.authenticated(
-                loginUser, null, loginUser.getAuthorities());
+        long currentTime = System.currentTimeMillis();
+        loginUser.setToken(token);
+        loginUser.setLoginTime(currentTime);
+        loginUser.setExpireTime(currentTime + 60 * 60 * 1000L);
+        when(redisUtil.get(SystemConstants.LOGIN_TOKEN_KEY + token)).thenReturn(loginUser);
     }
 
     @Configuration(proxyBeanMethods = false)
