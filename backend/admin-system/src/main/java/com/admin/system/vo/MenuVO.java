@@ -26,10 +26,19 @@ public class MenuVO implements Serializable {
 
     private Integer orderNum;
 
+    /**
+     * 路由地址
+     */
     private String path;
 
+    /**
+     * 组件路径
+     */
     private String component;
 
+    /**
+     * 路由参数
+     */
     private String query;
 
     /**
@@ -57,6 +66,9 @@ public class MenuVO implements Serializable {
      */
     private String status;
 
+    /**
+     * 权限标识
+     */
     private String perms;
 
     private String icon;

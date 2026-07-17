@@ -49,7 +49,6 @@ public interface ISysMenuService extends IService<SysMenu> {
 
     boolean hasChildByMenuId(Long menuId);
 
-
     /**
      * 查询菜单列表（树形结构）
      */

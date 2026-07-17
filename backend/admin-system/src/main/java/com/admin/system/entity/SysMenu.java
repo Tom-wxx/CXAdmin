@@ -44,12 +44,21 @@ public class SysMenu extends BaseEntity {
     @NotNull(message = "显示顺序不能为空")
     private Integer orderNum;
 
+    /**
+     * 路由地址
+     */
     @Size(min = 0, max = 200, message = "路由地址不能超过200个字符")
     private String path;
 
+    /**
+     * 组件路径
+     */
     @Size(min = 0, max = 255, message = "组件路径不能超过255个字符")
     private String component;
 
+    /**
+     * 路由参数
+     */
     private String query;
 
     /**
@@ -78,6 +87,9 @@ public class SysMenu extends BaseEntity {
      */
     private String status;
 
+    /**
+     * 权限字符串
+     */
     @Size(min = 0, max = 100, message = "权限标识长度不能超过100个字符")
     private String perms;
 

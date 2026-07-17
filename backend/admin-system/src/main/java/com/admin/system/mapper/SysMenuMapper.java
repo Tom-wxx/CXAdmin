@@ -31,7 +31,6 @@ public interface SysMenuMapper extends BaseMapper<SysMenu> {
 
     SysMenu checkMenuNameUnique(@Param("menuName") String menuName, @Param("parentId") Long parentId);
 
-
     List<MenuVO> selectMenuVOList(@Param("menuName") String menuName, @Param("status") String status);
 
     MenuVO selectMenuVOById(@Param("menuId") Long menuId);
