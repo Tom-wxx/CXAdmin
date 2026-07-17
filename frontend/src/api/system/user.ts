@@ -63,32 +63,6 @@ export function changeUserStatus(userId: number, status: string): Promise<Result
   })
 }
 
-/** 校验用户名是否唯一 */
-export function checkUsernameUnique(username: string, userId?: number): Promise<Result<boolean>> {
-  return request({
-    url: '/system/user/checkUsernameUnique',
-    method: 'get',
-    params: { username, userId }
-  })
-}
-
-/** 校验手机号是否唯一 */
-export function checkPhoneUnique(phone: string, userId?: number): Promise<Result<boolean>> {
-  return request({
-    url: '/system/user/checkPhoneUnique',
-    method: 'get',
-    params: { phone, userId }
-  })
-}
-
-/** 校验邮箱是否唯一 */
-export function checkEmailUnique(email: string, userId?: number): Promise<Result<boolean>> {
-  return request({
-    url: '/system/user/checkEmailUnique',
-    method: 'get',
-    params: { email, userId }
-  })
-}
 
 /** 获取用户表单选项（部门、岗位、角色） */
 export function getUserFormOptions(): Promise<Result<UserFormOptions>> {

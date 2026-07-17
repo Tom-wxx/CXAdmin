@@ -37,28 +37,6 @@ export function getAvatarUrl(avatar, defaultAvatar = null) {
   return baseURL + avatar
 }
 
-/**
- * 检查URL是否为有效的头像URL
- * @param {string} url - 待检查的URL
- * @returns {boolean}
- */
-export function isValidAvatarUrl(url) {
-  if (!url) return false
-
-  // 完整URL
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return true
-  }
-
-  // API路径
-  if (url.startsWith('/api/') || url.startsWith('/uploads/')) {
-    return true
-  }
-
-  return false
-}
-
 export default {
-  getAvatarUrl,
-  isValidAvatarUrl
+  getAvatarUrl
 }

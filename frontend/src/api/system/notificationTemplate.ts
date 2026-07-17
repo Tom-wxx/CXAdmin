@@ -7,10 +7,6 @@ export function listTemplate(query: NotificationTemplateQuery): Promise<TableRes
   return request({ url: '/system/notification/template/list', method: 'get', params: query })
 }
 
-/** 查询所有模板 */
-export function getAllTemplates(): Promise<Result<NotificationTemplate[]>> {
-  return request({ url: '/system/notification/template/all', method: 'get' })
-}
 
 /** 查询模板详情 */
 export function getTemplate(id: number): Promise<Result<NotificationTemplate>> {

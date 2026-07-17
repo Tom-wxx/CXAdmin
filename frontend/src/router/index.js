@@ -113,15 +113,4 @@ const router = createRouter({
   routes: constantRoutes
 })
 
-// 重置路由：移除所有动态添加的路由，仅保留公共路由
-export function resetRouter() {
-  const constantNames = new Set()
-  constantRoutes.forEach(route => route.name && constantNames.add(route.name))
-  router.getRoutes().forEach(route => {
-    if (route.name && !constantNames.has(route.name)) {
-      router.removeRoute(route.name)
-    }
-  })
-}
-
 export default router

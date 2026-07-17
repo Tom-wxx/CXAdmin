@@ -7,10 +7,6 @@ export function listDept(query?: DeptQuery): Promise<Result<Dept[]>> {
   return request({ url: '/system/dept/list', method: 'get', params: query })
 }
 
-/** 查询部门列表（树形结构） */
-export function listDeptTree(query?: DeptQuery): Promise<Result<Dept[]>> {
-  return request({ url: '/system/dept/treeList', method: 'get', params: query })
-}
 
 /** 查询部门详细信息 */
 export function getDept(deptId: number): Promise<Result<Dept>> {

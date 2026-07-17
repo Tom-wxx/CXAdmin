@@ -27,10 +27,6 @@ export function delMenu(menuId: number, force?: boolean): Promise<Result<void>> 
   return request({ url: '/system/menu/' + menuId, method: 'delete', params: { force } })
 }
 
-/** 校验菜单名称是否唯一 */
-export function checkMenuNameUnique(menuName: string, menuId?: number, parentId?: number): Promise<Result<boolean>> {
-  return request({ url: '/system/menu/checkMenuNameUnique', method: 'get', params: { menuName, menuId, parentId } })
-}
 
 /** 获取菜单下拉树列表 */
 export function treeselect(): Promise<Result<TreeOption[]>> {

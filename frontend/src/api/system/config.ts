@@ -8,10 +8,6 @@ export function listConfig(query: ConfigQuery): Promise<TableResponse<Config>> {
   return request({ url: '/system/config/list', method: 'get', params: query })
 }
 
-/** 根据参数键名查询参数值 */
-export function getConfigKey(configKey: string): Promise<Result<string>> {
-  return request({ url: '/system/config/configKey/' + configKey, method: 'get' })
-}
 
 /** 查询参数配置详细信息 */
 export function getConfig(configId: number): Promise<Result<Config>> {
@@ -33,10 +29,6 @@ export function delConfig(configIds: number | number[]): Promise<Result<void>> {
   return request({ url: '/system/config/' + configIds, method: 'delete' })
 }
 
-/** 校验参数键名是否唯一 */
-export function checkConfigKeyUnique(configKey: string, configId?: number): Promise<Result<boolean>> {
-  return request({ url: '/system/config/checkConfigKeyUnique', method: 'get', params: { configKey, configId } })
-}
 
 /** 公开读取登录宠物类型，失败时由调用方静默回退 */
 export function getLoginPetType(): Promise<Result<LoginPetType>> {

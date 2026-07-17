@@ -42,15 +42,6 @@ export function changeRoleStatus(roleId: number, status: string): Promise<Result
   return request({ url: '/system/role/changeStatus', method: 'put', params: { roleId, status } })
 }
 
-/** 校验角色名称是否唯一 */
-export function checkRoleNameUnique(roleName: string, roleId?: number): Promise<Result<boolean>> {
-  return request({ url: '/system/role/checkRoleNameUnique', method: 'get', params: { roleName, roleId } })
-}
-
-/** 校验角色权限字符是否唯一 */
-export function checkRoleKeyUnique(roleKey: string, roleId?: number): Promise<Result<boolean>> {
-  return request({ url: '/system/role/checkRoleKeyUnique', method: 'get', params: { roleKey, roleId } })
-}
 
 /** 保存角色菜单权限 */
 export function saveRoleMenus(roleId: number, menuIds: number[]): Promise<Result<void>> {

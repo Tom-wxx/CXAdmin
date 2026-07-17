@@ -7,30 +7,6 @@ export function listFile(query: FileQuery): Promise<TableResponse<FileInfo>> {
   return request({ url: '/system/file/list', method: 'get', params: query })
 }
 
-/** 获取文件详情 */
-export function getFile(fileId: number): Promise<Result<FileInfo>> {
-  return request({ url: `/system/file/${fileId}`, method: 'get' })
-}
-
-/** 上传文件 */
-export function uploadFile(data: FormData): Promise<Result<FileInfo>> {
-  return request({
-    url: '/system/file/upload',
-    method: 'post',
-    headers: { 'Content-Type': 'multipart/form-data' },
-    data
-  })
-}
-
-/** 批量上传文件 */
-export function batchUploadFile(data: FormData): Promise<Result<FileInfo[]>> {
-  return request({
-    url: '/system/file/upload/batch',
-    method: 'post',
-    headers: { 'Content-Type': 'multipart/form-data' },
-    data
-  })
-}
 
 /** 下载文件（二进制流） */
 export function downloadFile(fileId: number): Promise<Blob> {
