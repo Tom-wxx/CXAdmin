@@ -25,22 +25,13 @@ public class SysNotification extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 通知ID
-     */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    /**
-     * 通知标题
-     */
     @NotBlank(message = "通知标题不能为空")
     @Size(max = 200, message = "通知标题长度不能超过200个字符")
     private String title;
 
-    /**
-     * 通知内容
-     */
     private String content;
 
     /**
@@ -59,36 +50,18 @@ public class SysNotification extends BaseEntity {
      */
     private String status;
 
-    /**
-     * 接收用户ID
-     */
     @NotNull(message = "接收用户ID不能为空")
     private Long userId;
 
-    /**
-     * 发送者ID
-     */
     private Long senderId;
 
-    /**
-     * 发送者名称
-     */
     private String senderName;
 
-    /**
-     * 关联链接
-     */
     @Size(max = 500, message = "关联链接长度不能超过500个字符")
     private String linkUrl;
 
-    /**
-     * 链接类型
-     */
     private String linkType;
 
-    /**
-     * 阅读时间
-     */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date readTime;
 

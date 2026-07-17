@@ -22,17 +22,14 @@ public class CodeGeneratorUtil {
      * 生成代码（返回ZIP字节数组）
      */
     public static byte[] generateCode(TableInfo tableInfo, GenConfig config) throws IOException {
-        // 设置velocity资源加载器
         Properties prop = new Properties();
         prop.put("resource.loader", "class");
         prop.put("resource.loader.class.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
         Velocity.init(prop);
 
-        // 封装模板数据
         Map<String, Object> map = prepareContext(tableInfo, config);
         VelocityContext context = new VelocityContext(map);
 
-        // 获取模板列表
         List<String> templates = getTemplates();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ZipOutputStream zip = new ZipOutputStream(outputStream);
@@ -42,7 +39,6 @@ public class CodeGeneratorUtil {
             Template tpl = Velocity.getTemplate(templateName, "UTF-8");
             tpl.merge(context, sw);
 
-            // 添加到zip
             String fileName = getFileName(templateName, tableInfo.getClassName(), config.getModuleName());
             zip.putNextEntry(new ZipEntry(fileName));
             zip.write(sw.toString().getBytes("UTF-8"));
@@ -79,17 +75,14 @@ public class CodeGeneratorUtil {
      */
     private static List<String> getTemplates() {
         List<String> templates = new ArrayList<>();
-        // 后端模板
         templates.add("templates/Entity.java.vm");
         templates.add("templates/Mapper.java.vm");
         templates.add("templates/Mapper.xml.vm");
         templates.add("templates/Service.java.vm");
         templates.add("templates/ServiceImpl.java.vm");
         templates.add("templates/Controller.java.vm");
-        // 前端模板
         templates.add("templates/vue-index.vue.vm");
         templates.add("templates/api.js.vm");
-        // SQL脚本
         templates.add("templates/sql.vm");
         return templates;
     }
@@ -98,13 +91,10 @@ public class CodeGeneratorUtil {
      * 获取文件名
      */
     private static String getFileName(String template, String className, String moduleName) {
-        // 后端路径
         String packagePath = "backend/src/main/java/com/admin/system/";
         String resourcesPath = "backend/src/main/resources/";
-        // 前端路径
         String vuePath = "frontend/src/views/" + moduleName + "/";
         String apiPath = "frontend/src/api/" + moduleName + "/";
-        // 类名首字母小写
         String classname = className.substring(0, 1).toLowerCase() + className.substring(1);
 
         if (template.contains("Entity.java.vm")) {
@@ -166,11 +156,9 @@ public class CodeGeneratorUtil {
      * 表名转换成类名
      */
     public static String tableToClassName(String tableName, String tablePrefix) {
-        // 去掉表前缀
         if (tableName.startsWith(tablePrefix)) {
             tableName = tableName.substring(tablePrefix.length());
         }
-        // 转换成类名
         StringBuilder result = new StringBuilder();
         String[] parts = tableName.toLowerCase().split("_");
         for (String part : parts) {
@@ -184,13 +172,11 @@ public class CodeGeneratorUtil {
      */
     public static String mysqlTypeToJavaType(String mysqlType) {
         String type = mysqlType.toLowerCase();
-        // 整数类型
         if (type.contains("bigint")) {
             return "Long";
         } else if (type.contains("int")) {
             return "Integer";
         }
-        // 浮点类型
         else if (type.contains("decimal") || type.contains("numeric")) {
             return "BigDecimal";
         } else if (type.contains("double")) {
@@ -198,19 +184,15 @@ public class CodeGeneratorUtil {
         } else if (type.contains("float")) {
             return "Float";
         }
-        // 字符串类型
         else if (type.contains("varchar") || type.contains("text") || type.contains("char") || type.contains("json")) {
             return "String";
         }
-        // 日期时间类型
         else if (type.contains("datetime") || type.contains("timestamp") || type.contains("date") || type.contains("time")) {
             return "Date";
         }
-        // 二进制类型
         else if (type.contains("blob") || type.contains("binary")) {
             return "byte[]";
         }
-        // 布尔类型
         else if (type.contains("bit") || type.contains("bool")) {
             return "Boolean";
         }

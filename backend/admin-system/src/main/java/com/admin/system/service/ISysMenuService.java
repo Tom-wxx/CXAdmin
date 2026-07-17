@@ -16,19 +16,10 @@ import java.util.Set;
  */
 public interface ISysMenuService extends IService<SysMenu> {
 
-    /**
-     * 根据用户ID查询权限
-     */
     Set<String> selectMenuPermsByUserId(Long userId);
 
-    /**
-     * 根据用户ID查询菜单树信息
-     */
     List<SysMenu> selectMenuTreeByUserId(Long userId);
 
-    /**
-     * 根据角色ID查询菜单树信息
-     */
     List<Long> selectMenuListByRoleId(Long roleId);
 
     /**
@@ -46,66 +37,32 @@ public interface ISysMenuService extends IService<SysMenu> {
      */
     List<SysMenu> buildMenuTreeSelect(List<SysMenu> menus);
 
-    /**
-     * 查询菜单列表
-     */
     List<SysMenu> selectMenuList(SysMenu menu);
 
-    /**
-     * 新增菜单
-     */
     int insertMenu(SysMenu menu);
 
-    /**
-     * 修改菜单
-     */
     int updateMenu(SysMenu menu);
 
-    /**
-     * 删除菜单
-     */
     int deleteMenuById(Long menuId);
 
-    /**
-     * 校验菜单名称是否唯一
-     */
     boolean checkMenuNameUnique(SysMenu menu);
 
-    /**
-     * 是否存在菜单子节点
-     */
     boolean hasChildByMenuId(Long menuId);
 
-    // ==================== 新增 DTO/VO 模式方法 ====================
 
     /**
      * 查询菜单列表（树形结构）
      */
     List<MenuVO> selectMenuTreeList(String menuName, String status);
 
-    /**
-     * 根据菜单ID查询菜单详情
-     */
     MenuVO selectMenuById(Long menuId);
 
-    /**
-     * 新增菜单
-     */
     void insertMenu(MenuDTO menuDTO);
 
-    /**
-     * 修改菜单
-     */
     void updateMenu(MenuDTO menuDTO);
 
-    /**
-     * 删除菜单
-     */
     void deleteMenuById(Long menuId, boolean force);
 
-    /**
-     * 校验菜单名称是否唯一
-     */
     boolean checkMenuNameUnique(String menuName, Long menuId, Long parentId);
 
 }

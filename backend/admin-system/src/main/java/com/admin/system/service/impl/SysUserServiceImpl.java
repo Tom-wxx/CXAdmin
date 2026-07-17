@@ -73,22 +73,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void insertUser(UserDTO userDTO) {
-        // 校验用户名唯一性
         if (!checkUsernameUnique(userDTO.getUsername(), null)) {
             throw new ServiceException("新增用户'" + userDTO.getUsername() + "'失败，用户名已存在");
         }
 
-        // 校验手机号唯一性
         if (StringUtils.hasText(userDTO.getPhone()) && !checkPhoneUnique(userDTO.getPhone(), null)) {
             throw new ServiceException("新增用户'" + userDTO.getUsername() + "'失败，手机号已存在");
         }
 
-        // 校验邮箱唯一性
         if (StringUtils.hasText(userDTO.getEmail()) && !checkEmailUnique(userDTO.getEmail(), null)) {
             throw new ServiceException("新增用户'" + userDTO.getUsername() + "'失败，邮箱已存在");
         }
 
-        // DTO 转 Entity
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
 
@@ -104,13 +100,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             user.setPassword(SecurityUtils.encryptPassword(SystemConstants.DEFAULT_PASSWORD));
         }
 
-        // 保存用户
         userMapper.insert(user);
 
-        // 保存用户与角色关联
         insertUserRole(user.getUserId(), userDTO.getRoleIds());
 
-        // 保存用户与岗位关联
         insertUserPost(user.getUserId(), userDTO.getPostIds());
     }
 
@@ -127,22 +120,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         checkUserAllowed(userDTO.getUserId());
         checkUserDataScope(userDTO.getUserId());
 
-        // 校验用户名唯一性
         if (!checkUsernameUnique(userDTO.getUsername(), userDTO.getUserId())) {
             throw new ServiceException("修改用户'" + userDTO.getUsername() + "'失败，用户名已存在");
         }
 
-        // 校验手机号唯一性
         if (StringUtils.hasText(userDTO.getPhone()) && !checkPhoneUnique(userDTO.getPhone(), userDTO.getUserId())) {
             throw new ServiceException("修改用户'" + userDTO.getUsername() + "'失败，手机号已存在");
         }
 
-        // 校验邮箱唯一性
         if (StringUtils.hasText(userDTO.getEmail()) && !checkEmailUnique(userDTO.getEmail(), userDTO.getUserId())) {
             throw new ServiceException("修改用户'" + userDTO.getUsername() + "'失败，邮箱已存在");
         }
 
-        // DTO 转 Entity
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
 
@@ -154,14 +143,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setPassword(null);
         userMapper.updateById(user);
 
-        // 删除用户与角色关联
         userMapper.deleteUserRoleByUserId(user.getUserId());
-        // 新增用户与角色关联
         insertUserRole(user.getUserId(), userDTO.getRoleIds());
 
-        // 删除用户与岗位关联
         userMapper.deleteUserPostByUserId(user.getUserId());
-        // 新增用户与岗位关联
         insertUserPost(user.getUserId(), userDTO.getPostIds());
     }
 
@@ -207,9 +192,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         checkUserAllowed(userId);
         checkUserDataScope(userId);
 
-        // 删除用户与角色关联
         userMapper.deleteUserRoleByUserId(userId);
-        // 删除用户与岗位关联
         userMapper.deleteUserPostByUserId(userId);
 
         userMapper.deleteById(userId);
@@ -448,7 +431,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 }
 
                 try {
-                    // 读取单元格数据
                     String username = getCellValue(row.getCell(0));
                     String nickname = getCellValue(row.getCell(1));
                     String deptIdStr = getCellValue(row.getCell(2));
@@ -457,19 +439,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                     String gender = getCellValue(row.getCell(5));
                     String password = getCellValue(row.getCell(6));
 
-                    // 验证必填字段
                     if (!StringUtils.hasText(username)) {
                         failureCount++;
                         failureMessages.add("第" + (i + 1) + "行: 用户名不能为空");
                         continue;
                     }
 
-                    // 检查用户是否存在
                     SysUser existUser = userMapper.checkUsernameUnique(username);
 
                     if (existUser != null) {
                         if (updateSupport) {
-                            // 更新用户
                             existUser.setNickname(StringUtils.hasText(nickname) ? nickname : existUser.getNickname());
                             existUser.setPhonenumber(StringUtils.hasText(phone) ? phone : existUser.getPhonenumber());
                             existUser.setEmail(StringUtils.hasText(email) ? email : existUser.getEmail());
@@ -484,7 +463,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                             failureMessages.add("第" + (i + 1) + "行: 用户名'" + username + "'已存在");
                         }
                     } else {
-                        // 新增用户
                         SysUser user = new SysUser();
                         user.setUsername(username);
                         user.setNickname(StringUtils.hasText(nickname) ? nickname : username);

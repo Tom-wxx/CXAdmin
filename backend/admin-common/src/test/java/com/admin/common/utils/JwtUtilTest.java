@@ -21,10 +21,8 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        // No setup needed for static utility class
     }
 
-    // ==================== generateToken Tests ====================
 
     @Test
     @DisplayName("生成Token - 基本生成成功")
@@ -58,7 +56,6 @@ class JwtUtilTest {
         assertEquals("admin", parsed.getSubject());
     }
 
-    // ==================== getUsernameFromToken Tests ====================
 
     @Test
     @DisplayName("从Token获取用户名 - 正常获取")
@@ -96,7 +93,6 @@ class JwtUtilTest {
         assertNull(username);
     }
 
-    // ==================== parseToken Tests ====================
 
     @Test
     @DisplayName("解析Token - 正常解析")
@@ -134,7 +130,6 @@ class JwtUtilTest {
         });
     }
 
-    // ==================== isTokenExpired Tests ====================
 
     @Test
     @DisplayName("Token过期检查 - 有效Token未过期")
@@ -164,7 +159,6 @@ class JwtUtilTest {
         assertTrue(expired);
     }
 
-    // ==================== validateToken Tests ====================
 
     @Test
     @DisplayName("验证Token - 有效Token验证通过")
@@ -189,14 +183,11 @@ class JwtUtilTest {
     @Test
     @DisplayName("验证Token - 无效Token返回false")
     void validateToken_invalidToken_shouldReturnFalse() {
-        // getUsernameFromToken returns null for invalid token
-        // "admin".equals(null) returns false, so validateToken returns false
         boolean valid = JwtUtil.validateToken("invalid.token", "admin", SECRET);
 
         assertFalse(valid);
     }
 
-    // ==================== Edge Cases ====================
 
     @Test
     @DisplayName("Token的过期时间正确设置")

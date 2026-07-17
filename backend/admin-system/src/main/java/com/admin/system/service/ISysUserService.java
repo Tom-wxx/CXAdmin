@@ -23,84 +23,36 @@ public interface ISysUserService extends IService<SysUser> {
      */
     Page<UserVO> selectUserPage(Page<SysUser> page, SysUser query);
 
-    /**
-     * 根据用户名查询用户
-     */
     SysUser selectUserByUsername(String username);
 
-    /**
-     * 根据用户ID查询用户详情
-     */
     UserVO selectUserById(Long userId);
 
-    /**
-     * Query current logged-in user profile.
-     */
     UserVO selectCurrentUserProfile();
 
-    /**
-     * 新增用户
-     */
     void insertUser(UserDTO userDTO);
 
-    /**
-     * 修改用户
-     */
     void updateUser(UserDTO userDTO);
 
-    /**
-     * Update current logged-in user profile.
-     */
     void updateCurrentUserProfile(UserDTO userDTO);
 
-    /**
-     * 删除用户
-     */
     void deleteUserById(Long userId);
 
-    /**
-     * 批量删除用户
-     */
     void deleteUserByIds(Long[] userIds);
 
-    /**
-     * 重置密码
-     */
     void resetPassword(Long userId, String newPassword);
 
-    /**
-     * Update current logged-in user password.
-     */
     void updateCurrentUserPassword(String oldPassword, String newPassword);
 
-    /**
-     * 修改用户状态
-     */
     void updateUserStatus(Long userId, String status);
 
-    /**
-     * 校验用户名是否唯一
-     */
     boolean checkUsernameUnique(String username, Long userId);
 
-    /**
-     * 校验手机号是否唯一
-     */
     boolean checkPhoneUnique(String phone, Long userId);
 
-    /**
-     * 校验邮箱是否唯一
-     */
     boolean checkEmailUnique(String email, Long userId);
 
-    /**
-     * 根据用户ID查询岗位ID列表
-     */
     List<Long> selectPostIdsByUserId(Long userId);
 
-    /**
-     * 根据用户ID查询角色ID列表
-     */
     List<Long> selectRoleIdsByUserId(Long userId);
 
     /**
@@ -108,8 +60,5 @@ public interface ISysUserService extends IService<SysUser> {
      */
     List<UserVO> selectUserList(SysUser query);
 
-    /**
-     * 导入用户数据
-     */
     Map<String, Object> importUsers(MultipartFile file, boolean updateSupport);
 }

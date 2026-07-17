@@ -22,15 +22,9 @@ public class SysMessage extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 消息ID
-     */
     @TableId(value = "message_id", type = IdType.AUTO)
     private Long messageId;
 
-    /**
-     * 消息名称
-     */
     @NotBlank(message = "消息名称不能为空")
     @Size(max = 100, message = "消息名称长度不能超过100个字符")
     private String messageName;
@@ -48,9 +42,6 @@ public class SysMessage extends BaseEntity {
     @NotBlank(message = "消息类型不能为空")
     private String messageType;
 
-    /**
-     * 消息主题/标题
-     */
     @Size(max = 200, message = "消息主题长度不能超过200个字符")
     private String subject;
 

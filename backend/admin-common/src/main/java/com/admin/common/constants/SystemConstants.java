@@ -58,22 +58,12 @@ public final class SystemConstants {
      */
     public static final String CONFIG_TYPE_BUILTIN = "Y";
 
-
     // ==================== 超级管理员 ====================
 
-    /**
-     * 超级管理员用户ID
-     */
     public static final long SUPER_ADMIN_ID = 1L;
 
-    /**
-     * 超级管理员用户名
-     */
     public static final String SUPER_ADMIN_USERNAME = "admin";
 
-    /**
-     * 默认密码
-     */
     public static final String DEFAULT_PASSWORD = "123456";
 
     // ==================== 验证码 ====================

@@ -38,27 +38,22 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
             throw new ServiceException("文件不能为空");
         }
 
-        // 获取原始文件名
         String originalFileName = file.getOriginalFilename();
         if (originalFileName == null || originalFileName.isEmpty()) {
             throw new ServiceException("文件名不能为空");
         }
 
-        // 获取文件扩展名
         String fileExt = FileUtil.getFileExtension(originalFileName);
 
-        // 检查文件类型是否允许
         if (!fileUploadConfig.isAllowedType(fileExt)) {
             throw new ServiceException("不支持的文件类型: " + fileExt);
         }
 
-        // 检查文件大小
         if (!fileUploadConfig.isAllowedSize(file.getSize())) {
             throw new ServiceException("文件大小超过限制: " +
                     FileUtil.formatFileSize(fileUploadConfig.getMaxSize() * 1024L * 1024L));
         }
 
-        // 生成新文件名
         String newFileName = FileUtil.generateFileName(originalFileName);
 
         // 生成文件系统路径（按日期分类，使用系统分隔符）
@@ -67,11 +62,9 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         // 生成URL路径（按日期分类，使用 / 分隔符）
         String relativeUrlPath = FileUtil.generateDatePathForUrl(newFileName);
 
-        // 完整的文件系统路径
         String uploadPath = fileUploadConfig.getAbsolutePath();
         String fullPath = uploadPath + File.separator + relativeFilePath;
 
-        // 输出日志，帮助调试
         log.info("=== 文件上传路径信息 ===");
         log.info("配置的上传路径: {}", fileUploadConfig.getPath());
         log.info("绝对上传路径: {}", uploadPath);
@@ -79,7 +72,6 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         log.info("相对URL路径: {}", relativeUrlPath);
         log.info("完整文件路径: {}", fullPath);
 
-        // 创建目录
         File destFile = new File(fullPath);
         log.info("目标文件对象: {}", destFile.getAbsolutePath());
         log.info("父目录是否存在: {}", destFile.getParentFile().exists());
@@ -89,15 +81,12 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
             log.info("创建父目录: {}, 结果: {}", destFile.getParentFile().getAbsolutePath(), created);
         }
 
-        // 保存文件
         log.info("开始保存文件到: {}", destFile.getAbsolutePath());
         file.transferTo(destFile);
         log.info("文件保存成功，文件大小: {} bytes", destFile.length());
 
-        // 计算MD5
         String md5 = FileUtil.calculateMD5(destFile);
 
-        // 检查是否已存在相同MD5的文件
         SysFile existingFile = lambdaQuery()
                 .eq(SysFile::getMd5, md5)
                 .one();
@@ -135,7 +124,6 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
             }
         }
 
-        // 创建文件记录
         SysFile sysFile = new SysFile();
         sysFile.setFileName(newFileName);
         sysFile.setOriginalName(originalFileName);
@@ -152,7 +140,6 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         sysFile.setStatus("0");
         // createBy 和 updateBy 由 MyBatis Plus 自动填充
 
-        // 保存到数据库
         save(sysFile);
 
         log.info("文件上传成功: {}, 大小: {}", originalFileName, FileUtil.formatFileSize(file.getSize()));
@@ -162,25 +149,21 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
 
     @Override
     public void downloadFile(Long fileId, HttpServletResponse response) throws Exception {
-        // 查询文件信息
         SysFile sysFile = getById(fileId);
         if (sysFile == null) {
             throw new ServiceException("文件不存在");
         }
 
-        // 检查文件是否存在
         File file = new File(sysFile.getFilePath());
         if (!file.exists()) {
             throw new ServiceException("文件已被删除");
         }
 
-        // 更新下载次数
         lambdaUpdate()
                 .eq(SysFile::getFileId, fileId)
                 .setSql("download_count = download_count + 1")
                 .update();
 
-        // 设置响应头
         response.setContentType(sysFile.getFileType());
         response.setContentLengthLong(sysFile.getFileSize());
 
@@ -190,7 +173,6 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         response.setHeader("Content-Disposition",
                 "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName);
 
-        // 输出文件流
         try (InputStream is = Files.newInputStream(file.toPath());
              OutputStream os = response.getOutputStream()) {
 

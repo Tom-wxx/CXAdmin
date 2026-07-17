@@ -19,30 +19,15 @@ public class SysFile extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 文件ID
-     */
     @TableId(value = "file_id", type = IdType.AUTO)
     private Long fileId;
 
-    /**
-     * 文件名称
-     */
     private String fileName;
 
-    /**
-     * 原始文件名
-     */
     private String originalName;
 
-    /**
-     * 文件存储路径
-     */
     private String filePath;
 
-    /**
-     * 文件访问URL
-     */
     private String fileUrl;
 
     /**
@@ -55,9 +40,6 @@ public class SysFile extends BaseEntity {
      */
     private String fileType;
 
-    /**
-     * 文件扩展名
-     */
     private String fileExt;
 
     /**
@@ -70,14 +52,8 @@ public class SysFile extends BaseEntity {
      */
     private String storageType;
 
-    /**
-     * 文件MD5值
-     */
     private String md5;
 
-    /**
-     * 下载次数
-     */
     private Integer downloadCount;
 
     /**

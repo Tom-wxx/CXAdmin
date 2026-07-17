@@ -69,7 +69,6 @@ class SysUserServiceImplTest {
         SecurityContextHolder.clearContext();
     }
 
-    // ==================== selectUserByUsername Tests ====================
 
     @Test
     @DisplayName("按用户名查询 - 用户存在")
@@ -92,7 +91,6 @@ class SysUserServiceImplTest {
         assertNull(result);
     }
 
-    // ==================== insertUser Tests ====================
 
     @Test
     @DisplayName("新增用户 - 成功")
@@ -197,7 +195,6 @@ class SysUserServiceImplTest {
         verify(userMapper, never()).batchUserPost(any(), anyList());
     }
 
-    // ==================== updateUser Tests ====================
 
     @Test
     @DisplayName("修改用户 - 成功")
@@ -254,7 +251,6 @@ class SysUserServiceImplTest {
         assertDoesNotThrow(() -> userService.updateUser(userDTO));
     }
 
-    // ==================== deleteUserById Tests ====================
 
     @Test
     @DisplayName("删除用户 - 成功(非管理员)")
@@ -289,7 +285,6 @@ class SysUserServiceImplTest {
         assertTrue(exception.getMessage().contains("超级管理员"));
     }
 
-    // ==================== deleteUserByIds Tests ====================
 
     @Test
     @DisplayName("批量删除用户 - 成功(非管理员)")
@@ -334,7 +329,6 @@ class SysUserServiceImplTest {
         assertEquals("用户ID不能为空", exception.getMessage());
     }
 
-    // ==================== resetPassword Tests ====================
 
     @Test
     @DisplayName("重置密码 - 成功")
@@ -379,7 +373,6 @@ class SysUserServiceImplTest {
         assertEquals("新密码不能为空", exception.getMessage());
     }
 
-    // ==================== updateUserStatus Tests ====================
 
     @Test
     @DisplayName("修改用户状态 - 成功")
@@ -414,7 +407,6 @@ class SysUserServiceImplTest {
         assertEquals("用户状态不能为空", exception.getMessage());
     }
 
-    // ==================== checkUsernameUnique Tests ====================
 
     @Test
     @DisplayName("用户名唯一校验 - 无重复返回true")
@@ -442,7 +434,6 @@ class SysUserServiceImplTest {
         assertFalse(userService.checkUsernameUnique("admin", 1L));
     }
 
-    // ==================== checkPhoneUnique Tests ====================
 
     @Test
     @DisplayName("手机号唯一校验 - 无重复返回true")
@@ -462,7 +453,6 @@ class SysUserServiceImplTest {
         assertFalse(userService.checkPhoneUnique("13800138000", 1L));
     }
 
-    // ==================== checkEmailUnique Tests ====================
 
     @Test
     @DisplayName("邮箱唯一校验 - 无重复返回true")
@@ -482,7 +472,6 @@ class SysUserServiceImplTest {
         assertFalse(userService.checkEmailUnique("test@example.com", 1L));
     }
 
-    // ==================== selectPostIdsByUserId / selectRoleIdsByUserId Tests ====================
 
     @Test
     @DisplayName("查询用户岗位ID列表")
@@ -510,7 +499,6 @@ class SysUserServiceImplTest {
         assertTrue(result.contains(3L));
     }
 
-    // ==================== 越权防护 Tests（垂直 + 水平）====================
 
     @Test
     @DisplayName("垂直越权防护 - 重置超级管理员密码被拒")
@@ -555,7 +543,6 @@ class SysUserServiceImplTest {
         assertTrue(ex.getMessage().contains("权限"));
     }
 
-    // ==================== current user profile Tests ====================
 
     @Test
     @DisplayName("current profile uses authenticated user id")

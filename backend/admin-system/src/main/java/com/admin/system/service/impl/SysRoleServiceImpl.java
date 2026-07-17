@@ -66,24 +66,19 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void insertRole(RoleDTO roleDTO) {
-        // 校验角色名称唯一性
         if (!checkRoleNameUnique(roleDTO.getRoleName(), null)) {
             throw new ServiceException("新增角色'" + roleDTO.getRoleName() + "'失败，角色名称已存在");
         }
 
-        // 校验角色权限唯一性
         if (!checkRoleKeyUnique(roleDTO.getRoleKey(), null)) {
             throw new ServiceException("新增角色'" + roleDTO.getRoleName() + "'失败，角色权限已存在");
         }
 
-        // DTO 转 Entity
         SysRole role = new SysRole();
         BeanUtils.copyProperties(roleDTO, role);
 
-        // 保存角色
         roleMapper.insert(role);
 
-        // 保存角色与菜单关联
         if (roleDTO.getMenuIds() != null && roleDTO.getMenuIds().length > 0) {
             saveRoleMenus(role.getRoleId(), roleDTO.getMenuIds());
         }
@@ -99,27 +94,21 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             throw new ServiceException("角色ID不能为空");
         }
 
-        // 校验角色名称唯一性
         if (!checkRoleNameUnique(roleDTO.getRoleName(), roleDTO.getRoleId())) {
             throw new ServiceException("修改角色'" + roleDTO.getRoleName() + "'失败，角色名称已存在");
         }
 
-        // 校验角色权限唯一性
         if (!checkRoleKeyUnique(roleDTO.getRoleKey(), roleDTO.getRoleId())) {
             throw new ServiceException("修改角色'" + roleDTO.getRoleName() + "'失败，角色权限已存在");
         }
 
-        // DTO 转 Entity
         SysRole role = new SysRole();
         BeanUtils.copyProperties(roleDTO, role);
 
-        // 更新角色
         roleMapper.updateById(role);
 
-        // 删除角色与菜单关联
         roleMapper.deleteRoleMenuByRoleId(role.getRoleId());
 
-        // 新增角色与菜单关联
         if (roleDTO.getMenuIds() != null && roleDTO.getMenuIds().length > 0) {
             saveRoleMenus(role.getRoleId(), roleDTO.getMenuIds());
         }
@@ -135,7 +124,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             throw new ServiceException("角色ID不能为空");
         }
 
-        // 检查角色是否已分配用户
         Long userCount = userMapper.countUsersByRoleId(roleId);
         if (userCount != null && userCount > 0) {
             SysRole role = roleMapper.selectById(roleId);
@@ -143,10 +131,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             throw new ServiceException("角色'" + roleName + "'已分配给" + userCount + "个用户，不能删除");
         }
 
-        // 删除角色与菜单关联
         roleMapper.deleteRoleMenuByRoleId(roleId);
 
-        // 删除角色
         roleMapper.deleteById(roleId);
     }
 
@@ -225,10 +211,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             throw new ServiceException("角色ID不能为空");
         }
 
-        // 删除角色与菜单关联
         roleMapper.deleteRoleMenuByRoleId(roleId);
 
-        // 新增角色与菜单关联
         if (menuIds != null && menuIds.length > 0) {
             roleMapper.batchRoleMenu(roleId, menuIds);
         }

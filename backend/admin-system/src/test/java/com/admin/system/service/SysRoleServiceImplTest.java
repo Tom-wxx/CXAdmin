@@ -56,7 +56,6 @@ class SysRoleServiceImplTest {
         existingRole.setRoleKey("admin");
     }
 
-    // ==================== selectRoleById Tests ====================
 
     @Test
     @DisplayName("查询角色详情 - 存在")
@@ -82,7 +81,6 @@ class SysRoleServiceImplTest {
         assertNull(result);
     }
 
-    // ==================== selectRoleList Tests ====================
 
     @Test
     @DisplayName("查询所有角色列表")
@@ -98,7 +96,6 @@ class SysRoleServiceImplTest {
         assertEquals(2, result.size());
     }
 
-    // ==================== selectRolesByUserId Tests ====================
 
     @Test
     @DisplayName("按用户ID查询角色列表")
@@ -114,7 +111,6 @@ class SysRoleServiceImplTest {
         assertEquals("Admin", result.get(0).getRoleName());
     }
 
-    // ==================== insertRole Tests ====================
 
     @Test
     @DisplayName("新增角色 - 成功")
@@ -190,7 +186,6 @@ class SysRoleServiceImplTest {
         verify(roleMapper, never()).batchRoleMenu(any(), any());
     }
 
-    // ==================== updateRole Tests ====================
 
     @Test
     @DisplayName("修改角色 - 成功")
@@ -238,7 +233,6 @@ class SysRoleServiceImplTest {
         assertDoesNotThrow(() -> roleService.updateRole(roleDTO));
     }
 
-    // ==================== deleteRoleById Tests ====================
 
     @Test
     @DisplayName("删除角色 - 成功(无用户分配)")
@@ -276,7 +270,6 @@ class SysRoleServiceImplTest {
         assertTrue(exception.getMessage().contains("不能删除"));
     }
 
-    // ==================== deleteRoleByIds Tests ====================
 
     @Test
     @DisplayName("批量删除角色 - 成功")
@@ -309,7 +302,6 @@ class SysRoleServiceImplTest {
         assertEquals("角色ID不能为空", exception.getMessage());
     }
 
-    // ==================== updateRoleStatus Tests ====================
 
     @Test
     @DisplayName("修改角色状态 - 成功")
@@ -334,7 +326,6 @@ class SysRoleServiceImplTest {
         assertEquals("角色ID不能为空", exception.getMessage());
     }
 
-    // ==================== checkRoleNameUnique Tests ====================
 
     @Test
     @DisplayName("角色名称唯一校验 - 无重复返回true")
@@ -362,7 +353,6 @@ class SysRoleServiceImplTest {
         assertFalse(roleService.checkRoleNameUnique("Admin", 1L));
     }
 
-    // ==================== checkRoleKeyUnique Tests ====================
 
     @Test
     @DisplayName("角色权限唯一校验 - 无重复返回true")
@@ -381,7 +371,6 @@ class SysRoleServiceImplTest {
         assertFalse(roleService.checkRoleKeyUnique("admin", 1L));
     }
 
-    // ==================== saveRoleMenus Tests ====================
 
     @Test
     @DisplayName("保存角色菜单权限 - 成功")
@@ -427,7 +416,6 @@ class SysRoleServiceImplTest {
         verify(roleMapper, never()).batchRoleMenu(anyLong(), any());
     }
 
-    // ==================== selectMenuIdsByRoleId Tests ====================
 
     @Test
     @DisplayName("查询角色菜单ID列表")

@@ -16,44 +16,20 @@ public class MenuVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 菜单ID
-     */
     private Long menuId;
 
-    /**
-     * 父菜单ID
-     */
     private Long parentId;
 
-    /**
-     * 父菜单名称
-     */
     private String parentName;
 
-    /**
-     * 菜单名称
-     */
     private String menuName;
 
-    /**
-     * 显示顺序
-     */
     private Integer orderNum;
 
-    /**
-     * 路由地址
-     */
     private String path;
 
-    /**
-     * 组件路径
-     */
     private String component;
 
-    /**
-     * 路由参数
-     */
     private String query;
 
     /**
@@ -81,28 +57,13 @@ public class MenuVO implements Serializable {
      */
     private String status;
 
-    /**
-     * 权限标识
-     */
     private String perms;
 
-    /**
-     * 菜单图标
-     */
     private String icon;
 
-    /**
-     * 创建时间
-     */
     private Date createTime;
 
-    /**
-     * 备注
-     */
     private String remark;
 
-    /**
-     * 子菜单
-     */
     private List<MenuVO> children = new ArrayList<>();
 }

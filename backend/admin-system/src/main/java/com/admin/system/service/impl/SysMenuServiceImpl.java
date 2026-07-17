@@ -238,7 +238,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return getChildList(list, t).size() > 0;
     }
 
-    // ==================== 新增 DTO/VO 模式方法实现 ====================
 
     @Override
     public List<com.admin.system.vo.MenuVO> selectMenuTreeList(String menuName, String status) {
@@ -253,16 +252,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 
     @Override
     public void insertMenu(com.admin.system.dto.MenuDTO menuDTO) {
-        // 校验菜单名称唯一性
         if (!checkMenuNameUnique(menuDTO.getMenuName(), null, menuDTO.getParentId())) {
             throw new com.admin.common.exception.ServiceException("新增菜单'" + menuDTO.getMenuName() + "'失败，菜单名称已存在");
         }
 
-        // DTO 转 Entity
         SysMenu menu = new SysMenu();
         org.springframework.beans.BeanUtils.copyProperties(menuDTO, menu);
 
-        // 保存菜单
         menuMapper.insert(menu);
     }
 
@@ -272,16 +268,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
             throw new com.admin.common.exception.ServiceException("菜单ID不能为空");
         }
 
-        // 校验菜单名称唯一性
         if (!checkMenuNameUnique(menuDTO.getMenuName(), menuDTO.getMenuId(), menuDTO.getParentId())) {
             throw new com.admin.common.exception.ServiceException("修改菜单'" + menuDTO.getMenuName() + "'失败，菜单名称已存在");
         }
 
-        // DTO 转 Entity
         SysMenu menu = new SysMenu();
         org.springframework.beans.BeanUtils.copyProperties(menuDTO, menu);
 
-        // 更新菜单
         menuMapper.updateById(menu);
     }
 
@@ -291,12 +284,10 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
             throw new com.admin.common.exception.ServiceException("菜单ID不能为空");
         }
 
-        // 如果不是强制删除，检查是否有子菜单
         if (!force && hasChildByMenuId(menuId)) {
             throw new com.admin.common.exception.ServiceException("存在子菜单，不允许删除");
         }
 
-        // 删除菜单
         menuMapper.deleteById(menuId);
     }
 
@@ -333,7 +324,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * 递归列表（MenuVO版本）
      */
     private void recursionFnVO(List<com.admin.system.vo.MenuVO> list, com.admin.system.vo.MenuVO t) {
-        // 得到子节点列表
         List<com.admin.system.vo.MenuVO> childList = getChildListVO(list, t);
         t.setChildren(childList);
         for (com.admin.system.vo.MenuVO tChild : childList) {

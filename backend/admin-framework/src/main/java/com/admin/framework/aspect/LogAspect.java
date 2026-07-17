@@ -71,13 +71,10 @@ public class LogAspect {
 
     protected void handleLog(final JoinPoint joinPoint, Log controllerLog, final Exception e, Object jsonResult) {
         try {
-            // 获取当前的用户
             LoginUser loginUser = SecurityUtils.getLoginUser();
 
-            // *========数据库日志=========*//
             SysOperLog operLog = new SysOperLog();
             operLog.setStatus(e == null ? 0 : 1);
-            // 请求的地址
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
                 HttpServletRequest request = attributes.getRequest();
@@ -95,25 +92,20 @@ public class LogAspect {
                 operLog.setErrorMsg(substring(e.getMessage(), 0, 2000));
             }
 
-            // 设置方法名称
             String className = joinPoint.getTarget().getClass().getName();
             String methodName = joinPoint.getSignature().getName();
             operLog.setMethod(className + "." + methodName + "()");
 
-            // 设置请求方式
             ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (requestAttributes != null) {
                 HttpServletRequest request = requestAttributes.getRequest();
                 operLog.setRequestMethod(request.getMethod());
             }
 
-            // 处理设置注解上的参数
             getControllerMethodDescription(joinPoint, controllerLog, operLog, jsonResult);
 
-            // 保存数据库
             operLogService.save(operLog);
         } catch (Exception exp) {
-            // 记录本地异常日志
             log.error("异常信息:{}", exp.getMessage());
             exp.printStackTrace();
         }
@@ -127,9 +119,7 @@ public class LogAspect {
      * @throws Exception
      */
     public void getControllerMethodDescription(JoinPoint joinPoint, Log log, SysOperLog operLog, Object jsonResult) throws Exception {
-        // 设置action动作
         operLog.setBusinessType(log.businessType().ordinal());
-        // 设置标题
         operLog.setTitle(log.title());
         // 是否需要保存request，参数和值
         if (log.isSaveRequestData()) {
