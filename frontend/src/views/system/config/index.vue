@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,10 +7,8 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList" />
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="list" border>
       <el-table-column label="参数主键" align="center" prop="configId" width="100" />
       <el-table-column label="参数名称" align="center" prop="configName" show-overflow-tooltip />
@@ -47,7 +44,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <Pagination
       v-show="total > 0"
       :total="total"
@@ -56,7 +52,6 @@
       @pagination="getList"
     />
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
       <el-form ref="configFormRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="参数名称" prop="configName">
@@ -120,7 +115,6 @@ const { loading, list, total, queryParams, getList, handleQuery, resetQuery } =
     defaultQuery: { configName: undefined, configKey: undefined, configType: undefined }
   })
 
-// 对话框
 const dialogTitle = ref('')
 const dialogVisible = ref(false)
 const configFormRef = ref<FormInstance>()

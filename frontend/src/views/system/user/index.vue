@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,7 +7,6 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar
       show-add
       show-export
@@ -20,7 +18,6 @@
       @refresh="getList"
     />
 
-    <!-- 导入对话框 -->
     <el-dialog title="用户导入" v-model="importDialogVisible" width="400px" append-to-body>
       <el-upload
         ref="uploadRef"
@@ -43,7 +40,6 @@
       </div></template>
     </el-dialog>
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="userList" border>
       <el-table-column label="用户ID" align="center" prop="userId" width="80" />
       <el-table-column label="用户名" align="center" prop="username" />
@@ -92,7 +88,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <pagination
       v-show="total > 0"
       :total="total"
@@ -101,7 +96,6 @@
       @pagination="getList"
     />
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px" append-to-body>
       <el-form ref="userFormRef" :model="form" :rules="rules" label-width="80px">
         <el-row>
@@ -256,17 +250,14 @@ const { loading, list: userList, total, queryParams, getList, handleQuery, reset
     defaultQuery: { username: undefined, phone: undefined, status: undefined }
   })
 
-// 对话框
 const dialogTitle = ref('')
 const dialogVisible = ref(false)
 const userFormRef = ref<FormInstance>()
 
-// 下拉选项
 const deptOptions = ref<DeptOption[]>([])
 const postOptions = ref<PostOption[]>([])
 const roleOptions = ref<RoleOption[]>([])
 
-// 导入对话框
 const importDialogVisible = ref(false)
 const updateSupport = ref(false)
 const importFile = ref<File | null>(null)
@@ -321,7 +312,6 @@ const rules = reactive<FormRules>({
   ]
 })
 
-/** 获取表单选项数据 */
 function getFormOptions() {
   getUserFormOptions().then(response => {
     deptOptions.value = response.data.depts || []
@@ -330,7 +320,6 @@ function getFormOptions() {
   })
 }
 
-/** 新增按钮操作 */
 function handleAdd() {
   reset()
   getFormOptions()
@@ -338,7 +327,6 @@ function handleAdd() {
   dialogVisible.value = true
 }
 
-/** 修改按钮操作 */
 function handleUpdate(row: User) {
   reset()
   getFormOptions()
@@ -354,7 +342,6 @@ function handleUpdate(row: User) {
   })
 }
 
-/** 提交按钮 */
 function submitForm() {
   userFormRef.value?.validate(valid => {
     if (valid) {
@@ -375,19 +362,16 @@ function submitForm() {
   })
 }
 
-/** 取消按钮 */
 function cancel() {
   dialogVisible.value = false
   reset()
 }
 
-/** 表单重置 */
 function reset() {
   Object.assign(form, formDefaults)
   userFormRef.value?.resetFields()
 }
 
-/** 用户状态修改 */
 function handleStatusChange(row: User) {
   const text = row.status === '0' ? '启用' : '停用'
   ElMessageBox.confirm('确认要"' + text + '""' + row.username + '"用户吗？', '警告', {
@@ -403,7 +387,6 @@ function handleStatusChange(row: User) {
   })
 }
 
-/** 删除按钮操作 */
 function handleDelete(row: User) {
   ElMessageBox.confirm('是否确认删除用户"' + row.username + '"？', '警告', {
     confirmButtonText: '确定',
@@ -417,7 +400,6 @@ function handleDelete(row: User) {
   })
 }
 
-/** 更多操作触发 */
 function handleCommand(command: string, row: User) {
   switch (command) {
     case 'resetPwd':
@@ -426,7 +408,6 @@ function handleCommand(command: string, row: User) {
   }
 }
 
-/** 重置密码按钮操作 */
 function handleResetPwd(row: User) {
   ElMessageBox.prompt('请输入"' + row.username + '"的新密码', '重置密码', {
     confirmButtonText: '确定',
@@ -440,7 +421,6 @@ function handleResetPwd(row: User) {
   }).catch(() => {})
 }
 
-/** 导出按钮操作 */
 function handleExport() {
   ElMessageBox.confirm('是否确认导出所有用户数据?', '警告', {
     confirmButtonText: '确定',
@@ -460,7 +440,6 @@ function handleExport() {
   }).catch(() => {})
 }
 
-/** 导入按钮操作 */
 function handleImport() {
   importDialogVisible.value = true
   updateSupport.value = false
@@ -468,12 +447,10 @@ function handleImport() {
   uploadRef.value?.clearFiles()
 }
 
-/** 文件改变 */
 function handleFileChange(file: UploadFile) {
   importFile.value = file.raw ?? null
 }
 
-/** 下载模板 */
 function handleDownloadTemplate() {
   downloadTemplate().then(response => {
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
@@ -486,7 +463,6 @@ function handleDownloadTemplate() {
   })
 }
 
-/** 提交导入 */
 function submitImport() {
   if (!importFile.value) {
     ElMessage.warning('请选择要导入的文件')

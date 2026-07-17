@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,7 +7,6 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar show-refresh @refresh="getList">
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" size="small" @click="handleClean">清空</el-button>
@@ -18,7 +16,6 @@
       </el-col>
     </TableToolbar>
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="jobLogList" border>
       <el-table-column label="日志编号" align="center" prop="jobLogId" width="80" />
       <el-table-column label="任务名称" align="center" prop="jobName" show-overflow-tooltip />
@@ -53,7 +50,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <pagination
       v-show="total > 0"
       :total="total"
@@ -62,7 +58,6 @@
       @pagination="getList"
     />
 
-    <!-- 查看详情对话框 -->
     <el-dialog title="调度日志详细" v-model="viewDialogVisible" width="700px" append-to-body>
       <el-form :model="viewForm" label-width="120px">
         <el-row>
@@ -147,7 +142,6 @@ const queryParams = reactive<JobLogQuery & { current: number; size: number }>({
 const viewDialogVisible = ref(false)
 const viewForm = ref<JobLog>({})
 
-/** 查询任务日志列表 */
 function getList() {
   loading.value = true
   listJobLog(queryParams).then(res => {
@@ -158,7 +152,6 @@ function getList() {
   })
 }
 
-/** 搜索按钮操作 */
 function handleQuery() {
   queryParams.current = 1
   getList()
@@ -171,7 +164,6 @@ function resetQuery() {
   handleQuery()
 }
 
-/** 查看按钮操作 */
 function handleView(row: JobLog) {
   getJobLog(row.jobLogId as number).then(res => {
     viewForm.value = res.data
@@ -179,7 +171,6 @@ function handleView(row: JobLog) {
   })
 }
 
-/** 删除按钮操作 */
 function handleDelete(row: JobLog) {
   ElMessageBox.confirm('是否确认删除日志编号为"' + row.jobLogId + '"的数据项？', '警告', {
     confirmButtonText: '确定',
@@ -193,7 +184,6 @@ function handleDelete(row: JobLog) {
   })
 }
 
-/** 清空按钮操作 */
 function handleClean() {
   ElMessageBox.confirm('是否确认清空所有调度日志数据？', '警告', {
     confirmButtonText: '确定',
@@ -207,12 +197,10 @@ function handleClean() {
   })
 }
 
-/** 返回按钮操作 */
 function handleBack() {
   router.push('/monitor/job')
 }
 
-// init
 getList()
 </script>
 

@@ -3,27 +3,22 @@ import type { Result, TableResponse } from '@/types/api'
 import type { LoginPetType } from '@/types/login-pet'
 import type { Config, ConfigQuery, LoginPetTypeUpdateBody } from '@/types/system/config'
 
-/** 分页查询参数配置列表 */
 export function listConfig(query: ConfigQuery): Promise<TableResponse<Config>> {
   return request({ url: '/system/config/list', method: 'get', params: query })
 }
 
-/** 查询参数配置详细信息 */
 export function getConfig(configId: number): Promise<Result<Config>> {
   return request({ url: '/system/config/' + configId, method: 'get' })
 }
 
-/** 新增参数配置 */
 export function addConfig(data: Config): Promise<Result<void>> {
   return request({ url: '/system/config', method: 'post', data })
 }
 
-/** 修改参数配置 */
 export function updateConfig(data: Config): Promise<Result<void>> {
   return request({ url: '/system/config', method: 'put', data })
 }
 
-/** 删除参数配置 */
 export function delConfig(configIds: number | number[]): Promise<Result<void>> {
   return request({ url: '/system/config/' + configIds, method: 'delete' })
 }
@@ -37,7 +32,6 @@ export function getLoginPetType(): Promise<Result<LoginPetType>> {
   })
 }
 
-/** 更新全局登录宠物类型 */
 export function updateLoginPetType(type: LoginPetType): Promise<Result<void>> {
   const data: LoginPetTypeUpdateBody = { type }
   return request({ url: '/system/config/login-pet', method: 'put', data })

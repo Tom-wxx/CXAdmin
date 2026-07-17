@@ -2,7 +2,6 @@ import request from '@/utils/request'
 import type { Result } from '@/types/api'
 import type { SystemOverview, TrendPoint, NameValue } from '@/types/statistics'
 
-/** 获取系统概览数据 */
 export function getSystemOverview(): Promise<Result<SystemOverview>> {
   return request({
     url: '/statistics/overview',
@@ -10,7 +9,6 @@ export function getSystemOverview(): Promise<Result<SystemOverview>> {
   })
 }
 
-/** 获取用户增长趋势 */
 export function getUserGrowthTrend(days: number): Promise<Result<TrendPoint[]>> {
   return request({
     url: '/statistics/user/growth',
@@ -19,7 +17,6 @@ export function getUserGrowthTrend(days: number): Promise<Result<TrendPoint[]>> 
   })
 }
 
-/** 获取登录统计趋势 */
 export function getLoginStatistics(days: number): Promise<Result<TrendPoint[]>> {
   return request({
     url: '/statistics/login/trend',
@@ -28,7 +25,6 @@ export function getLoginStatistics(days: number): Promise<Result<TrendPoint[]>> 
   })
 }
 
-/** 获取操作日志统计 */
 export function getOperationStatistics(days: number): Promise<Result<TrendPoint[]>> {
   return request({
     url: '/statistics/operation/trend',
@@ -37,7 +33,6 @@ export function getOperationStatistics(days: number): Promise<Result<TrendPoint[
   })
 }
 
-/** 获取部门人员分布 */
 export function getDeptUserDistribution(): Promise<Result<NameValue[]>> {
   return request({
     url: '/statistics/dept/distribution',
@@ -45,7 +40,6 @@ export function getDeptUserDistribution(): Promise<Result<NameValue[]>> {
   })
 }
 
-/** 获取角色人员分布 */
 export function getRoleUserDistribution(): Promise<Result<NameValue[]>> {
   return request({
     url: '/statistics/role/distribution',
@@ -53,7 +47,6 @@ export function getRoleUserDistribution(): Promise<Result<NameValue[]>> {
   })
 }
 
-/** 获取操作类型统计 */
 export function getOperationTypeStatistics(): Promise<Result<NameValue[]>> {
   return request({
     url: '/statistics/operation/type',

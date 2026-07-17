@@ -7,17 +7,14 @@ export function listMenu(query?: MenuQuery): Promise<Result<Menu[]>> {
   return request({ url: '/system/menu/list', method: 'get', params: query })
 }
 
-/** 查询菜单详细信息 */
 export function getMenu(menuId: number): Promise<Result<Menu>> {
   return request({ url: '/system/menu/' + menuId, method: 'get' })
 }
 
-/** 新增菜单 */
 export function addMenu(data: Menu): Promise<Result<void>> {
   return request({ url: '/system/menu', method: 'post', data })
 }
 
-/** 修改菜单 */
 export function updateMenu(data: Menu): Promise<Result<void>> {
   return request({ url: '/system/menu', method: 'put', data })
 }
@@ -26,7 +23,6 @@ export function updateMenu(data: Menu): Promise<Result<void>> {
 export function delMenu(menuId: number, force?: boolean): Promise<Result<void>> {
   return request({ url: '/system/menu/' + menuId, method: 'delete', params: { force } })
 }
-
 
 /** 获取菜单下拉树列表 */
 export function treeselect(): Promise<Result<TreeOption[]>> {

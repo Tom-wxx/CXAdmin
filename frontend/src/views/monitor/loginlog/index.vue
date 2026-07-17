@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,14 +7,12 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar show-export show-refresh :export-disabled="exportLoading" @export="handleExport" @refresh="getList">
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" size="small" @click="handleClean">清空</el-button>
       </el-col>
     </TableToolbar>
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="loginLogList" border>
       <el-table-column label="日志编号" align="center" prop="infoId" width="100" />
       <el-table-column label="用户账号" align="center" prop="username" width="120" />
@@ -52,7 +49,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <pagination
       v-show="total > 0"
       :total="total"
@@ -61,7 +57,6 @@
       @pagination="getList"
     />
 
-    <!-- 详细信息对话框 -->
     <el-dialog title="登录日志详细" v-model="detailVisible" width="700px" append-to-body>
       <el-form :model="detailData" label-width="100px">
         <el-row>
@@ -151,7 +146,6 @@ const detailVisible = ref(false)
 const detailData = ref<LoginLog>({})
 const exportLoading = ref(false)
 
-/** 查询登录日志列表 */
 function getList() {
   loading.value = true
   const range = queryParams.dateRange
@@ -170,7 +164,6 @@ function getList() {
   })
 }
 
-/** 搜索按钮操作 */
 function handleQuery() {
   queryParams.current = 1
   getList()
@@ -183,7 +176,6 @@ function resetQuery() {
   handleQuery()
 }
 
-/** 详细按钮操作 */
 function handleView(row: LoginLog) {
   getLoginLog(row.infoId as number).then(res => {
     detailData.value = res.data
@@ -191,7 +183,6 @@ function handleView(row: LoginLog) {
   })
 }
 
-/** 删除按钮操作 */
 function handleDelete(row: LoginLog) {
   ElMessageBox.confirm('是否确认删除日志编号为"' + row.infoId + '"的数据项？', '警告', {
     confirmButtonText: '确定',
@@ -205,7 +196,6 @@ function handleDelete(row: LoginLog) {
   })
 }
 
-/** 清空按钮操作 */
 function handleClean() {
   ElMessageBox.confirm('是否确认清空所有登录日志数据项？', '警告', {
     confirmButtonText: '确定',
@@ -219,7 +209,6 @@ function handleClean() {
   })
 }
 
-/** 导出按钮操作 */
 function handleExport() {
   ElMessageBox.confirm('是否确认导出所有登录日志数据？', '警告', {
     confirmButtonText: '确定',
@@ -242,7 +231,6 @@ function handleExport() {
   })
 }
 
-// init
 getList()
 </script>
 

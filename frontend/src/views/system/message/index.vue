@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,7 +7,6 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar
       show-add
       show-delete
@@ -19,7 +17,6 @@
       @refresh="getList"
     />
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="消息ID" align="center" prop="messageId" width="80" />
@@ -60,7 +57,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <Pagination
       v-show="total > 0"
       :total="total"
@@ -69,7 +65,6 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改对话框 -->
     <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="消息名称" prop="messageName">

@@ -8,7 +8,6 @@ export interface DashboardChartSeries {
   [key: string]: unknown
 }
 
-/** 仪表板统计卡片数据 */
 export interface DashboardStatCard {
   totalUsers?: number
   todayUsers?: number
@@ -22,7 +21,6 @@ export interface DashboardStatCard {
   [key: string]: unknown
 }
 
-/** 仪表板近期操作日志条目 */
 export interface DashboardRecentLog {
   id?: number | string
   operTime?: string
@@ -33,7 +31,6 @@ export interface DashboardRecentLog {
   [key: string]: unknown
 }
 
-/** 仪表板完整数据 */
 export interface DashboardData {
   statCard?: DashboardStatCard
   userTrend?: DashboardChartSeries
@@ -43,9 +40,6 @@ export interface DashboardData {
   [key: string]: unknown
 }
 
-/**
- * 获取仪表板完整数据
- */
 export function getDashboardData(): Promise<Result<DashboardData>> {
   return request({
     url: '/dashboard/data',

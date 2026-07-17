@@ -2,7 +2,6 @@ import request from '@/utils/request'
 import type { Result, TableResponse } from '@/types/api'
 import type { User, UserQuery, UserFormOptions } from '@/types/system/user'
 
-/** 分页查询用户列表 */
 export function listUser(query: UserQuery): Promise<TableResponse<User>> {
   return request({
     url: '/system/user/list',
@@ -11,7 +10,6 @@ export function listUser(query: UserQuery): Promise<TableResponse<User>> {
   })
 }
 
-/** 查询用户详细信息 */
 export function getUser(userId: number): Promise<Result<User>> {
   return request({
     url: '/system/user/' + userId,
@@ -19,7 +17,6 @@ export function getUser(userId: number): Promise<Result<User>> {
   })
 }
 
-/** 新增用户 */
 export function addUser(data: User): Promise<Result<void>> {
   return request({
     url: '/system/user',
@@ -28,7 +25,6 @@ export function addUser(data: User): Promise<Result<void>> {
   })
 }
 
-/** 修改用户 */
 export function updateUser(data: User): Promise<Result<void>> {
   return request({
     url: '/system/user',
@@ -45,7 +41,6 @@ export function delUser(userIds: number | number[]): Promise<Result<void>> {
   })
 }
 
-/** 重置用户密码 */
 export function resetUserPwd(userId: number, newPassword: string): Promise<Result<void>> {
   return request({
     url: '/system/user/resetPwd',
@@ -62,7 +57,6 @@ export function changeUserStatus(userId: number, status: string): Promise<Result
     params: { userId, status }
   })
 }
-
 
 /** 获取用户表单选项（部门、岗位、角色） */
 export function getUserFormOptions(): Promise<Result<UserFormOptions>> {
@@ -91,7 +85,6 @@ export function downloadTemplate(): Promise<Blob> {
   }) as unknown as Promise<Blob>
 }
 
-/** 导入用户数据 */
 export function importUser(data: FormData): Promise<Result<void>> {
   return request({
     url: '/system/user/import',

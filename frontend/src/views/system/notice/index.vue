@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,10 +7,8 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList" />
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="list" border>
       <el-table-column label="公告编号" align="center" prop="noticeId" width="100" />
       <el-table-column label="公告标题" align="center" prop="noticeTitle" show-overflow-tooltip />
@@ -55,7 +52,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <Pagination
       v-show="total > 0"
       :total="total"
@@ -64,7 +60,6 @@
       @pagination="getList"
     />
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="820px" append-to-body :close-on-click-modal="false">
       <el-form ref="noticeFormRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="公告标题" prop="noticeTitle">
@@ -100,7 +95,6 @@
       </div></template>
     </el-dialog>
 
-    <!-- 查看详情对话框 -->
     <el-dialog title="公告详情" v-model="viewDialogVisible" width="820px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="公告标题">{{ viewForm.noticeTitle }}</el-descriptions-item>
@@ -167,16 +161,13 @@ const { loading, list, total, queryParams, getList, handleQuery, resetQuery } =
     defaultQuery: { noticeTitle: undefined, noticeType: undefined, status: undefined }
   })
 
-// 编辑对话框
 const dialogTitle = ref('')
 const dialogVisible = ref(false)
 const noticeFormRef = ref<FormInstance>()
 
-// 查看详情对话框
 const viewDialogVisible = ref(false)
 const viewForm = reactive<Notice>({})
 
-// 富文本编辑器配置
 const editorOptions = {
   theme: 'snow',
   placeholder: '请输入公告内容',

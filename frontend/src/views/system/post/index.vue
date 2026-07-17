@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,7 +7,6 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar
       show-add
       show-delete
@@ -22,7 +20,6 @@
       @refresh="getList"
     />
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" border>
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="岗位ID" align="center" prop="postId" width="80" />
@@ -62,7 +59,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <Pagination
       v-show="total > 0"
       :total="total"
@@ -71,7 +67,6 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改岗位对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="岗位编码" prop="postCode">
@@ -132,12 +127,10 @@ const { loading, list, total, queryParams, getList, handleQuery, resetQuery } =
     defaultQuery: { postCode: undefined, postName: undefined, status: undefined }
   })
 
-// 选择项
 const ids = ref<number[]>([])
 const single = ref(true)
 const multiple = ref(true)
 
-// 对话框
 const title = ref('')
 const open = ref(false)
 const formRef = ref<FormInstance>()

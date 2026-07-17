@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,14 +7,12 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList">
       <el-col :span="1.5">
         <el-button type="info" plain icon="Sort" size="small" @click="toggleExpandAll">展开/折叠</el-button>
       </el-col>
     </TableToolbar>
 
-    <!-- 部门树形表格 -->
     <el-table
       v-if="refreshTable"
       v-loading="loading"
@@ -62,7 +59,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 添加或修改部门对话框 -->
     <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-row>
@@ -155,21 +151,13 @@ const searchFields = [
 
 const statusOptions = STATUS_OPTIONS
 
-// 遮罩层
 const loading = ref(true)
-// 部门列表
 const deptList = ref<Dept[]>([])
-// 部门树选项
 const deptOptions = ref<Dept[]>([])
-// 弹出层标题
 const title = ref('')
-// 是否显示弹出层
 const open = ref(false)
-// 是否展开，默认全部展开
 const isExpandAll = ref(true)
-// 重新渲染表格状态
 const refreshTable = ref(true)
-// 查询参数
 const queryParams = reactive<DeptQuery>({
   deptName: undefined,
   status: undefined
@@ -188,10 +176,8 @@ const formDefaults: Dept = {
   status: '0'
 }
 
-// 表单参数
 const form = reactive<Dept>({ ...formDefaults })
 
-// 表单校验
 const rules = reactive<FormRules>({
   parentId: [
     { required: true, message: '上级部门不能为空', trigger: 'blur' }
@@ -218,7 +204,6 @@ const rules = reactive<FormRules>({
   ]
 })
 
-/** 查询部门列表 */
 function getList() {
   loading.value = true
   listDept(queryParams).then(response => {
@@ -227,7 +212,6 @@ function getList() {
   })
 }
 
-/** 查询部门下拉树结构 */
 function getTreeselect() {
   listDept().then(response => {
     const dept: Dept = { deptId: 0, deptName: '主类目', children: handleTree(response.data) }
@@ -235,29 +219,24 @@ function getTreeselect() {
   })
 }
 
-// 取消按钮
 function cancel() {
   open.value = false
   reset()
 }
 
-// 表单重置
 function reset() {
   Object.assign(form, formDefaults)
   formRef.value?.resetFields()
 }
 
-/** 搜索按钮操作 */
 function handleQuery() {
   getList()
 }
 
-/** 重置按钮操作 */
 function resetQuery() {
   handleQuery()
 }
 
-/** 新增按钮操作 */
 function handleAdd(row?: Dept) {
   reset()
   getTreeselect()
@@ -270,7 +249,6 @@ function handleAdd(row?: Dept) {
   title.value = '添加部门'
 }
 
-/** 展开/折叠操作 */
 function toggleExpandAll() {
   refreshTable.value = false
   isExpandAll.value = !isExpandAll.value
@@ -279,7 +257,6 @@ function toggleExpandAll() {
   })
 }
 
-/** 修改按钮操作 */
 function handleUpdate(row: Dept) {
   reset()
   getTreeselect()
@@ -290,7 +267,6 @@ function handleUpdate(row: Dept) {
   })
 }
 
-/** 提交按钮 */
 function submitForm() {
   formRef.value?.validate(valid => {
     if (valid) {
@@ -311,7 +287,6 @@ function submitForm() {
   })
 }
 
-/** 删除按钮操作 */
 function handleDelete(row: Dept) {
   ElMessageBox.confirm('是否确认删除名称为"' + row.deptName + '"的数据项?', '警告', {
     confirmButtonText: '确定',

@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,14 +7,12 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList">
       <el-col :span="1.5">
         <el-button type="info" plain icon="Sort" size="small" @click="toggleExpandAll">展开/折叠</el-button>
       </el-col>
     </TableToolbar>
 
-    <!-- 数据表格（树形） -->
     <el-table
       v-if="refreshTable"
       v-loading="loading"
@@ -68,7 +65,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="680px" append-to-body>
       <el-form ref="menuFormRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
@@ -260,21 +256,13 @@ const searchFields = [
 
 const statusOptions = STATUS_OPTIONS
 
-// 加载状态
 const loading = ref(true)
-// 菜单列表
 const menuList = ref<Menu[]>([])
-// 菜单树选项
 const menuOptions = ref<Menu[]>([])
-// 对话框标题
 const dialogTitle = ref('')
-// 对话框显示状态
 const dialogVisible = ref(false)
-// 是否展开，默认全部展开
 const isExpandAll = ref(true)
-// 重新渲染表格状态
 const refreshTable = ref(true)
-// 查询参数
 const queryParams = reactive<MenuQuery>({
   menuName: undefined,
   status: undefined
@@ -296,10 +284,8 @@ const formDefaults: Menu = {
   status: '0'
 }
 
-// 表单数据
 const form = reactive<Menu>({ ...formDefaults })
 
-// 表单校验规则
 const rules = reactive<FormRules>({
   menuName: [
     { required: true, message: '菜单名称不能为空', trigger: 'blur' }
@@ -312,7 +298,6 @@ const rules = reactive<FormRules>({
   ]
 })
 
-/** 查询菜单列表 */
 function getList() {
   loading.value = true
   listMenu(queryParams).then(response => {
@@ -323,7 +308,6 @@ function getList() {
   })
 }
 
-/** 查询菜单下拉树结构 */
 function getTreeselect() {
   treeselect().then(response => {
     // api 声明 treeselect() 返回 TreeOption[]（id/label），但后端 /treeselect 实际返回
@@ -334,22 +318,18 @@ function getTreeselect() {
   })
 }
 
-/** 选择图标 */
 function selected(name: string) {
   form.icon = name
 }
 
-/** 搜索按钮操作 */
 function handleQuery() {
   getList()
 }
 
-/** 重置按钮操作 */
 function resetQuery() {
   handleQuery()
 }
 
-/** 新增按钮操作 */
 function handleAdd(row?: Menu) {
   reset()
   getTreeselect()
@@ -362,7 +342,6 @@ function handleAdd(row?: Menu) {
   dialogVisible.value = true
 }
 
-/** 展开/折叠操作 */
 function toggleExpandAll() {
   refreshTable.value = false
   isExpandAll.value = !isExpandAll.value
@@ -371,7 +350,6 @@ function toggleExpandAll() {
   })
 }
 
-/** 修改按钮操作 */
 function handleUpdate(row: Menu) {
   reset()
   getTreeselect()
@@ -382,7 +360,6 @@ function handleUpdate(row: Menu) {
   })
 }
 
-/** 提交按钮 */
 function submitForm() {
   menuFormRef.value?.validate(valid => {
     if (valid) {
@@ -403,19 +380,16 @@ function submitForm() {
   })
 }
 
-/** 取消按钮 */
 function cancel() {
   dialogVisible.value = false
   reset()
 }
 
-/** 表单重置 */
 function reset() {
   Object.assign(form, formDefaults)
   menuFormRef.value?.resetFields()
 }
 
-/** 删除按钮操作 */
 function handleDelete(row: Menu) {
   ElMessageBox.confirm('是否确认删除名称为"' + row.menuName + '"的菜单？', '警告', {
     confirmButtonText: '确定',

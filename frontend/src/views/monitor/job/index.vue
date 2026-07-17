@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,14 +7,12 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar show-add show-refresh @add="handleAdd" @refresh="getList">
       <el-col :span="1.5">
         <el-button type="success" plain icon="Document" size="small" @click="handleJobLog">日志</el-button>
       </el-col>
     </TableToolbar>
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="jobList" border>
       <el-table-column label="任务编号" align="center" prop="jobId" width="80" />
       <el-table-column label="任务名称" align="center" prop="jobName" show-overflow-tooltip />
@@ -56,7 +53,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <pagination
       v-show="total > 0"
       :total="total"
@@ -65,7 +61,6 @@
       @pagination="getList"
     />
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px" append-to-body>
       <el-form ref="jobFormRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="任务名称" prop="jobName">
@@ -187,7 +182,6 @@ const rules: FormRules = {
   ]
 }
 
-/** 查询定时任务列表 */
 function getList() {
   loading.value = true
   listJob(queryParams).then(res => {
@@ -199,7 +193,6 @@ function getList() {
   })
 }
 
-/** 搜索按钮操作 */
 function handleQuery() {
   queryParams.current = 1
   getList()
@@ -212,20 +205,17 @@ function resetQuery() {
   handleQuery()
 }
 
-/** 表单重置 */
 function reset() {
   form.value = emptyForm()
   jobFormRef.value?.resetFields()
 }
 
-/** 新增按钮操作 */
 function handleAdd() {
   reset()
   dialogTitle.value = '添加定时任务'
   dialogVisible.value = true
 }
 
-/** 修改按钮操作 */
 function handleUpdate(row: Job) {
   reset()
   getJob(row.jobId as number).then(res => {
@@ -235,7 +225,6 @@ function handleUpdate(row: Job) {
   })
 }
 
-/** 提交按钮 */
 function submitForm() {
   jobFormRef.value?.validate(valid => {
     if (valid) {
@@ -256,13 +245,11 @@ function submitForm() {
   })
 }
 
-/** 取消按钮 */
 function cancel() {
   dialogVisible.value = false
   reset()
 }
 
-/** 任务状态修改 */
 function handleStatusChange(row: Job) {
   const text = row.status === '0' ? '启用' : '停用'
   ElMessageBox.confirm('确认要"' + text + '""' + row.jobName + '"任务吗？', '警告', {
@@ -278,7 +265,6 @@ function handleStatusChange(row: Job) {
     })
 }
 
-/** 立即执行按钮操作 */
 function handleRun(row: Job) {
   ElMessageBox.confirm('确认要立即执行一次"' + row.jobName + '"任务吗？', '警告', {
     confirmButtonText: '确定',
@@ -291,7 +277,6 @@ function handleRun(row: Job) {
     .catch(() => { /* 用户取消 */ })
 }
 
-/** 删除按钮操作 */
 function handleDelete(row: Job) {
   ElMessageBox.confirm('是否确认删除任务名称为"' + row.jobName + '"的数据项？', '警告', {
     confirmButtonText: '确定',
@@ -305,7 +290,6 @@ function handleDelete(row: Job) {
     .catch(() => { /* 用户取消 */ })
 }
 
-/** 任务日志按钮操作 */
 function handleJobLog() {
   router.push('/monitor/jobLog')
 }

@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,7 +7,6 @@
       @reset="resetQuery"
     />
 
-    <!-- 操作按钮 -->
     <TableToolbar show-refresh @refresh="getList">
       <el-col :span="1.5">
         <el-button type="success" plain icon="Check" size="small" :disabled="multiple" @click="handleMarkAsRead">标记已读</el-button>
@@ -21,7 +19,6 @@
       </el-col>
     </TableToolbar>
 
-    <!-- 通知列表 -->
     <el-table v-loading="loading" :data="notificationList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="状态" align="center" width="80">
@@ -78,7 +75,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <pagination
       v-show="total > 0"
       :total="total"
@@ -87,7 +83,6 @@
       @pagination="getList"
     />
 
-    <!-- 查看通知对话框 -->
     <el-dialog :title="viewForm.title" v-model="viewOpen" width="600px" append-to-body>
       <el-descriptions :column="1" border>
         <el-descriptions-item label="通知类型">
@@ -176,7 +171,6 @@ const queryParams = reactive<NotificationQuery>({
   status: undefined
 })
 
-/** 查询通知列表 */
 function getList() {
   loading.value = true
   listNotification(queryParams).then(res => {
@@ -186,7 +180,6 @@ function getList() {
   })
 }
 
-/** 搜索按钮操作 */
 function handleQuery() {
   queryParams.current = 1
   getList()
@@ -199,13 +192,11 @@ function resetQuery() {
   handleQuery()
 }
 
-// 多选框选中数据
 function handleSelectionChange(selection: Notification[]) {
   ids.value = selection.map(item => item.id as number)
   multiple.value = !selection.length
 }
 
-/** 查看通知 */
 function handleView(row: Notification) {
   getNotification(row.id as number).then(res => {
     viewForm.value = res.data
@@ -215,7 +206,6 @@ function handleView(row: Notification) {
   })
 }
 
-/** 标记已读 */
 function handleMarkAsRead() {
   if (ids.value.length === 0) {
     ElMessage.warning('请选择要标记的通知')
@@ -227,7 +217,6 @@ function handleMarkAsRead() {
   })
 }
 
-/** 全部标记为已读 */
 function handleMarkAllAsRead() {
   ElMessageBox.confirm('确认将所有未读消息标记为已读吗?', '提示', {
     confirmButtonText: '确定',
@@ -241,7 +230,6 @@ function handleMarkAllAsRead() {
     .catch(() => { /* 用户取消 */ })
 }
 
-/** 删除按钮操作 */
 function handleDelete(row?: Notification) {
   const delIds = row?.id ? [row.id] : ids.value
   if (delIds.length === 0) {

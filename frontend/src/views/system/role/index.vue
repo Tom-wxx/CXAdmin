@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 搜索表单 -->
     <SearchForm
       :model="queryParams"
       :fields="searchFields"
@@ -8,7 +7,6 @@
       @reset="resetQuery"
     />
 
-    <!-- 工具栏 -->
     <TableToolbar
       show-add
       show-export
@@ -19,7 +17,6 @@
       @refresh="getList"
     />
 
-    <!-- 数据表格 -->
     <el-table v-loading="loading" :data="roleList" border>
       <el-table-column label="角色ID" align="center" prop="roleId" width="80" />
       <el-table-column label="角色名称" align="center" prop="roleName" />
@@ -64,7 +61,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <pagination
       v-show="total > 0"
       :total="total"
@@ -73,7 +69,6 @@
       @pagination="getList"
     />
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
       <el-form ref="roleFormRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
@@ -131,7 +126,6 @@
       </div></template>
     </el-dialog>
 
-    <!-- 权限分配对话框 -->
     <el-dialog title="权限分配" v-model="permissionDialogVisible" width="600px" append-to-body>
       <el-form label-width="100px">
         <el-form-item label="角色名称">
@@ -197,7 +191,6 @@ const { loading, list: roleList, total, queryParams, getList, handleQuery, reset
     defaultQuery: { roleName: undefined, roleKey: undefined, status: undefined }
   })
 
-// 对话框
 const dialogTitle = ref('')
 const dialogVisible = ref(false)
 const roleFormRef = ref<FormInstance>()
@@ -232,7 +225,6 @@ const rules = reactive<FormRules>({
   ]
 })
 
-// 权限分配对话框
 const permissionDialogVisible = ref(false)
 const currentRole = reactive<Role>({})
 const menuOptions = ref<Menu[]>([])
@@ -245,14 +237,12 @@ const menuNodeAll = ref(false)
 const exportLoading = ref(false)
 const menuTreeRef = ref<InstanceType<typeof ElTree>>()
 
-/** 新增按钮操作 */
 function handleAdd() {
   reset()
   dialogTitle.value = '添加角色'
   dialogVisible.value = true
 }
 
-/** 修改按钮操作 */
 function handleUpdate(row: Role) {
   reset()
   const roleId = row.roleId as number // 表格行数据，roleId 必然存在
@@ -263,7 +253,6 @@ function handleUpdate(row: Role) {
   })
 }
 
-/** 提交按钮 */
 function submitForm() {
   roleFormRef.value?.validate(valid => {
     if (valid) {
@@ -284,19 +273,16 @@ function submitForm() {
   })
 }
 
-/** 取消按钮 */
 function cancel() {
   dialogVisible.value = false
   reset()
 }
 
-/** 表单重置 */
 function reset() {
   Object.assign(form, formDefaults, { menuIds: [], deptIds: [] })
   roleFormRef.value?.resetFields()
 }
 
-/** 角色状态修改 */
 function handleStatusChange(row: Role) {
   const text = row.status === '0' ? '启用' : '停用'
   ElMessageBox.confirm('确认要"' + text + '""' + row.roleName + '"角色吗？', '警告', {
@@ -312,7 +298,6 @@ function handleStatusChange(row: Role) {
   })
 }
 
-/** 删除按钮操作 */
 function handleDelete(row: Role) {
   ElMessageBox.confirm('是否确认删除角色"' + row.roleName + '"？', '警告', {
     confirmButtonText: '确定',
@@ -326,7 +311,6 @@ function handleDelete(row: Role) {
   })
 }
 
-/** 权限分配按钮操作 */
 function handlePermission(row: Role) {
   reset()
   Object.assign(currentRole, {
@@ -334,23 +318,18 @@ function handlePermission(row: Role) {
     roleName: row.roleName,
     roleKey: row.roleKey
   })
-  // 获取角色详情
   getRole(row.roleId as number).then(response => {
     Object.assign(form, response.data)
     permissionDialogVisible.value = true
-    // 获取菜单树
     getMenuTreeselect()
   })
 }
 
-/** 查询菜单树结构 */
 function getMenuTreeselect() {
   listMenu({}).then(response => {
     menuOptions.value = buildMenuTree(response.data)
-    // 获取角色已分配的菜单ID
     return getMenuIds(currentRole.roleId as number) // 进入本对话框前已赋值
   }).then(response => {
-    // 设置选中的菜单节点
     const checkedKeys = response.data
     checkedKeys.forEach(menuId => {
       nextTick(() => {
@@ -360,17 +339,14 @@ function getMenuTreeselect() {
   })
 }
 
-/** 构建菜单树 */
 function buildMenuTree(menus: Menu[]): Menu[] {
   const tree: Menu[] = []
   const map: Record<number, Menu> = {}
 
-  // 创建节点映射
   menus.forEach(menu => {
     map[menu.menuId as number] = { ...menu, children: [] }
   })
 
-  // 构建树形结构
   menus.forEach(menu => {
     const node = map[menu.menuId as number]
     if (menu.parentId === 0) {
@@ -380,7 +356,6 @@ function buildMenuTree(menus: Menu[]): Menu[] {
     }
   })
 
-  // 删除空children
   function removeEmptyChildren(nodes: Menu[]) {
     nodes.forEach(node => {
       if (node.children && node.children.length === 0) {
@@ -395,7 +370,6 @@ function buildMenuTree(menus: Menu[]): Menu[] {
   return tree
 }
 
-/** 树权限（展开/折叠）*/
 function handleCheckedTreeExpand(value: unknown) {
   const treeList = menuOptions.value
   // el-tree 的 store.nodesMap 未在公开类型中暴露，此处直接访问其内部实现
@@ -406,23 +380,18 @@ function handleCheckedTreeExpand(value: unknown) {
   }
 }
 
-/** 树权限（全选/全不选）*/
 function handleCheckedTreeNodeAll(value: unknown) {
   // el-tree 类型声明要求 Node[]，但运行时按 node-key 接受原始数据对象，与其内部实现一致
   menuTreeRef.value?.setCheckedNodes((value ? menuOptions.value : []) as any)
 }
 
-/** 所有菜单节点数据 */
 function getMenuAllCheckedKeys(): number[] {
-  // 目前被选中的菜单节点
   const checkedKeys = (menuTreeRef.value?.getCheckedKeys() ?? []) as number[]
-  // 半选中的菜单节点
   const halfCheckedKeys = (menuTreeRef.value?.getHalfCheckedKeys() ?? []) as number[]
   checkedKeys.unshift(...halfCheckedKeys)
   return checkedKeys
 }
 
-/** 提交权限分配 */
 function submitPermission() {
   const roleId = currentRole.roleId as number // 进入本对话框前已赋值
   const menuIds = getMenuAllCheckedKeys()
@@ -432,13 +401,11 @@ function submitPermission() {
   })
 }
 
-/** 取消权限分配 */
 function cancelPermission() {
   permissionDialogVisible.value = false
   reset()
 }
 
-/** 导出按钮操作 */
 function handleExport() {
   ElMessageBox.confirm('是否确认导出所有角色数据？', '警告', {
     confirmButtonText: '确定',
