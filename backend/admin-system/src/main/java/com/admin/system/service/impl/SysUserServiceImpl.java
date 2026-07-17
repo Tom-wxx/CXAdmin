@@ -92,11 +92,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setPhonenumber(userDTO.getPhone());
         user.setSex(userDTO.getGender());
 
-        // 加密密码
         if (StringUtils.hasText(userDTO.getPassword())) {
             user.setPassword(SecurityUtils.encryptPassword(userDTO.getPassword()));
         } else {
-            // 默认密码
             user.setPassword(SecurityUtils.encryptPassword(SystemConstants.DEFAULT_PASSWORD));
         }
 
@@ -472,7 +470,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                         if (StringUtils.hasText(deptIdStr)) {
                             user.setDeptId(Long.parseLong(deptIdStr));
                         }
-                        // 设置默认密码
                         String pwd = StringUtils.hasText(password) ? password : SystemConstants.DEFAULT_PASSWORD;
                         user.setPassword(SecurityUtils.encryptPassword(pwd));
                         user.setStatus(SystemConstants.STATUS_NORMAL);
