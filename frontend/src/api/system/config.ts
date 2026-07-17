@@ -8,7 +8,6 @@ export function listConfig(query: ConfigQuery): Promise<TableResponse<Config>> {
   return request({ url: '/system/config/list', method: 'get', params: query })
 }
 
-
 /** 查询参数配置详细信息 */
 export function getConfig(configId: number): Promise<Result<Config>> {
   return request({ url: '/system/config/' + configId, method: 'get' })
@@ -28,7 +27,6 @@ export function updateConfig(data: Config): Promise<Result<void>> {
 export function delConfig(configIds: number | number[]): Promise<Result<void>> {
   return request({ url: '/system/config/' + configIds, method: 'delete' })
 }
-
 
 /** 公开读取登录宠物类型，失败时由调用方静默回退 */
 export function getLoginPetType(): Promise<Result<LoginPetType>> {

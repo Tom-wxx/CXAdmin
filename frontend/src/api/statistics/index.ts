@@ -28,7 +28,6 @@ export function getLoginStatistics(days: number): Promise<Result<TrendPoint[]>> 
   })
 }
 
-
 /** 获取操作日志统计 */
 export function getOperationStatistics(days: number): Promise<Result<TrendPoint[]>> {
   return request({
