@@ -58,7 +58,6 @@ public final class SystemConstants {
      */
     public static final String CONFIG_TYPE_BUILTIN = "Y";
 
-    // ==================== 菜单类型 ====================
 
     // ==================== 超级管理员 ====================
 
