@@ -60,21 +60,6 @@ public final class SystemConstants {
 
     // ==================== 菜单类型 ====================
 
-    /**
-     * 菜单类型 - 目录
-     */
-    public static final String MENU_TYPE_DIR = "M";
-
-    /**
-     * 菜单类型 - 菜单
-     */
-    public static final String MENU_TYPE_MENU = "C";
-
-    /**
-     * 菜单类型 - 按钮
-     */
-    public static final String MENU_TYPE_BUTTON = "F";
-
     // ==================== 超级管理员 ====================
 
     /**

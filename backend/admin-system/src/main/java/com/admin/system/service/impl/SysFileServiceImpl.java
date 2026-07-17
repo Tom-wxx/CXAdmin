@@ -4,7 +4,6 @@ import com.admin.common.exception.ServiceException;
 import com.admin.common.config.FileUploadConfig;
 import com.admin.system.entity.SysFile;
 import com.admin.system.mapper.SysFileMapper;
-import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.ISysFileService;
 import com.admin.common.utils.FileUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -18,7 +17,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 
 /**

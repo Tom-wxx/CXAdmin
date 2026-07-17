@@ -1,7 +1,5 @@
 package com.admin.system.task;
 
-import com.admin.system.service.ISysLoginLogService;
-import com.admin.system.service.ISysOperLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +22,6 @@ public class SystemTask {
     private static final Logger log = LoggerFactory.getLogger(SystemTask.class);
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final ISysOperLogService operLogService;
-    private final ISysLoginLogService loginLogService;
 
     /**
      * 系统信息监控任务
@@ -67,9 +63,6 @@ public class SystemTask {
             // 清理30天前的操作日志
             LocalDateTime expireTime = LocalDateTime.now().minusDays(30);
             log.info("开始清理{}之前的操作日志", expireTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-
-            // 这里可以调用service的方法删除过期日志
-            // operLogService.deleteExpiredLogs(expireTime);
 
             log.info("清理过期日志任务执行完成");
         } catch (Exception e) {
@@ -113,14 +106,6 @@ public class SystemTask {
             String today = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
             log.info("开始统计{}的数据...", today);
-
-            // 统计今日登录次数
-            // Long loginCount = loginLogService.countTodayLogins();
-            // log.info("今日登录次数: {}", loginCount);
-
-            // 统计今日操作次数
-            // Long operCount = operLogService.countTodayOperations();
-            // log.info("今日操作次数: {}", operCount);
 
             log.info("数据统计任务执行完成");
         } catch (Exception e) {

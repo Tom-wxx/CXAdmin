@@ -219,14 +219,4 @@ public class SysFileController {
         return Result.success(result);
     }
 
-    /**
-     * 格式化文件大小
-     */
-    private void formatSize(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        if (value != null) {
-            long size = ((Number) value).longValue();
-            map.put(key + "_text", FileUtil.formatFileSize(size));
-        }
-    }
 }

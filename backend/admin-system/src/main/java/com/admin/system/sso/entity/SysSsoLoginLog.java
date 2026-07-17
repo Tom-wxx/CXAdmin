@@ -19,7 +19,6 @@ public class SysSsoLoginLog implements Serializable {
 
     public static final String ACTION_AUTHORIZE = "authorize";
     public static final String ACTION_CALLBACK  = "callback";
-    public static final String ACTION_BIND      = "bind";
     public static final String ACTION_UNBIND    = "unbind";
 
     public static final String STATUS_SUCCESS = "success";
