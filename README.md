@@ -72,19 +72,28 @@
 
 ### 1. 初始化数据库
 
+**本地开发无需任何手工操作** —— 表结构与种子数据由 Flyway 在后端启动时自动完成，库不存在时也会由 JDBC 驱动自动创建（dev 的连接串带 `createDatabaseIfNotExist=true`）。确认 MySQL 已启动即可直接跳到下一步。
+
+迁移脚本位于 `backend/admin-boot/src/main/resources/db/migration/`：
+
+| 脚本 | 作用 |
+| --- | --- |
+| `V1__init_schema.sql` | 28 张表的结构 |
+| `V2__init_data.sql` | RBAC / 菜单 / 字典 / 配置 / 定时任务 / 通知模板等种子数据 |
+| `V3__add_login_pet_config.sql` | 登录页宠物配置（幂等） |
+| `V4__fix_message_notification_collation.sql` | 统一 message / notification 系列表的排序规则 |
+
+**连接到已存在的数据库时**，Flyway 会自动把现状认作 `baseline=2` 并跳过 V1/V2，只执行 V3 起的增量，**不会改动或清空既有数据**。
+
+**生产环境**需先由 DBA 建好空库（应用账号通常没有建库权限），随后启动即自动建表：
+
 ```sql
--- 创建数据库
-CREATE DATABASE admin_system DEFAULT CHARACTER SET utf8mb4;
-
--- 导入数据（单文件聚合所有表 + 种子数据，按依赖顺序执行）
-mysql -u root -p admin_system < database/init.sql
+CREATE DATABASE IF NOT EXISTS admin_system
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_general_ci;
 ```
 
-已有数据库升级时不要重新执行初始化脚本，请改为执行幂等升级 SQL：
-
-```bash
-mysql -u root -p admin_system < database/upgrade/20260713_add_login_pet_config.sql
-```
+后续要改表结构时，**不要修改已提交的 V*.sql**（Flyway 会校验校验和），新增一个递增版本号的脚本即可。
 
 ### 2. 启动后端
 
@@ -126,6 +135,7 @@ CXAdmin/
 │   ├── admin-system/             # com.admin.system —— 领域层：controller/service/mapper/entity/dto/vo、SSO、Quartz、代码生成
 │   ├── admin-framework/          # com.admin.framework —— 配置 / 安全 / AOP 切面 / 全局异常处理
 │   └── admin-boot/               # com.admin —— 唯一可执行 jar（AdminApplication + application.yml）
+│       └── src/main/resources/db/migration/   # Flyway 迁移脚本 V1~V4（数据库的唯一真相）
 ├── frontend/                     # 前端：Vue 3 + TypeScript + Vite
 │   └── src/
 │       ├── api/                  # 接口请求（.ts，按 Result<T> / TableResponse<T> 类型化）
@@ -135,9 +145,7 @@ CXAdmin/
 │       ├── components/           # 公共组件
 │       ├── router/ store/ utils/ # 路由 / Vuex / 工具
 │       └── main.ts               # 入口
-└── database/                     # 数据库脚本
-    ├── init.sql                  # 新装：完整表结构与种子数据
-    └── upgrade/                  # 既有数据库：按日期执行的幂等升级脚本
+└── check-environment.bat         # 环境自检脚本
 ```
 
 ## 配置说明

@@ -188,4 +188,23 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- 聚合父工程没有 main class，spring-boot:run / repackage 必须在这里跳过。
+                     否则 `mvn -pl admin-boot -am spring-boot:run` 会先在 admin-parent 上
+                     执行 run 并失败（历史上它曾"碰巧成功"，因为 backend/target/ 里残留着
+                     多模块拆分前的旧 classes，于是启动的其实是过期代码）。
+                     admin-boot 用 <skip>false</skip> 覆盖本项设置。 -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

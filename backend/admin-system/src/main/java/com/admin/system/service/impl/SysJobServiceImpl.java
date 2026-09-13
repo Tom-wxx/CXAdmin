@@ -12,6 +12,7 @@ import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@DependsOnDatabaseInitialization
 public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> implements ISysJobService {
 
     private final Scheduler scheduler;
@@ -32,6 +34,9 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     /**
      * 项目启动时，初始化定时器 主要是防止手动修改数据库导致未同步到定时任务处理
+     *
+     * <p>本方法在 Bean 初始化阶段就要读 sys_job，因此必须晚于 Flyway 建表。
+     * 类上的 {@code @DependsOnDatabaseInitialization} 就是为此而加——否则全新库首次启动会因表不存在而失败。
      */
     @PostConstruct
     public void init() throws SchedulerException {

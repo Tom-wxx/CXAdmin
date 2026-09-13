@@ -51,13 +51,22 @@ ALTER USER 'root'@'localhost' IDENTIFIED BY 'YourNewPassword123!';
 ```
 
 #### 3. 创建数据库
-```bash
-# 登录MySQL
-mysql -u root -p
 
-# 创建数据库
-source /path/to/database/schema.sql
-source /path/to/database/init-data.sql
+生产只需建一个**空库**，表结构与种子数据由应用启动时的 Flyway 自动完成。
+显式指定排序规则，避免 MySQL 8 默认的 `utf8mb4_0900_ai_ci` 与迁移脚本里的 `utf8mb4_general_ci` 混用（跨表 JOIN 会抛 `Illegal mix of collations`）。
+
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS admin_system \
+  DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;"
+```
+
+> 生产的 `DB_URL` **不要**加 `createDatabaseIfNotExist=true`（那是 dev 专用）：应用账号通常无建库权限，且它会掩盖 `DB_URL` 配错的事故——静默建一个空库然后灌入全套表，而真正的库无人问津。
+
+首次启动后可这样确认迁移结果：
+
+```bash
+mysql -u root -p admin_system -e "SELECT installed_rank, version, description, type, success \
+  FROM flyway_schema_history ORDER BY installed_rank;"
 ```
 
 #### 4. 安装Redis
@@ -435,18 +444,36 @@ cp admin-system.jar admin-system.jar.bak
 # 停止服务
 systemctl stop admin-system
 
-# 上传新版本jar包
-# 替换旧版本
-
-# 执行数据库升级脚本（如果有）
-mysql -u root -p admin_system < upgrade.sql
+# 上传新版本jar包，替换旧版本
+# 数据库结构变更无需手工执行 SQL —— Flyway 会在启动时自动跑完新增的 V*.sql
 
 # 启动服务
 systemctl start admin-system
 
-# 查看日志确认启动成功
+# 查看日志确认启动成功，并核对迁移版本
 tail -f logs/admin-system.log
+mysql -u root -p admin_system -e "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
 ```
+
+> 多实例部署时无需额外协调：Flyway 会对 `flyway_schema_history` 加锁，并发启动的实例中只有一个真正执行迁移，其余等待后继续。
+
+#### 2.1 迁移失败的恢复
+
+MySQL 的 DDL 不支持事务，若某个迁移执行到一半失败，会留下部分已建对象 + `flyway_schema_history` 里一条 `success=0` 的记录，此后每次启动都会被 `validate` 拦住。
+
+```bash
+# 1. 先看清失败在哪一版
+mysql -u root -p admin_system -e "SELECT * FROM flyway_schema_history WHERE success=0;"
+
+# 2. 手工回退该版本已经建好的对象（对照那个 V*.sql 逐条撤销）
+
+# 3. 清掉失败记录，然后重启服务，Flyway 会重新执行该版本
+mysql -u root -p admin_system -e "DELETE FROM flyway_schema_history WHERE success=0;"
+systemctl restart admin-system
+```
+
+开发环境更省事：直接 `DROP DATABASE admin_system;` 重启即可全量重建。
+`clean-disabled: true` 已在 `application.yml` 中开启，`flyway clean` 被禁用，不存在误清库的风险。
 
 #### 3. 回滚（如果需要）
 ```bash

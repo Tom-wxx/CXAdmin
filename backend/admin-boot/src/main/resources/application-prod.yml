@@ -17,6 +17,11 @@ spring:
 
   datasource:
     druid:
+      # ⚠️ 生产 DB_URL 不要加 createDatabaseIfNotExist=true（dev 才加）：
+      #    ① 生产库账号通常没有 CREATE DATABASE 权限；
+      #    ② 更要紧的是它会掩盖"DB_URL 写错"的事故——静默建一个空库，
+      #       然后 Flyway 把它当全新环境灌进 28 张表，而真正的库无人问津。
+      #    生产请先由 DBA 建好空库（语句见 DEPLOY.md），Flyway 只负责建表和升级。
       url: ${DB_URL}
       username: ${DB_USERNAME}
       password: ${DB_PASSWORD}

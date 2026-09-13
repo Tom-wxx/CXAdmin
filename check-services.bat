@@ -51,14 +51,14 @@ if %errorlevel% == 0 (
 echo.
 
 echo [4/4] 检查数据库...
-mysql -u root -proot -e "USE admin_system; SELECT COUNT(*) FROM sys_user;" >nul 2>&1
+mysql -u root -proot -e "USE admin_system; SELECT COUNT(*) FROM flyway_schema_history;" >nul 2>&1
 if %errorlevel% == 0 (
-    echo ✓ 数据库 admin_system 已初始化
+    echo ✓ 数据库 admin_system 已由 Flyway 初始化
+    mysql -u root -proot -e "SELECT CONCAT('  当前版本: ', MAX(version)) FROM admin_system.flyway_schema_history WHERE success=1;" -N 2>nul
 ) else (
-    echo ✗ 数据库未初始化
-    echo   请执行初始化脚本:
-    echo   mysql -u root -p ^< database\schema.sql
-    echo   mysql -u root -p ^< database\init-data.sql
+    echo ⚠ 数据库尚未初始化 —— 这是正常的，无需手工建库
+    echo   直接启动后端即可：Flyway 会自动建库建表并灌入种子数据
+    echo   cd backend ^&^& mvn -pl admin-boot -am spring-boot:run
 )
 echo.
 
