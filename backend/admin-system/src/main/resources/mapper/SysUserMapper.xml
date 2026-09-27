@@ -182,6 +182,14 @@
           AND u.deleted = 0
     </select>
 
+    <select id="selectUserIdsByRoleId" parameterType="Long" resultType="Long">
+        SELECT DISTINCT ur.user_id
+        FROM sys_user_role ur
+        INNER JOIN sys_user u ON ur.user_id = u.user_id
+        WHERE ur.role_id = #{roleId}
+          AND u.deleted = 0
+    </select>
+
     <select id="selectUsersByRoleIds" parameterType="java.util.List" resultMap="SysUserResult">
         SELECT DISTINCT u.user_id, u.dept_id, u.username, u.nickname, u.email, u.phonenumber, u.sex, u.avatar,
                         u.password, u.status, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark

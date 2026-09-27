@@ -6,6 +6,7 @@ import com.admin.system.dto.RegisterDTO;
 import com.admin.system.dto.ResetPasswordDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.service.IRegisterService;
 import com.admin.common.utils.MailService;
 import com.admin.common.utils.RedisUtil;
@@ -27,6 +28,7 @@ public class RegisterServiceImpl implements IRegisterService {
     private final RedisUtil redisUtil;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final LoginSessionManager sessionManager;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -93,5 +95,7 @@ public class RegisterServiceImpl implements IRegisterService {
             throw new ServiceException("用户不存在或已被删除");
         }
         redisUtil.delete(SystemConstants.RESET_PWD_KEY + dto.getToken());
+        // 找回密码意味着旧凭据可能已泄露：踢掉该用户全部会话
+        sessionManager.removeByUserId(userId);
     }
 }

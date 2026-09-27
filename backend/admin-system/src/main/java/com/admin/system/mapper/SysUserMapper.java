@@ -53,6 +53,8 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
 
     Long countUsersByRoleId(@Param("roleId") Long roleId);
 
+    List<Long> selectUserIdsByRoleId(@Param("roleId") Long roleId);
+
     List<SysUser> selectUsersByRoleIds(@Param("roleIds") List<Long> roleIds);
 
 }

@@ -2,6 +2,7 @@ package com.admin.framework.security;
 
 import com.admin.common.config.JwtProperties;
 import com.admin.system.entity.SysUser;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.security.LoginUser;
 import com.admin.common.utils.RedisUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,9 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private RedisUtil redisUtil;
+
+    @Mock
+    private LoginSessionManager sessionManager;
 
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
@@ -131,8 +135,9 @@ class JwtAuthenticationFilterTest {
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Verify token was refreshed in Redis
-        verify(redisUtil).set(eq("login_tokens:" + token), any(LoginUser.class), eq(30L), eq(TimeUnit.MINUTES));
+        // Verify session was refreshed (via the session manager, which also renews the user index)
+        verify(sessionManager).save(argThat(u -> token.equals(u.getToken())
+                && u.getExpireTime() - u.getLoginTime() == TimeUnit.MINUTES.toMillis(30)));
     }
 
     @Test
@@ -150,7 +155,7 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         // Verify token was NOT refreshed
-        verify(redisUtil, never()).set(anyString(), any(), anyLong(), any(TimeUnit.class));
+        verify(sessionManager, never()).save(any());
     }
 
     // ==================== Filter Chain Tests ====================

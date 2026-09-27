@@ -6,6 +6,7 @@ import com.admin.system.dto.RegisterDTO;
 import com.admin.system.dto.ResetPasswordDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.service.impl.RegisterServiceImpl;
 import com.admin.common.utils.MailService;
 import com.admin.common.utils.RedisUtil;
@@ -33,6 +34,7 @@ class RegisterServiceTest {
     @Mock private RedisUtil redisUtil;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private MailService mailService;
+    @Mock private LoginSessionManager sessionManager;
 
     private RegisterDTO validDto() {
         RegisterDTO dto = new RegisterDTO();

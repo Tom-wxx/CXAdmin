@@ -11,12 +11,14 @@ import com.admin.system.service.ISysDeptService;
 import com.admin.common.utils.RedisUtil;
 import com.admin.system.vo.OnlineUserVO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,7 +31,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OnlineUserServiceImpl implements IOnlineUserService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
     private final RedisUtil redisUtil;
     private final ISysDeptService deptService;
 
@@ -38,31 +39,39 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     @Override
     public List<OnlineUserVO> selectOnlineUserList(String username, String ipaddr) {
-        // 获取所有在线用户的key
-        Set<String> keys = redisTemplate.keys(SystemConstants.LOGIN_TOKEN_KEY + "*");
-        if (keys == null || keys.isEmpty()) {
+        List<String> keys = new ArrayList<>(redisUtil.scanKeys(SystemConstants.LOGIN_TOKEN_KEY + "*"));
+        if (keys.isEmpty()) {
             return new ArrayList<>();
         }
 
-        List<OnlineUserVO> onlineUserList = new ArrayList<>();
-        for (String key : keys) {
-            Object obj = redisUtil.get(key);
-            if (obj instanceof LoginUser) {
-                LoginUser loginUser = (LoginUser) obj;
-                OnlineUserVO onlineUser = convertToVO(loginUser, key);
-
-                // 筛选条件
-                if (username != null && !username.isEmpty()
-                    && !onlineUser.getUsername().contains(username)) {
-                    continue;
-                }
-                if (ipaddr != null && !ipaddr.isEmpty()
-                    && (onlineUser.getIpaddr() == null || !onlineUser.getIpaddr().contains(ipaddr))) {
-                    continue;
-                }
-
-                onlineUserList.add(onlineUser);
+        // 一次 MGET 取回全部会话，避免逐键往返
+        List<Object> values = redisUtil.multiGet(keys);
+        List<LoginUser> loginUsers = new ArrayList<>();
+        List<String> loginKeys = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i++) {
+            if (values.get(i) instanceof LoginUser loginUser) {
+                loginUsers.add(loginUser);
+                loginKeys.add(keys.get(i));
             }
+        }
+
+        Map<Long, String> deptNames = loadDeptNames(loginUsers);
+
+        List<OnlineUserVO> onlineUserList = new ArrayList<>();
+        for (int i = 0; i < loginUsers.size(); i++) {
+            OnlineUserVO onlineUser = convertToVO(loginUsers.get(i), loginKeys.get(i), deptNames);
+
+            // 筛选条件
+            if (username != null && !username.isEmpty()
+                && !onlineUser.getUsername().contains(username)) {
+                continue;
+            }
+            if (ipaddr != null && !ipaddr.isEmpty()
+                && (onlineUser.getIpaddr() == null || !onlineUser.getIpaddr().contains(ipaddr))) {
+                continue;
+            }
+
+            onlineUserList.add(onlineUser);
         }
 
         // 按登录时间降序排序
@@ -72,20 +81,20 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     /**
-     * 查询在线用户列表（分页）
+     * 统计在线用户数
      */
     @Override
     public long countOnlineUsers() {
-        Set<String> keys = redisTemplate.keys(SystemConstants.LOGIN_TOKEN_KEY + "*");
-        if (keys == null || keys.isEmpty()) {
+        List<String> keys = new ArrayList<>(redisUtil.scanKeys(SystemConstants.LOGIN_TOKEN_KEY + "*"));
+        if (keys.isEmpty()) {
             return 0L;
         }
 
-        return keys.stream()
-                .map(redisUtil::get)
+        return redisUtil.multiGet(keys).stream()
                 .filter(LoginUser.class::isInstance)
                 .count();
     }
+
     @Override
     public PageResult<OnlineUserVO> selectOnlineUserListPage(String username, String ipaddr, Integer current, Integer size) {
         // 获取全部在线用户
@@ -142,9 +151,27 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     /**
+     * 一次查询取回所有在线用户的部门名称（避免逐个用户查部门的 N+1）
+     */
+    private Map<Long, String> loadDeptNames(List<LoginUser> loginUsers) {
+        Set<Long> deptIds = loginUsers.stream()
+                .map(LoginUser::getUser)
+                .filter(Objects::nonNull)
+                .map(SysUser::getDeptId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (deptIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return deptService.listByIds(deptIds).stream()
+                .filter(dept -> dept.getDeptName() != null)
+                .collect(Collectors.toMap(SysDept::getDeptId, SysDept::getDeptName, (a, b) -> a));
+    }
+
+    /**
      * 转换为VO对象
      */
-    private OnlineUserVO convertToVO(LoginUser loginUser, String key) {
+    private OnlineUserVO convertToVO(LoginUser loginUser, String key, Map<Long, String> deptNames) {
         OnlineUserVO vo = new OnlineUserVO();
 
         // 提取token（去掉前缀 "login_tokens:"）
@@ -159,10 +186,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         // 部门信息
         if (user.getDeptId() != null) {
-            SysDept dept = deptService.getById(user.getDeptId());
-            if (dept != null) {
-                vo.setDeptName(dept.getDeptName());
-            }
+            vo.setDeptName(deptNames.get(user.getDeptId()));
         }
 
         // 登录信息

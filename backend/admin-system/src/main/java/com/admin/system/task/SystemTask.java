@@ -2,13 +2,12 @@ package com.admin.system.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.admin.common.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Set;
 
 /**
  * 系统定时任务
@@ -21,7 +20,7 @@ public class SystemTask {
 
     private static final Logger log = LoggerFactory.getLogger(SystemTask.class);
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisUtil redisUtil;
 
     /**
      * 系统信息监控任务
@@ -40,9 +39,7 @@ public class SystemTask {
                     totalMemory, usedMemory, freeMemory);
 
             // 监控Redis连接
-            Set<String> keys = redisTemplate.keys("*");
-            int keyCount = keys != null ? keys.size() : 0;
-            log.info("Redis缓存键数量: {}", keyCount);
+            log.info("Redis缓存键数量: {}", redisUtil.dbSize());
 
             log.info("系统信息监控任务执行完成");
         } catch (Exception e) {
@@ -150,7 +147,7 @@ public class SystemTask {
             // 检查Redis连接
             log.info("检查Redis连接...");
             try {
-                redisTemplate.hasKey("health_check");
+                redisUtil.hasKey("health_check");
                 log.info("Redis连接正常");
             } catch (Exception e) {
                 log.error("Redis连接异常", e);

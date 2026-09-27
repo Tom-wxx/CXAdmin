@@ -18,6 +18,11 @@ public final class SystemConstants {
     public static final String LOGIN_TOKEN_KEY = "login_tokens:";
 
     /**
+     * 用户 → 会话 token 集合索引 Redis key 前缀（按 userId 批量失效/刷新会话用）
+     */
+    public static final String LOGIN_USER_TOKENS_KEY = "login_user_tokens:";
+
+    /**
      * 验证码 Redis key 前缀
      */
     public static final String CAPTCHA_KEY = "captcha:";

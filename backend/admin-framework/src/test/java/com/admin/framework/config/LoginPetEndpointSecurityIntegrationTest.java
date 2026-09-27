@@ -7,6 +7,7 @@ import com.admin.framework.security.JwtAuthenticationFilter;
 import com.admin.framework.web.GlobalExceptionHandler;
 import com.admin.system.controller.SysConfigController;
 import com.admin.system.entity.SysUser;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.security.LoginUser;
 import com.admin.system.service.ISysConfigService;
 import jakarta.servlet.http.Cookie;
@@ -219,7 +220,7 @@ class LoginPetEndpointSecurityIntegrationTest {
 
         @Bean
         JwtAuthenticationFilter jwtAuthenticationFilter(JwtProperties jwtProperties, RedisUtil redisUtil) {
-            return new JwtAuthenticationFilter(jwtProperties, redisUtil);
+            return new JwtAuthenticationFilter(jwtProperties, redisUtil, mock(LoginSessionManager.class));
         }
 
         @Bean

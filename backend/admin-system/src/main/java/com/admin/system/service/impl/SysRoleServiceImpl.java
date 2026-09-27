@@ -4,6 +4,7 @@ import com.admin.common.exception.ServiceException;
 import com.admin.system.dto.RoleDTO;
 import com.admin.system.entity.SysRole;
 import com.admin.system.mapper.SysRoleMapper;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.service.ISysRoleService;
 import com.admin.system.vo.RoleVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -27,6 +28,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 
     private final SysRoleMapper roleMapper;
     private final SysUserMapper userMapper;
+    private final LoginSessionManager sessionManager;
 
     /**
      * 分页查询角色列表
@@ -110,8 +112,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         roleMapper.deleteRoleMenuByRoleId(role.getRoleId());
 
         if (roleDTO.getMenuIds() != null && roleDTO.getMenuIds().length > 0) {
-            saveRoleMenus(role.getRoleId(), roleDTO.getMenuIds());
+            roleMapper.batchRoleMenu(role.getRoleId(), roleDTO.getMenuIds());
         }
+
+        // 权限/状态变化：刷新持有该角色的在线用户会话
+        sessionManager.syncByRoleId(role.getRoleId());
     }
 
     /**
@@ -165,6 +170,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         role.setRoleId(roleId);
         role.setStatus(status);
         roleMapper.updateById(role);
+        sessionManager.syncByRoleId(roleId);
     }
 
     /**
@@ -216,6 +222,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         if (menuIds != null && menuIds.length > 0) {
             roleMapper.batchRoleMenu(roleId, menuIds);
         }
+        sessionManager.syncByRoleId(roleId);
     }
 
     /**

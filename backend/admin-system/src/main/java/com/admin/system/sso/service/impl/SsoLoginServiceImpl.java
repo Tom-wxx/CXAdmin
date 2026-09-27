@@ -5,6 +5,7 @@ import com.admin.common.exception.ServiceException;
 import com.admin.common.config.JwtProperties;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.security.LoginUser;
 import com.admin.system.service.ISysMenuService;
 import com.admin.system.sso.config.SsoProperties;
@@ -56,6 +57,7 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProperties jwtProperties;
     private final ISsoAuditLogService auditLog;
+    private final LoginSessionManager sessionManager;
 
     @Override
     public String buildAuthorizationUrl(String code) {
@@ -267,8 +269,7 @@ public class SsoLoginServiceImpl implements ISsoLoginService {
         loginUser.setLoginTime(System.currentTimeMillis());
         loginUser.setExpireTime(loginUser.getLoginTime() + jwtProperties.getExpireTime() * 60_000L);
 
-        redisUtil.set(SystemConstants.LOGIN_TOKEN_KEY + token,
-                loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
+        sessionManager.save(loginUser);
 
         int maxAgeSec = (int) (jwtProperties.getExpireTime() * 60);
         // 1) HttpOnly JWT，后端 JwtAuthenticationFilter 用

@@ -2,6 +2,7 @@ package com.admin.framework.security;
 
 import com.admin.common.constants.SystemConstants;
 import com.admin.common.config.JwtProperties;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.security.LoginUser;
 import com.admin.common.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * JWT认证过滤器
@@ -38,6 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProperties jwtProperties;
     private final RedisUtil redisUtil;
+    private final LoginSessionManager sessionManager;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -117,13 +118,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 刷新令牌有效期
+     * 刷新令牌有效期（经 LoginSessionManager 写入，同时续期用户会话索引）
      */
     private void refreshToken(LoginUser loginUser) {
         loginUser.setLoginTime(System.currentTimeMillis());
         loginUser.setExpireTime(loginUser.getLoginTime() + jwtProperties.getExpireTime() * 60 * 1000);
-        String userKey = SystemConstants.LOGIN_TOKEN_KEY + loginUser.getToken();
-        redisUtil.set(userKey, loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
+        sessionManager.save(loginUser);
     }
 
 }

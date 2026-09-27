@@ -3,6 +3,7 @@ package com.admin.system.service;
 import com.admin.common.config.JwtProperties;
 import com.admin.system.dto.LoginDTO;
 import com.admin.system.entity.SysUser;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.security.LoginUser;
 import com.admin.system.service.impl.LoginServiceImpl;
 import com.admin.common.utils.RedisUtil;
@@ -61,6 +62,9 @@ class LoginServiceImplTest {
     @Mock
     private ISysLoginLogService loginLogService;
 
+    @Mock
+    private LoginSessionManager sessionManager;
+
     private LoginDTO loginDTO;
     private LoginUser loginUser;
     private SysUser sysUser;
@@ -115,8 +119,8 @@ class LoginServiceImplTest {
         verify(redisUtil).delete("captcha:test-uuid");
         // Verify login retry cleared
         verify(redisUtil).delete("login_retry:admin:unknown");
-        // Verify token stored in Redis
-        verify(redisUtil).set(startsWith("login_tokens:"), any(LoginUser.class), eq(30L), eq(TimeUnit.MINUTES));
+        // Verify session stored (with the issued token) through the session manager
+        verify(sessionManager).save(argThat(u -> result.get("token").equals(u.getToken())));
     }
 
     @Test
@@ -186,12 +190,9 @@ class LoginServiceImplTest {
 
         loginService.login(loginDTO);
 
-        verify(redisUtil).set(
-                argThat(key -> key.startsWith("login_tokens:")),
-                argThat(value -> value instanceof LoginUser),
-                eq(60L),
-                eq(TimeUnit.MINUTES)
-        );
+        // 会话有效期 = 配置的 60 分钟
+        verify(sessionManager).save(argThat(u ->
+                u.getToken() != null && u.getExpireTime() - u.getLoginTime() == TimeUnit.MINUTES.toMillis(60)));
     }
 
     @Test

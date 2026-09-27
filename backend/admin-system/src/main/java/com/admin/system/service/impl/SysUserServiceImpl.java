@@ -6,6 +6,8 @@ import com.admin.system.datascope.DataScopeChecker;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
+import com.admin.system.security.LoginSessionManager;
+import com.admin.system.security.LoginUser;
 import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.ISysUserService;
 import com.admin.system.vo.UserVO;
@@ -35,6 +37,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     private final SysUserMapper userMapper;
     private final DataScopeChecker dataScopeChecker;
+    private final LoginSessionManager sessionManager;
 
     /**
      * 分页查询用户列表
@@ -146,6 +149,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         userMapper.deleteUserPostByUserId(user.getUserId());
         insertUserPost(user.getUserId(), userDTO.getPostIds());
+
+        // 角色/部门/状态可能变化：把已登录会话同步到最新（停用则踢下线）
+        sessionManager.syncByUserId(user.getUserId());
     }
 
     /**
@@ -194,6 +200,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         userMapper.deleteUserPostByUserId(userId);
 
         userMapper.deleteById(userId);
+        sessionManager.syncByUserId(userId);
     }
 
     /**
@@ -232,6 +239,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setUserId(userId);
         user.setPassword(SecurityUtils.encryptPassword(newPassword));
         userMapper.updateById(user);
+        sessionManager.removeByUserId(userId);
     }
 
     /**
@@ -263,6 +271,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setUserId(currentUserId);
         user.setPassword(SecurityUtils.encryptPassword(newPassword));
         userMapper.updateById(user);
+
+        // 其他设备上的会话下线，保留当前会话
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        sessionManager.removeByUserId(currentUserId, loginUser != null ? loginUser.getToken() : null);
     }
     /**
      * 修改用户状态
@@ -285,6 +297,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setUserId(userId);
         user.setStatus(status);
         userMapper.updateById(user);
+        sessionManager.syncByUserId(userId);
     }
 
     private Long requireCurrentUserId() {
@@ -455,6 +468,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                                 existUser.setDeptId(Long.parseLong(deptIdStr));
                             }
                             userMapper.updateById(existUser);
+                            sessionManager.syncByUserId(existUser.getUserId());
                             successCount++;
                         } else {
                             failureCount++;

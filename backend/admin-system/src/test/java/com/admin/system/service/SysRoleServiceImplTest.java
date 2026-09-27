@@ -5,6 +5,7 @@ import com.admin.system.dto.RoleDTO;
 import com.admin.system.entity.SysRole;
 import com.admin.system.mapper.SysRoleMapper;
 import com.admin.system.mapper.SysUserMapper;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.service.impl.SysRoleServiceImpl;
 import com.admin.system.vo.RoleVO;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,9 @@ class SysRoleServiceImplTest {
 
     @Mock
     private SysUserMapper userMapper;
+
+    @Mock
+    private LoginSessionManager sessionManager;
 
     private RoleDTO roleDTO;
     private SysRole existingRole;
@@ -194,15 +198,16 @@ class SysRoleServiceImplTest {
         when(roleMapper.checkRoleNameUnique("Test Role")).thenReturn(null);
         when(roleMapper.checkRoleKeyUnique("test_role")).thenReturn(null);
         when(roleMapper.updateById(any(SysRole.class))).thenReturn(1);
-        // updateRole calls deleteRoleMenuByRoleId once, then saveRoleMenus calls it again
         when(roleMapper.deleteRoleMenuByRoleId(1L)).thenReturn(3);
         when(roleMapper.batchRoleMenu(any(), any())).thenReturn(3);
 
         assertDoesNotThrow(() -> roleService.updateRole(roleDTO));
 
         verify(roleMapper).updateById(any(SysRole.class));
-        // deleteRoleMenuByRoleId called twice: once in updateRole, once in saveRoleMenus
-        verify(roleMapper, times(2)).deleteRoleMenuByRoleId(1L);
+        // 旧菜单只删一次、新菜单写入一次，持有该角色的会话同步一次
+        verify(roleMapper, times(1)).deleteRoleMenuByRoleId(1L);
+        verify(roleMapper).batchRoleMenu(any(), any());
+        verify(sessionManager, times(1)).syncByRoleId(1L);
     }
 
     @Test

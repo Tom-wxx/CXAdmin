@@ -5,6 +5,7 @@ import com.admin.system.datascope.DataScopeChecker;
 import com.admin.system.dto.UserDTO;
 import com.admin.system.entity.SysUser;
 import com.admin.system.mapper.SysUserMapper;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.security.LoginUser;
 import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.impl.SysUserServiceImpl;
@@ -43,6 +44,9 @@ class SysUserServiceImplTest {
 
     @Mock
     private DataScopeChecker dataScopeChecker;
+
+    @Mock
+    private LoginSessionManager sessionManager;
 
     private UserDTO userDTO;
     private SysUser existingUser;
@@ -344,6 +348,8 @@ class SysUserServiceImplTest {
             assertTrue(user.getPassword().startsWith("$2a$"));
             return true;
         }));
+        // 管理员重置密码后，该用户全部会话下线
+        verify(sessionManager).removeByUserId(2L);
     }
 
     @Test
@@ -387,6 +393,8 @@ class SysUserServiceImplTest {
             assertEquals("1", user.getStatus());
             return true;
         }));
+        // 停用后同步会话（停用 → 踢下线）
+        verify(sessionManager).syncByUserId(2L);
     }
 
     @Test
@@ -657,6 +665,8 @@ class SysUserServiceImplTest {
             assertTrue(SecurityUtils.matchesPassword("newPass123", user.getPassword()));
             return true;
         }));
+        // 本人改密：其他会话下线，保留当前会话
+        verify(sessionManager).removeByUserId(7L, "current-token");
     }
 
     private void setAuthentication(Long userId, String username) {
@@ -665,6 +675,7 @@ class SysUserServiceImplTest {
         user.setUsername(username);
         user.setStatus("0");
         LoginUser loginUser = new LoginUser(user, Collections.emptySet());
+        loginUser.setToken("current-token");
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);

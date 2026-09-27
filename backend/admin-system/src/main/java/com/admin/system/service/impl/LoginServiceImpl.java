@@ -8,6 +8,7 @@ import com.admin.system.entity.SysFile;
 import com.admin.system.entity.SysLoginLog;
 import com.admin.system.entity.SysMenu;
 import com.admin.system.entity.SysUser;
+import com.admin.system.security.LoginSessionManager;
 import com.admin.system.security.LoginUser;
 import com.admin.system.security.SecurityUtils;
 import com.admin.system.service.ILoginService;
@@ -51,6 +52,7 @@ public class LoginServiceImpl implements ILoginService {
     private final ISysMenuService menuService;
     private final ISysFileService fileService;
     private final ISysLoginLogService loginLogService;
+    private final LoginSessionManager sessionManager;
 
     /**
      * 登录失败最大重试次数
@@ -104,8 +106,7 @@ public class LoginServiceImpl implements ILoginService {
             loginUser.setExpireTime(loginUser.getLoginTime() + jwtProperties.getExpireTime() * 60 * 1000);
 
             // 保存用户信息到Redis
-            String userKey = SystemConstants.LOGIN_TOKEN_KEY + token;
-            redisUtil.set(userKey, loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
+            sessionManager.save(loginUser);
 
             // 记录登录日志
             recordLoginLog(username, status, msg, ip);
@@ -179,8 +180,7 @@ public class LoginServiceImpl implements ILoginService {
     public void logout() {
         LoginUser loginUser = SecurityUtils.getLoginUser();
         if (loginUser != null) {
-            String userKey = SystemConstants.LOGIN_TOKEN_KEY + loginUser.getToken();
-            redisUtil.delete(userKey);
+            sessionManager.remove(loginUser);
         }
     }
 
@@ -263,8 +263,7 @@ public class LoginServiceImpl implements ILoginService {
 
         // 更新Redis中的用户信息
         loginUser.getUser().setAvatar(sysFile.getFileUrl());
-        String userKey = SystemConstants.LOGIN_TOKEN_KEY + loginUser.getToken();
-        redisUtil.set(userKey, loginUser, jwtProperties.getExpireTime(), TimeUnit.MINUTES);
+        sessionManager.save(loginUser);
 
         // 返回结果
         Map<String, Object> result = new HashMap<>();

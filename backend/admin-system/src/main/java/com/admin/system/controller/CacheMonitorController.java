@@ -1,15 +1,15 @@
 package com.admin.system.controller;
 
 import com.admin.common.Result;
+import com.admin.common.constants.SystemConstants;
+import com.admin.common.utils.RedisUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.DataType;
-import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +28,21 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class CacheMonitorController {
 
+    /**
+     * “清空缓存”不得触碰的键前缀：在线会话及其索引、登录限流计数（清掉等于重置防爆破）、
+     * 验证码、找回密码令牌、SSO state —— 它们是运行时安全状态，不是可随意重建的缓存。
+     */
+    private static final List<String> PROTECTED_KEY_PREFIXES = List.of(
+            SystemConstants.LOGIN_TOKEN_KEY,
+            SystemConstants.LOGIN_USER_TOKENS_KEY,
+            SystemConstants.LOGIN_RETRY_KEY,
+            SystemConstants.CAPTCHA_KEY,
+            SystemConstants.RESET_PWD_KEY,
+            "sso:state:"
+    );
+
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisUtil redisUtil;
 
     /**
      * 获取缓存列表（按键前缀分类）
@@ -39,9 +53,9 @@ public class CacheMonitorController {
     public Result<List<Map<String, Object>>> getCacheList() {
         List<Map<String, Object>> cacheList = new ArrayList<>();
 
-        // 获取所有键
-        Set<String> keys = redisTemplate.keys("*");
-        if (keys == null || keys.isEmpty()) {
+        // 使用 SCAN 获取所有键（避免 KEYS * 阻塞）
+        Set<String> keys = redisUtil.scanKeys("*");
+        if (keys.isEmpty()) {
             return Result.success(cacheList);
         }
 
@@ -95,20 +109,9 @@ public class CacheMonitorController {
         }
 
         // 使用 SCAN 命令获取键（避免 KEYS * 阻塞）
-        Set<String> keys = redisTemplate.execute((RedisCallback<Set<String>>) connection -> {
-            Set<String> keySet = new HashSet<>();
-            Cursor<byte[]> cursor = connection.scan(
-                    ScanOptions.scanOptions().match(pattern).count(1000).build()
-            );
+        Set<String> keys = redisUtil.scanKeys(pattern);
 
-            while (cursor.hasNext()) {
-                keySet.add(new String(cursor.next(), StandardCharsets.UTF_8));
-            }
-            cursor.close();
-            return keySet;
-        });
-
-        if (keys == null || keys.isEmpty()) {
+        if (keys.isEmpty()) {
             return Result.success(keyList);
         }
 
@@ -223,15 +226,17 @@ public class CacheMonitorController {
     }
 
     /**
-     * 清空所有缓存
+     * 清空所有缓存（保留会话、限流计数等安全状态，见 {@link #PROTECTED_KEY_PREFIXES}）
      */
     @Operation(summary = "清空所有缓存")
     @PreAuthorize("@ss.hasPermi('monitor:cache:clear')")
     @DeleteMapping("/clear")
     public Result<Void> clearAllCache() {
-        Set<String> keys = redisTemplate.keys("*");
-        if (keys != null && !keys.isEmpty()) {
-            redisTemplate.delete(keys);
+        List<String> keys = redisUtil.scanKeys("*").stream()
+                .filter(key -> PROTECTED_KEY_PREFIXES.stream().noneMatch(key::startsWith))
+                .toList();
+        if (!keys.isEmpty()) {
+            redisUtil.delete(keys);
         }
         return Result.success("清空成功");
     }
