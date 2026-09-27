@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 import { useECharts } from '@/composables/useECharts'
 
 interface ChartData {
@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineOptions({ name: 'ChartCard' })
 
-type EChartsOption = Parameters<echarts.ECharts['setOption']>[0]
+type EChartsOption = Parameters<ReturnType<typeof echarts.init>['setOption']>[0]
 
 const chartRef = ref<HTMLElement>()
 const { setOption } = useECharts(chartRef)

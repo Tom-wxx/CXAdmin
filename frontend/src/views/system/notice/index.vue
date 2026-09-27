@@ -108,7 +108,7 @@
         <el-descriptions-item label="创建时间" :span="2">{{ parseTime(viewForm.createTime || '') }}</el-descriptions-item>
         <el-descriptions-item label="公告内容" :span="2">
           <div class="ql-snow notice-view-wrapper">
-            <div class="ql-editor notice-view-content" v-html="viewForm.noticeContent || '无内容'"></div>
+            <div class="ql-editor notice-view-content" v-html="sanitizeHtml(viewForm.noticeContent) || '无内容'"></div>
           </div>
         </el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{ viewForm.remark }}</el-descriptions-item>
@@ -129,6 +129,7 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import { listNotice, getNotice, addNotice, updateNotice, delNotice } from '@/api/system/notice'
 import { useCrudTable } from '@/composables'
 import { parseTime } from '@/utils'
+import { sanitizeHtml } from '@/utils/sanitize'
 import type { Notice, NoticeQuery } from '@/types/system/notice'
 import Pagination from '@/components/Pagination/index.vue'
 import SearchForm from '@/components/SearchForm/index.vue'

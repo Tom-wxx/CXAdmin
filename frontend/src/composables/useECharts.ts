@@ -1,5 +1,5 @@
 import { onBeforeUnmount, onMounted, type Ref } from 'vue'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 
 type EChartsInstance = ReturnType<typeof echarts.init>
 type EChartsOption = Parameters<EChartsInstance['setOption']>[0]

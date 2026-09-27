@@ -17,7 +17,8 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
     "@vueup/vue-quill": "^1.5.3",
-    "axios": "^0.27.2",
+    "axios": "^1.20.0",
+    "dompurify": "^3.4.16",
     "echarts": "^5.4.3",
     "element-plus": "^2.14.2",
     "js-cookie": "^3.0.1",
@@ -32,11 +33,11 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@babel/eslint-parser": "^7.25.0",
-    "@typescript-eslint/eslint-plugin": "^8.18.0",
-    "@typescript-eslint/parser": "^8.18.0",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^25.9.3",
     "@types/nprogress": "^0.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
     "@vitejs/plugin-vue": "^5.2.4",
     "@vue/test-utils": "^2.4.6",
     "eslint": "^8.57.0",
@@ -66,15 +67,36 @@
       "ecmaVersion": 2021,
       "sourceType": "module"
     },
-    "plugins": ["@typescript-eslint"],
+    "plugins": [
+      "@typescript-eslint"
+    ],
     "rules": {
       "vue/multi-word-component-names": "off",
       "vue/no-reserved-component-names": "off",
-      "vue/no-mutating-props": ["error", { "shallowOnly": true }],
+      "vue/no-mutating-props": [
+        "error",
+        {
+          "shallowOnly": true
+        }
+      ],
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { "args": "none", "caughtErrors": "none", "ignoreRestSiblings": true, "varsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "args": "none",
+          "caughtErrors": "none",
+          "ignoreRestSiblings": true,
+          "varsIgnorePattern": "^_"
+        }
+      ],
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-expressions": ["error", { "allowShortCircuit": true, "allowTernary": true }]
+      "@typescript-eslint/no-unused-expressions": [
+        "error",
+        {
+          "allowShortCircuit": true,
+          "allowTernary": true
+        }
+      ]
     }
   },
   "browserslist": [

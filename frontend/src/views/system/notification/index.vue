@@ -102,7 +102,7 @@
           {{ parseTime(viewForm.createTime || '') }}
         </el-descriptions-item>
         <el-descriptions-item label="通知内容">
-          <div v-html="viewForm.content" style="white-space: pre-wrap;"></div>
+          <div v-html="sanitizeHtml(viewForm.content)" style="white-space: pre-wrap;"></div>
         </el-descriptions-item>
       </el-descriptions>
       <template #footer><div class="dialog-footer">
@@ -124,6 +124,7 @@ import {
 } from '@/api/system/notification'
 import type { Notification, NotificationQuery } from '@/types/system/notification'
 import { parseTime } from '@/utils/index.js'
+import { sanitizeHtml } from '@/utils/sanitize'
 import Pagination from '@/components/Pagination/index.vue'
 import SearchForm from '@/components/SearchForm/index.vue'
 import TableToolbar from '@/components/TableToolbar/index.vue'

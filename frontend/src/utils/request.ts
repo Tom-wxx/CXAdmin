@@ -1,4 +1,10 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type AxiosError } from 'axios'
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type AxiosError,
+  type InternalAxiosRequestConfig
+} from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import store from '@/store'
 import { HTTP_OK, HTTP_UNAUTHORIZED, HTTP_SERVER_ERROR } from '@/utils/constants'
@@ -21,7 +27,7 @@ const service: AxiosInstance = axios.create({
 
 // request 拦截器
 service.interceptors.request.use(
-  (config: AxiosRequestConfig) => config,
+  (config: InternalAxiosRequestConfig) => config,
   (error: unknown) => Promise.reject(error)
 )
 
