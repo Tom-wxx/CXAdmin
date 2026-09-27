@@ -3,6 +3,7 @@ package com.admin.system.service.impl;
 import com.admin.system.entity.SysOperLog;
 import com.admin.system.service.*;
 import com.admin.system.vo.DashboardVO;
+import com.admin.system.vo.StatisticsVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -24,14 +24,18 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements IDashboardService {
 
+    /**
+     * 仪表板趋势图的天数
+     */
+    private static final int TREND_DAYS = 7;
+
     private final ISysUserService userService;
     private final ISysRoleService roleService;
     private final ISysNoticeService noticeService;
     private final IOnlineUserService onlineUserService;
-    private final ISysDeptService deptService;
     private final ISysOperLogService operLogService;
-    private final ISysLoginLogService loginLogService;
     private final ISysNotificationService notificationService;
+    private final IStatisticsService statisticsService;
 
     @Override
     public DashboardVO getDashboardData() {
@@ -94,86 +98,44 @@ public class DashboardServiceImpl implements IDashboardService {
 
     @Override
     public DashboardVO.ChartData getUserTrend() {
-        DashboardVO.ChartData chartData = new DashboardVO.ChartData();
-
-        List<String> labels = new ArrayList<>();
-        List<Long> values = new ArrayList<>();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd");
-
-        // 统计最近7天的用户注册数
-        for (int i = 6; i >= 0; i--) {
-            LocalDate date = LocalDate.now().minusDays(i);
-            labels.add(date.format(formatter));
-
-            LocalDateTime startOfDay = date.atStartOfDay();
-            LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-
-            long count = userService.count(
-                new LambdaQueryWrapper<com.admin.system.entity.SysUser>()
-                    .ge(com.admin.system.entity.SysUser::getCreateTime, startOfDay)
-                    .lt(com.admin.system.entity.SysUser::getCreateTime, endOfDay)
-            );
-            values.add(count);
-        }
-
-        chartData.setLabels(labels);
-        chartData.setValues(values);
-
-        return chartData;
+        // 统计最近7天的用户注册数（一次按天聚合查询，见 StatisticsServiceImpl）
+        return toDailyChart(statisticsService.getUserGrowthTrend(TREND_DAYS));
     }
 
     @Override
     public DashboardVO.ChartData getLoginStats() {
-        DashboardVO.ChartData chartData = new DashboardVO.ChartData();
-
-        List<String> labels = new ArrayList<>();
-        List<Long> values = new ArrayList<>();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd");
-
         // 统计最近7天的登录次数
-        for (int i = 6; i >= 0; i--) {
-            LocalDate date = LocalDate.now().minusDays(i);
-            labels.add(date.format(formatter));
-
-            LocalDateTime startOfDay = date.atStartOfDay();
-            LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-
-            long count = loginLogService.count(
-                new LambdaQueryWrapper<com.admin.system.entity.SysLoginLog>()
-                    .ge(com.admin.system.entity.SysLoginLog::getLoginTime, startOfDay)
-                    .lt(com.admin.system.entity.SysLoginLog::getLoginTime, endOfDay)
-            );
-            values.add(count);
-        }
-
-        chartData.setLabels(labels);
-        chartData.setValues(values);
-
-        return chartData;
+        return toDailyChart(statisticsService.getLoginStatistics(TREND_DAYS));
     }
 
     @Override
     public DashboardVO.ChartData getDeptDistribution() {
         DashboardVO.ChartData chartData = new DashboardVO.ChartData();
 
-        // 获取所有部门
-        List<com.admin.system.entity.SysDept> deptList = deptService.list();
+        List<String> labels = new ArrayList<>();
+        List<Long> values = new ArrayList<>();
+        for (StatisticsVO item : statisticsService.getDeptUserDistribution()) {
+            labels.add(item.getName());
+            values.add(item.getValue());
+        }
+
+        chartData.setLabels(labels);
+        chartData.setValues(values);
+
+        return chartData;
+    }
+
+    /**
+     * 按天统计结果 → 图表数据（标签 yyyy-MM-dd 缩为 MM-dd）
+     */
+    private DashboardVO.ChartData toDailyChart(List<StatisticsVO> daily) {
+        DashboardVO.ChartData chartData = new DashboardVO.ChartData();
 
         List<String> labels = new ArrayList<>();
         List<Long> values = new ArrayList<>();
-
-        // 统计每个部门的人数
-        for (com.admin.system.entity.SysDept dept : deptList) {
-            long count = userService.count(
-                new LambdaQueryWrapper<com.admin.system.entity.SysUser>()
-                    .eq(com.admin.system.entity.SysUser::getDeptId, dept.getDeptId())
-            );
-            if (count > 0) {
-                labels.add(dept.getDeptName());
-                values.add(count);
-            }
+        for (StatisticsVO item : daily) {
+            labels.add(item.getDate().substring(5));
+            values.add(item.getValue());
         }
 
         chartData.setLabels(labels);

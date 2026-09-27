@@ -32,10 +32,10 @@
             AND status = #{status}
         </if>
         <if test="beginTime != null and beginTime != ''">
-            AND DATE_FORMAT(login_time,'%Y-%m-%d') &gt;= DATE_FORMAT(#{beginTime},'%Y-%m-%d')
+            AND login_time &gt;= DATE(#{beginTime})
         </if>
         <if test="endTime != null and endTime != ''">
-            AND DATE_FORMAT(login_time,'%Y-%m-%d') &lt;= DATE_FORMAT(#{endTime},'%Y-%m-%d')
+            AND login_time &lt; DATE(#{endTime}) + INTERVAL 1 DAY
         </if>
         ORDER BY login_time DESC
     </select>
@@ -58,12 +58,20 @@
             AND status = #{status}
         </if>
         <if test="beginTime != null and beginTime != ''">
-            AND DATE_FORMAT(login_time,'%Y-%m-%d') &gt;= DATE_FORMAT(#{beginTime},'%Y-%m-%d')
+            AND login_time &gt;= DATE(#{beginTime})
         </if>
         <if test="endTime != null and endTime != ''">
-            AND DATE_FORMAT(login_time,'%Y-%m-%d') &lt;= DATE_FORMAT(#{endTime},'%Y-%m-%d')
+            AND login_time &lt; DATE(#{endTime}) + INTERVAL 1 DAY
         </if>
         ORDER BY login_time DESC
+    </select>
+
+    <!-- 统计图表：按天分组计数（login_time 走 idx_login_time 区间扫描） -->
+    <select id="countByDay" resultType="com.admin.system.vo.GroupCountVO">
+        SELECT DATE_FORMAT(login_time, '%Y-%m-%d') AS groupKey, COUNT(*) AS total
+        FROM sys_login_log
+        WHERE login_time &gt;= #{since}
+        GROUP BY groupKey
     </select>
 
 </mapper>

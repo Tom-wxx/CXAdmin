@@ -182,6 +182,31 @@
           AND u.deleted = 0
     </select>
 
+    <!-- 统计图表：分组计数 -->
+    <select id="countCreatedByDay" resultType="com.admin.system.vo.GroupCountVO">
+        SELECT DATE_FORMAT(create_time, '%Y-%m-%d') AS groupKey, COUNT(*) AS total
+        FROM sys_user
+        WHERE deleted = 0
+          AND create_time &gt;= #{since}
+        GROUP BY groupKey
+    </select>
+
+    <select id="countUsersGroupByDept" resultType="com.admin.system.vo.GroupCountVO">
+        SELECT CAST(dept_id AS CHAR) AS groupKey, COUNT(*) AS total
+        FROM sys_user
+        WHERE deleted = 0
+          AND dept_id IS NOT NULL
+        GROUP BY dept_id
+    </select>
+
+    <select id="countUsersGroupByRole" resultType="com.admin.system.vo.GroupCountVO">
+        SELECT CAST(ur.role_id AS CHAR) AS groupKey, COUNT(DISTINCT ur.user_id) AS total
+        FROM sys_user_role ur
+        INNER JOIN sys_user u ON ur.user_id = u.user_id
+        WHERE u.deleted = 0
+        GROUP BY ur.role_id
+    </select>
+
     <select id="selectUserIdsByRoleId" parameterType="Long" resultType="Long">
         SELECT DISTINCT ur.user_id
         FROM sys_user_role ur

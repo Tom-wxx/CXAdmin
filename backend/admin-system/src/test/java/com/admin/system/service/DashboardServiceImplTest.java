@@ -2,6 +2,7 @@ package com.admin.system.service;
 
 import com.admin.system.service.impl.DashboardServiceImpl;
 import com.admin.system.vo.DashboardVO;
+import com.admin.system.vo.StatisticsVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,9 +11,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @DisplayName("DashboardServiceImpl 仪表盘服务测试")
@@ -32,16 +36,13 @@ class DashboardServiceImplTest {
     private IOnlineUserService onlineUserService;
 
     @Mock
-    private ISysDeptService deptService;
-
-    @Mock
     private ISysOperLogService operLogService;
 
     @Mock
-    private ISysLoginLogService loginLogService;
+    private ISysNotificationService notificationService;
 
     @Mock
-    private ISysNotificationService notificationService;
+    private IStatisticsService statisticsService;
 
     private DashboardServiceImpl dashboardService;
 
@@ -52,10 +53,9 @@ class DashboardServiceImplTest {
                 roleService,
                 noticeService,
                 onlineUserService,
-                deptService,
                 operLogService,
-                loginLogService,
-                notificationService
+                notificationService,
+                statisticsService
         );
     }
 
@@ -75,5 +75,25 @@ class DashboardServiceImplTest {
         assertEquals(6L, result.getPendingTasks());
         verify(onlineUserService).countOnlineUsers();
         verify(notificationService).countPendingTasks();
+    }
+
+    @Test
+    @DisplayName("用户趋势 - 复用统计服务的 7 天聚合结果，标签为 MM-dd，不逐天查库")
+    void getUserTrend_shouldReuseStatisticsAggregation() {
+        when(statisticsService.getUserGrowthTrend(7)).thenReturn(List.of(
+                daily("2026-09-26", 1L), daily("2026-09-27", 3L)));
+
+        DashboardVO.ChartData result = dashboardService.getUserTrend();
+
+        assertEquals(List.of("09-26", "09-27"), result.getLabels());
+        assertEquals(List.of(1L, 3L), result.getValues());
+        verifyNoInteractions(userService);
+    }
+
+    private StatisticsVO daily(String date, Long value) {
+        StatisticsVO vo = new StatisticsVO();
+        vo.setDate(date);
+        vo.setValue(value);
+        return vo;
     }
 }

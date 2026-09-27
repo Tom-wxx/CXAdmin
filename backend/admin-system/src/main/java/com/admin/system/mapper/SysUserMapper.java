@@ -1,12 +1,14 @@
 package com.admin.system.mapper;
 
 import com.admin.system.entity.SysUser;
+import com.admin.system.vo.GroupCountVO;
 import com.admin.system.vo.UserVO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -54,6 +56,15 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     Long countUsersByRoleId(@Param("roleId") Long roleId);
 
     List<Long> selectUserIdsByRoleId(@Param("roleId") Long roleId);
+
+    /** 按天统计 since 之后新增的用户数（groupKey = yyyy-MM-dd） */
+    List<GroupCountVO> countCreatedByDay(@Param("since") LocalDateTime since);
+
+    /** 按部门统计用户数（groupKey = dept_id） */
+    List<GroupCountVO> countUsersGroupByDept();
+
+    /** 按角色统计用户数（groupKey = role_id） */
+    List<GroupCountVO> countUsersGroupByRole();
 
     List<SysUser> selectUsersByRoleIds(@Param("roleIds") List<Long> roleIds);
 

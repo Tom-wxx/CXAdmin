@@ -1,11 +1,13 @@
 package com.admin.system.mapper;
 
 import com.admin.system.entity.SysOperLog;
+import com.admin.system.vo.GroupCountVO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -41,4 +43,14 @@ public interface SysOperLogMapper extends BaseMapper<SysOperLog> {
                                         @Param("status") Integer status,
                                         @Param("beginTime") String beginTime,
                                         @Param("endTime") String endTime);
+
+    /**
+     * 按天统计 since 之后的操作次数（groupKey = yyyy-MM-dd）
+     */
+    List<GroupCountVO> countByDay(@Param("since") LocalDateTime since);
+
+    /**
+     * 按业务类型统计 since 之后的操作次数（groupKey = business_type，可能为 null）
+     */
+    List<GroupCountVO> countByBusinessType(@Param("since") LocalDateTime since);
 }

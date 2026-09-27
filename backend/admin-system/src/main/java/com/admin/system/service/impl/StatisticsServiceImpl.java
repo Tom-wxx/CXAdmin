@@ -4,6 +4,7 @@ import com.admin.system.entity.*;
 import com.admin.system.mapper.*;
 import com.admin.system.service.IOnlineUserService;
 import com.admin.system.service.IStatisticsService;
+import com.admin.system.vo.GroupCountVO;
 import com.admin.system.vo.StatisticsVO;
 import com.admin.system.vo.SystemOverviewVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,7 +16,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 统计服务实现类
@@ -101,63 +101,14 @@ public class StatisticsServiceImpl implements IStatisticsService {
 
     @Override
     public List<StatisticsVO> getUserGrowthTrend(Integer days) {
-        if (days == null || days <= 0) {
-            days = 30;
-        }
-
-        List<StatisticsVO> result = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        for (int i = days - 1; i >= 0; i--) {
-            LocalDate date = today.minusDays(i);
-            LocalDateTime startTime = date.atStartOfDay();
-            LocalDateTime endTime = date.plusDays(1).atStartOfDay();
-
-            Long count = userMapper.selectCount(
-                    new LambdaQueryWrapper<SysUser>()
-                            .eq(SysUser::getDeleted, 0)
-                            .ge(SysUser::getCreateTime, startTime)
-                            .lt(SysUser::getCreateTime, endTime)
-            );
-
-            StatisticsVO vo = new StatisticsVO();
-            vo.setDate(date.format(formatter));
-            vo.setValue(count);
-            result.add(vo);
-        }
-
-        return result;
+        int n = normalizeDays(days);
+        return fillDays(userMapper.countCreatedByDay(startOfWindow(n)), n);
     }
 
     @Override
     public List<StatisticsVO> getLoginStatistics(Integer days) {
-        if (days == null || days <= 0) {
-            days = 30;
-        }
-
-        List<StatisticsVO> result = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        for (int i = days - 1; i >= 0; i--) {
-            LocalDate date = today.minusDays(i);
-            LocalDateTime startTime = date.atStartOfDay();
-            LocalDateTime endTime = date.plusDays(1).atStartOfDay();
-
-            Long count = loginLogMapper.selectCount(
-                    new LambdaQueryWrapper<SysLoginLog>()
-                            .ge(SysLoginLog::getLoginTime, startTime)
-                            .lt(SysLoginLog::getLoginTime, endTime)
-            );
-
-            StatisticsVO vo = new StatisticsVO();
-            vo.setDate(date.format(formatter));
-            vo.setValue(count);
-            result.add(vo);
-        }
-
-        return result;
+        int n = normalizeDays(days);
+        return fillDays(loginLogMapper.countByDay(startOfWindow(n)), n);
     }
 
     @Override
@@ -181,48 +132,21 @@ public class StatisticsServiceImpl implements IStatisticsService {
 
     @Override
     public List<StatisticsVO> getOperationStatistics(Integer days) {
-        if (days == null || days <= 0) {
-            days = 30;
-        }
-
-        List<StatisticsVO> result = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        for (int i = days - 1; i >= 0; i--) {
-            LocalDate date = today.minusDays(i);
-            LocalDateTime startTime = date.atStartOfDay();
-            LocalDateTime endTime = date.plusDays(1).atStartOfDay();
-
-            Long count = operLogMapper.selectCount(
-                    new LambdaQueryWrapper<SysOperLog>()
-                            .ge(SysOperLog::getOperTime, startTime)
-                            .lt(SysOperLog::getOperTime, endTime)
-            );
-
-            StatisticsVO vo = new StatisticsVO();
-            vo.setDate(date.format(formatter));
-            vo.setValue(count);
-            result.add(vo);
-        }
-
-        return result;
+        int n = normalizeDays(days);
+        return fillDays(operLogMapper.countByDay(startOfWindow(n)), n);
     }
 
     @Override
     public List<StatisticsVO> getDeptUserDistribution() {
-        // 查询所有部门
+        // 两条查询：部门列表 + 按部门分组计数（原先是每个部门一条 COUNT）
         List<SysDept> depts = deptMapper.selectList(
                 new LambdaQueryWrapper<SysDept>().eq(SysDept::getDeleted, 0)
         );
+        Map<String, Long> counts = toCountMap(userMapper.countUsersGroupByDept());
 
         List<StatisticsVO> result = new ArrayList<>();
         for (SysDept dept : depts) {
-            Long count = userMapper.selectCount(
-                    new LambdaQueryWrapper<SysUser>()
-                            .eq(SysUser::getDeleted, 0)
-                            .eq(SysUser::getDeptId, dept.getDeptId())
-            );
+            long count = counts.getOrDefault(String.valueOf(dept.getDeptId()), 0L);
             if (count > 0) {
                 StatisticsVO vo = new StatisticsVO();
                 vo.setName(dept.getDeptName());
@@ -236,15 +160,14 @@ public class StatisticsServiceImpl implements IStatisticsService {
 
     @Override
     public List<StatisticsVO> getRoleUserDistribution() {
-        // 查询所有角色
         List<SysRole> roles = roleMapper.selectList(
                 new LambdaQueryWrapper<SysRole>().eq(SysRole::getDeleted, 0)
         );
+        Map<String, Long> counts = toCountMap(userMapper.countUsersGroupByRole());
 
         List<StatisticsVO> result = new ArrayList<>();
         for (SysRole role : roles) {
-            // 通过 sys_user_role 表统计该角色的用户数
-            Long count = userMapper.countUsersByRoleId(role.getRoleId());
+            long count = counts.getOrDefault(String.valueOf(role.getRoleId()), 0L);
             if (count > 0) {
                 StatisticsVO vo = new StatisticsVO();
                 vo.setName(role.getRoleName());
@@ -258,29 +181,57 @@ public class StatisticsServiceImpl implements IStatisticsService {
 
     @Override
     public List<StatisticsVO> getOperationTypeStatistics() {
-        // 查询最近30天的操作日志
+        // 最近30天按操作类型在数据库里分组计数（原先把30天的日志整表读进内存再分组）
         LocalDateTime startTime = LocalDate.now().minusDays(30).atStartOfDay();
-        List<SysOperLog> logs = operLogMapper.selectList(
-                new LambdaQueryWrapper<SysOperLog>().ge(SysOperLog::getOperTime, startTime)
-        );
-
-        // 按操作类型分组统计
-        Map<String, Long> typeCountMap = logs.stream()
-                .collect(Collectors.groupingBy(
-                        log -> log.getBusinessType() != null ? String.valueOf(log.getBusinessType()) : "其他",
-                        Collectors.counting()
-                ));
 
         List<StatisticsVO> result = new ArrayList<>();
-        for (Map.Entry<String, Long> entry : typeCountMap.entrySet()) {
-            String typeName = getBusinessTypeName(entry.getKey());
+        for (GroupCountVO row : operLogMapper.countByBusinessType(startTime)) {
+            String type = row.getGroupKey() != null ? row.getGroupKey() : "其他";
             StatisticsVO vo = new StatisticsVO();
-            vo.setName(typeName);
-            vo.setValue(entry.getValue());
+            vo.setName(getBusinessTypeName(type));
+            vo.setValue(row.getTotal());
             result.add(vo);
         }
 
         return result;
+    }
+
+    private static int normalizeDays(Integer days) {
+        return days == null || days <= 0 ? 30 : days;
+    }
+
+    /**
+     * 统计窗口起点：含今天在内共 days 天的第一天零点
+     */
+    private static LocalDateTime startOfWindow(int days) {
+        return LocalDate.now().minusDays(days - 1L).atStartOfDay();
+    }
+
+    /**
+     * 把按天分组的结果铺成连续 days 天（无数据的日期补 0）
+     */
+    private static List<StatisticsVO> fillDays(List<GroupCountVO> rows, int days) {
+        Map<String, Long> counts = toCountMap(rows);
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        List<StatisticsVO> result = new ArrayList<>(days);
+        for (int i = days - 1; i >= 0; i--) {
+            String date = today.minusDays(i).format(formatter);
+            StatisticsVO vo = new StatisticsVO();
+            vo.setDate(date);
+            vo.setValue(counts.getOrDefault(date, 0L));
+            result.add(vo);
+        }
+        return result;
+    }
+
+    private static Map<String, Long> toCountMap(List<GroupCountVO> rows) {
+        Map<String, Long> counts = new HashMap<>();
+        for (GroupCountVO row : rows) {
+            counts.put(row.getGroupKey(), row.getTotal());
+        }
+        return counts;
     }
 
     /**
